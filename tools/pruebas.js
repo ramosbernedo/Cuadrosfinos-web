@@ -17,7 +17,7 @@ async function newPage(b, vp = { width: 1366, height: 860 }) {
 }
 
 (async () => {
-  const b = await chromium.launch();
+  const b = await chromium.launch({ args: ["--use-gl=swiftshader", "--enable-webgl", "--ignore-gpu-blocklist"] });
   const ctx = await b.newContext();
   const get = async u => { const r = await ctx.request.get(BASE + u, { failOnStatusCode: false }); return { status: r.status(), text: () => r.text() }; };
 
@@ -179,7 +179,7 @@ async function newPage(b, vp = { width: 1366, height: 860 }) {
     ok("Botones de compra fijos abajo en celular", sticky === "sticky");
     await q.goto(BASE + "/cuadro/foco-disciplina-ejecucion/", { waitUntil: "networkidle" });
     ok("Ficha con galería de fotos reales", (await q.$$eval("#pViews .view", v => v.length)) >= 10);
-    await q.click("#pViews .view >> nth=2"); await q.waitForTimeout(300);
+    await q.click("#pViews .view[data-tab=\"foto\"] >> nth=0"); await q.waitForTimeout(300);
     ok("Tocar una miniatura muestra la foto", await q.isVisible("#pPhotoImg") && (await q.getAttribute("#pPhotoImg", "src")).includes("/img/ambiente/"));
     await q.click("#pZoom"); await q.waitForTimeout(300);
     ok("Zoom abre la imagen a pantalla completa", await q.evaluate(() => document.querySelector("#zoom").open));
@@ -206,6 +206,11 @@ async function newPage(b, vp = { width: 1366, height: 860 }) {
     await q.click("#tabObra"); await q.click("#pZoom"); await q.waitForTimeout(300);
     ok("Personalizado: el zoom muestra la vista previa", await q.evaluate(() => !!document.querySelector("#zoomSvg svg")));
     await q.keyboard.press("Escape"); await q.waitForTimeout(300);
+    await q.goto(BASE + "/cuadro/triptico-fuerza-vision-lealtad/", { waitUntil: "networkidle" });
+    await q.click(".view--3d");
+    let ready = true; try { await q.waitForSelector("#mv.is-ready", { timeout: 30000 }); } catch { ready = false; }
+    ok("3D: el tríptico se arma con sus 3 obras", ready && (await q.evaluate(() => document.querySelector("#mv").model.materials.filter(m => /^obra/.test(m.name)).length)) === 3);
+    ok("3D: listo para ver en la pared (realidad aumentada en la pared, tamaño fijo)", (await q.getAttribute("#mv", "ar-placement")) === "wall" && (await q.getAttribute("#mv", "ar-scale")) === "fixed");
     await q.click("#navToggle"); await q.waitForTimeout(450);
     ok("Menú móvil abre", (await q.getAttribute("#navToggle", "aria-expanded")) === "true" && await q.isVisible("#navLinks a"));
     await q.keyboard.press("Escape");
