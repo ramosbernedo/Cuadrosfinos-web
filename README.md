@@ -1,24 +1,23 @@
-# Cuadros Finos — sitio web
+# Plantify Cuadros — sitio nuevo
 
-Sitio estático (HTML + CSS + JS, sin dependencias ni build) para una tienda de cuadros y enmarcado a medida.
+Versión rediseñada de https://cuadros.plantify.pe/ como sitio estático: HTML, CSS y JS, sin build ni dependencias.
 
-## Funciones
-- **Estudio en línea**: sube tu foto (se procesa solo en el navegador), elige moldura, tamaño, orientación y acabados; vista previa en ambientes (sala, dormitorio, oficina) y precio en tiempo real.
-- **Pedido por WhatsApp** con el resumen completo del cuadro.
-- **Colección** filtrable por categorías.
-- Proceso, garantía de calidad, testimonios, FAQ, CTA y botón flotante de WhatsApp.
-- Responsive, accesible (teclado, ARIA, `prefers-reduced-motion`) y rápido (todas las obras de muestra son CSS, cero imágenes).
+## Qué incluye
+- **Los 84 cuadros reales** (`data.js`) con sus colecciones, subcolecciones, ambientes, etiquetas “Más pedido” / “Nuevo” y campos de personalización. Las imágenes están en `img/cuadros/`.
+- **Ficha de cada cuadro** en ventana propia, con enlace compartible (`#cuadro/slug`).
+- **“En tu pared”**: el cuadro a escala real (30 × 37 cm, tríptico ≈ 98 cm) sobre un sofá, una cama, un escritorio o un aparador, con color de pared a elección.
+- **Mi selección**: se guardan varios cuadros, incluso personalizados, y se mandan en **un solo mensaje de WhatsApp** con total.
+- **Ayúdame a elegir**: 3 preguntas (pared, estilo, formato) → 6 recomendaciones.
+- Catálogo con filtros por colección y subcolección, ambiente, orden y búsqueda sin tildes. Búsqueda rápida con la tecla `/`.
+- Personalizados (+ S/ 40) con sus campos; los del Papa León XIV se cotizan al 912 012 451.
+- Responsive y accesible (teclado, `prefers-reduced-motion`, ARIA).
 
-## Personalizar
-En `app.js`, arriba del todo:
-- `WHATSAPP`: tu número (ej. `51987654321`).
-- `FRAMES`, `SIZES`: molduras, medidas y precios.
-- `CATALOG`: productos de la colección.
-
-Textos, correo y testimonios están en `index.html`.
+## Cambiar precios, WhatsApp o colecciones
+En `app.js`, arriba del todo: `CONFIG` (WhatsApp, precios) y `COLECCIONES`.
+Para agregar un cuadro: una línea en `data.js` + su imagen en `img/cuadros/<slug>.webp`
+(trípticos y dípticos: `<slug>-1.webp`, `-2.webp`, `-3.webp`).
 
 ## Ver en local
 ```bash
-python3 -m http.server 8000
+python3 -m http.server 8000   # y abrir http://localhost:8000
 ```
-Abre http://localhost:8000

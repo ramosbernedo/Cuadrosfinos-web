@@ -3,259 +3,256 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Cuadros Finos — Enmarcado y cuadros a medida en Lima</title>
-  <meta name="description" content="Cuadros personalizados, enmarcado a medida y arte decorativo. Diseña tu cuadro en línea, mira el precio al instante y pídelo por WhatsApp. Envíos a todo el Perú.">
-  <meta property="og:title" content="Cuadros Finos — Tu historia, bien enmarcada">
-  <meta property="og:description" content="Diseña tu cuadro a medida en minutos. Molduras premium, vidrio antirreflejo y envío a todo el Perú.">
-  <meta name="theme-color" content="#1d1a17">
-  <link rel="icon" href="assets/favicon.svg" type="image/svg+xml">
+  <title>Cuadros decorativos en blanco y negro, con marco · Plantify Cuadros</title>
+  <meta name="description" content="84 cuadros en blanco y negro con marco negro, listos para colgar. S/ 84 cada uno, tríptico S/ 149. Hechos a pedido en Lima en 4 a 6 días, envío a todo el Perú. Pídelo por WhatsApp.">
+  <meta property="og:title" content="Plantify Cuadros · Cuadros que dicen quién vive aquí">
+  <meta property="og:description" content="Arte en blanco y negro con marco, hecho en Lima. Míralo en tu pared antes de pedirlo.">
+  <meta property="og:image" content="img/cuadros/leon-fuerza.webp">
+  <meta name="theme-color" content="#0b0b0b">
+  <link rel="icon" href="img/favicon.png">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,300;9..144,500;9..144,600&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@112,300;112,400;112,500;100,600&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="styles.css">
+  <link rel="preload" as="image" href="img/cuadros/leon-fuerza.webp">
 </head>
 <body>
   <a class="skip" href="#main">Saltar al contenido</a>
 
-  <header class="nav" id="top">
-    <div class="wrap nav__inner">
-      <a href="#top" class="brand" aria-label="Cuadros Finos, inicio">
-        <span class="brand__mark" aria-hidden="true"></span>
-        <span class="brand__name">Cuadros <em>Finos</em></span>
+  <div class="topbar">
+    <div class="wrap topbar__in">
+      <span>Hechos a pedido en Lima · Envío a todo el Perú</span>
+      <span class="topbar__r">Si llega dañado, se repone</span>
+    </div>
+  </div>
+
+  <header class="nav" id="nav">
+    <div class="wrap nav__in">
+      <a href="#" class="brand" aria-label="Plantify Cuadros, inicio">
+        <img src="img/logo.png" alt="Plantify" width="123" height="40">
+        <span class="brand__tag">Cuadros</span>
       </a>
       <nav class="nav__links" aria-label="Principal">
-        <a href="#disena">Diseña tu cuadro</a>
-        <a href="#coleccion">Colección</a>
-        <a href="#proceso">Cómo funciona</a>
+        <a href="#catalogo">Catálogo</a>
+        <a href="#colecciones">Colecciones</a>
+        <a href="#personalizados">Personalizados</a>
+        <a href="#como">Cómo se pide</a>
         <a href="#faq">Preguntas</a>
       </nav>
-      <a class="btn btn--sm btn--dark nav__cta" href="#disena">Empezar</a>
-      <button class="nav__toggle" aria-label="Abrir menú" aria-expanded="false"><span></span><span></span></button>
+      <div class="nav__actions">
+        <button class="icon-btn" id="openSearch" aria-label="Buscar cuadro">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
+        </button>
+        <button class="icon-btn" id="openBag" aria-label="Mi selección">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="4" y="4" width="16" height="16"/><rect x="8" y="8" width="8" height="8"/></svg>
+          <span class="badge" id="bagCount" hidden>0</span>
+        </button>
+        <button class="nav__toggle" id="navToggle" aria-label="Abrir menú" aria-expanded="false"><span></span><span></span></button>
+      </div>
     </div>
   </header>
 
   <main id="main">
     <!-- HERO -->
     <section class="hero">
+      <div class="hero__light" aria-hidden="true"></div>
       <div class="wrap hero__grid">
-        <div class="hero__copy reveal">
-          <p class="eyebrow">Enmarcado artesanal · Lima, Perú</p>
-          <h1>Tu historia,<br><em>bien enmarcada.</em></h1>
-          <p class="lead">Convierte tus fotos, láminas y recuerdos en cuadros que se ven como en galería. Elige la moldura, mira el resultado en tu pared y recíbelo listo para colgar.</p>
-          <div class="hero__actions">
-            <a class="btn btn--dark" href="#disena">Diseñar mi cuadro <span aria-hidden="true">→</span></a>
-            <a class="btn btn--ghost" href="#coleccion">Ver colección</a>
+        <div class="hero__copy">
+          <p class="kicker">Plantify · Cuadros</p>
+          <h1>Cuadros que dicen<br><span>quién vive aquí</span></h1>
+          <p class="hero__lead">Arte en blanco y negro con marco, para la sala, el despacho y el dormitorio. Hecho a pedido en Lima y listo para colgar.</p>
+          <div class="hero__cta">
+            <a href="#catalogo" class="btn btn--light">Ver los 84 cuadros</a>
+            <button class="btn btn--line" data-open-quiz>Ayúdame a elegir</button>
           </div>
-          <ul class="trust">
-            <li><strong>4.9★</strong><span>+1,200 clientes</span></li>
-            <li><strong>72 h</strong><span>producción</span></li>
-            <li><strong>Todo el Perú</strong><span>envío asegurado</span></li>
-          </ul>
+          <dl class="hero__facts">
+            <div><dt>S/ 84</dt><dd>con marco incluido</dd></div>
+            <div><dt>4–6 días</dt><dd>hecho a pedido</dd></div>
+            <div><dt>Todo el Perú</dt><dd>envío protegido</dd></div>
+          </dl>
         </div>
-        <div class="hero__art reveal" aria-hidden="true">
-          <div class="wall">
-            <div class="frame frame--walnut f-lg float-1"><div class="mat"><div class="art art--sunset"></div></div></div>
-            <div class="frame frame--black f-sm float-2"><div class="mat"><div class="art art--lines"></div></div></div>
-            <div class="frame frame--gold f-md float-3"><div class="mat"><div class="art art--botanic"></div></div></div>
-            <div class="shelf"></div>
+        <div class="hero__wall">
+          <button class="hero__piece" data-open="leon-fuerza" aria-label="Ver León · Fuerza">
+            <span class="pf pf--hero"><img src="img/cuadros/leon-fuerza.webp" alt="León en blanco y negro, cuadro con marco negro" width="800" height="1200"></span>
+          </button>
+          <div class="hero__label">
+            <span>León · Fuerza</span>
+            <small>El que no necesita rugir. · S/ 84</small>
           </div>
         </div>
+      </div>
+      <div class="wrap">
+        <div class="rail" id="colRail" aria-label="Colecciones"></div>
       </div>
     </section>
 
-    <!-- MARQUEE -->
-    <div class="marquee" aria-hidden="true">
-      <div class="marquee__track">
-        <span>Molduras de madera maciza</span><span>✦</span><span>Vidrio antirreflejo</span><span>✦</span><span>Impresión giclée</span><span>✦</span><span>Paspartú libre de ácido</span><span>✦</span><span>Listo para colgar</span><span>✦</span>
-        <span>Molduras de madera maciza</span><span>✦</span><span>Vidrio antirreflejo</span><span>✦</span><span>Impresión giclée</span><span>✦</span><span>Paspartú libre de ácido</span><span>✦</span><span>Listo para colgar</span><span>✦</span>
-      </div>
-    </div>
-
-    <!-- CONFIGURATOR -->
-    <section class="section" id="disena">
+    <!-- TOP -->
+    <section class="sec" id="top">
       <div class="wrap">
-        <header class="section__head reveal">
-          <p class="eyebrow">Estudio en línea</p>
-          <h2>Diseña tu cuadro en vivo</h2>
-          <p>Sube tu imagen, elige cada detalle y ve el precio al instante. Cuando esté perfecto, lo pedimos por WhatsApp.</p>
-        </header>
-
-        <div class="studio reveal">
-          <div class="studio__preview">
-            <div class="room" id="room" data-room="sala">
-              <div class="room__frame-wrap" id="previewWrap">
-                <div class="frame" id="previewFrame">
-                  <div class="mat" id="previewMat">
-                    <div class="art art--sunset" id="previewArt"></div>
-                  </div>
-                </div>
-              </div>
-              <div class="room__sofa" aria-hidden="true"></div>
-              <div class="room__plant" aria-hidden="true"></div>
-            </div>
-            <div class="room-switch" role="radiogroup" aria-label="Ambiente">
-              <button role="radio" aria-checked="true" data-room="sala">Sala</button>
-              <button role="radio" aria-checked="false" data-room="dormitorio">Dormitorio</button>
-              <button role="radio" aria-checked="false" data-room="oficina">Oficina</button>
-            </div>
-          </div>
-
-          <form class="studio__panel" id="configForm" novalidate>
-            <fieldset>
-              <legend><span>1</span> Tu imagen</legend>
-              <label class="upload" for="upload">
-                <input type="file" id="upload" accept="image/*">
-                <span class="upload__icon" aria-hidden="true">⤒</span>
-                <span><strong>Sube una foto</strong> o arrástrala aquí<br><small>JPG o PNG · se queda en tu dispositivo</small></span>
-              </label>
-              <div class="swatches swatches--art" id="sampleArts" aria-label="O usa una obra de muestra">
-                <button type="button" class="is-active" data-art="sunset" aria-label="Atardecer"></button>
-                <button type="button" data-art="botanic" aria-label="Botánico"></button>
-                <button type="button" data-art="lines" aria-label="Líneas"></button>
-                <button type="button" data-art="ocean" aria-label="Océano"></button>
-                <button type="button" data-art="andes" aria-label="Andes"></button>
-              </div>
-            </fieldset>
-
-            <fieldset>
-              <legend><span>2</span> Moldura</legend>
-              <div class="chips" id="frameOptions"></div>
-            </fieldset>
-
-            <fieldset>
-              <legend><span>3</span> Tamaño</legend>
-              <div class="chips" id="sizeOptions"></div>
-              <div class="orient" role="radiogroup" aria-label="Orientación">
-                <button type="button" role="radio" aria-checked="true" data-orient="v">Vertical</button>
-                <button type="button" role="radio" aria-checked="false" data-orient="h">Horizontal</button>
-              </div>
-            </fieldset>
-
-            <fieldset>
-              <legend><span>4</span> Acabados</legend>
-              <label class="toggle"><input type="checkbox" id="optMat" checked><span class="toggle__ui"></span> Paspartú blanco <small>+ S/ 25</small></label>
-              <label class="toggle"><input type="checkbox" id="optGlass"><span class="toggle__ui"></span> Vidrio antirreflejo museo <small>+ 30%</small></label>
-              <label class="toggle"><input type="checkbox" id="optGift"><span class="toggle__ui"></span> Empaque de regalo <small>+ S/ 15</small></label>
-            </fieldset>
-
-            <div class="summary">
-              <div>
-                <p class="summary__label">Total estimado</p>
-                <p class="summary__price"><span id="price">S/ 0</span></p>
-                <p class="summary__meta" id="summaryText"></p>
-              </div>
-              <div class="qty">
-                <button type="button" id="qtyMinus" aria-label="Menos">−</button>
-                <output id="qty">1</output>
-                <button type="button" id="qtyPlus" aria-label="Más">+</button>
-              </div>
-            </div>
-            <button type="submit" class="btn btn--gold btn--block">Pedir por WhatsApp</button>
-            <p class="fine">Sin pago por adelantado. Te confirmamos detalles y tiempo de entrega en minutos.</p>
-          </form>
-        </div>
-      </div>
-    </section>
-
-    <!-- COLLECTION -->
-    <section class="section section--tint" id="coleccion">
-      <div class="wrap">
-        <header class="section__head section__head--row reveal">
+        <header class="sec__head">
           <div>
-            <p class="eyebrow">Colección</p>
-            <h2>Arte listo para tu pared</h2>
+            <p class="kicker">Los más pedidos</p>
+            <h2>Lo que más se cuelga</h2>
           </div>
-          <div class="filters" role="tablist" aria-label="Filtrar colección">
-            <button role="tab" aria-selected="true" data-filter="all">Todo</button>
-            <button role="tab" aria-selected="false" data-filter="abstracto">Abstracto</button>
-            <button role="tab" aria-selected="false" data-filter="naturaleza">Naturaleza</button>
-            <button role="tab" aria-selected="false" data-filter="peru">Perú</button>
-            <button role="tab" aria-selected="false" data-filter="minimal">Minimal</button>
-          </div>
+          <a href="#catalogo" class="link-arrow">Ver los 84 cuadros</a>
         </header>
-        <div class="grid" id="catalog"></div>
+        <div class="cards cards--scroll" id="topGrid"></div>
       </div>
     </section>
 
-    <!-- PROCESS -->
-    <section class="section" id="proceso">
+    <!-- WALL TEASER -->
+    <section class="sec sec--wall">
+      <div class="wrap wall-teaser">
+        <div class="wall-teaser__copy">
+          <p class="kicker">Antes de pedir</p>
+          <h2>Míralo en tu pared</h2>
+          <p>Cada cuadro se muestra a escala real sobre un sofá, una cama o un escritorio, con el color de pared que tú elijas. Sin sorpresas al colgarlo: 30 × 37 cm se ven así.</p>
+          <button class="btn btn--light" data-open="tigre-en-el-agua" data-tab="pared">Probar con un cuadro</button>
+        </div>
+        <div class="wall-teaser__scene" aria-hidden="true">
+          <div class="scene scene--sala scene--static" style="--wall:#d9d5cd">
+            <div class="scene__art scene__art--3">
+              <span class="pf"><img src="img/cuadros/triptico-fuerza-vision-lealtad-1.webp" alt="" loading="lazy"></span>
+              <span class="pf"><img src="img/cuadros/triptico-fuerza-vision-lealtad-2.webp" alt="" loading="lazy"></span>
+              <span class="pf"><img src="img/cuadros/triptico-fuerza-vision-lealtad-3.webp" alt="" loading="lazy"></span>
+            </div>
+            <div class="scene__furn"></div>
+            <span class="scene__measure">≈ 98 cm</span>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- CATALOG -->
+    <section class="sec" id="catalogo">
       <div class="wrap">
-        <header class="section__head reveal">
-          <p class="eyebrow">Cómo funciona</p>
-          <h2>De tu idea a tu pared en 4 pasos</h2>
+        <header class="sec__head">
+          <div>
+            <p class="kicker">Catálogo completo</p>
+            <h2>Todos los cuadros</h2>
+          </div>
+          <button class="btn btn--line btn--sm" data-open-quiz>Ayúdame a elegir</button>
+        </header>
+
+        <div class="filters">
+          <div class="filters__row" id="colFilters" role="tablist" aria-label="Colección"></div>
+          <div class="filters__row filters__row--sub" id="subFilters" aria-label="Subcolección"></div>
+          <div class="filters__bar">
+            <label class="search">
+              <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
+              <input type="search" id="q" placeholder="Busca: león, Jesús, Machu Picchu…" autocomplete="off">
+            </label>
+            <label class="select">
+              <span>Ambiente</span>
+              <select id="room">
+                <option value="">Todos</option>
+                <option value="sala">Sala</option>
+                <option value="dormitorio">Dormitorio</option>
+                <option value="oficina">Oficina</option>
+                <option value="comedor">Comedor</option>
+              </select>
+            </label>
+            <label class="select">
+              <span>Orden</span>
+              <select id="sort">
+                <option value="">Recomendados</option>
+                <option value="nuevo">Nuevos primero</option>
+                <option value="az">A–Z</option>
+              </select>
+            </label>
+          </div>
+          <p class="filters__count" id="count" aria-live="polite"></p>
+        </div>
+
+        <div class="cards" id="grid"></div>
+        <p class="empty" id="empty" hidden>No encontramos ese cuadro. <button class="link-btn" id="clearFilters">Ver todos</button> o <a href="#" data-wa="Hola, busco un cuadro que no encuentro en el catálogo:">pídenos uno a medida</a>.</p>
+      </div>
+    </section>
+
+    <!-- COLLECTIONS -->
+    <section class="sec sec--alt" id="colecciones">
+      <div class="wrap">
+        <header class="sec__head">
+          <div>
+            <p class="kicker">Colecciones</p>
+            <h2>Elige por lo que significa</h2>
+          </div>
+        </header>
+        <div class="cols" id="colGrid"></div>
+      </div>
+    </section>
+
+    <!-- PERSONALIZADOS -->
+    <section class="sec" id="personalizados">
+      <div class="wrap pers">
+        <div class="pers__media">
+          <span class="pf pf--tilt"><img src="img/cuadros/tu-ciudad.webp" alt="Mapa de ciudad personalizado" loading="lazy"></span>
+          <span class="pf pf--tilt2"><img src="img/cuadros/bendice-este-hogar.webp" alt="Cuadro Bendice este hogar con apellido" loading="lazy"></span>
+        </div>
+        <div class="pers__copy">
+          <p class="kicker">Personalizados · + S/ 40</p>
+          <h2>El cuadro que solo puede ser tuyo</h2>
+          <p>Tu ciudad, tu apellido, tu fecha o tu cielo. Escribes los datos y te mandamos la vista previa por WhatsApp <strong>antes de imprimir</strong>.</p>
+          <ul class="ticks">
+            <li>Mapa de tu ciudad o de cualquier lugar</li>
+            <li>“Bendice este hogar” con el apellido de tu familia</li>
+            <li>El cielo y la fecha de un día que importa</li>
+          </ul>
+          <button class="btn btn--light" data-filter-col="personalizados">Ver personalizados</button>
+        </div>
+      </div>
+    </section>
+
+    <!-- HOW -->
+    <section class="sec sec--alt" id="como">
+      <div class="wrap">
+        <header class="sec__head">
+          <div>
+            <p class="kicker">Cómo se pide</p>
+            <h2>Tres pasos, sin registrarte</h2>
+          </div>
         </header>
         <ol class="steps">
-          <li class="reveal"><span class="steps__n">01</span><h3>Diseña</h3><p>Sube tu foto o elige una obra. Prueba molduras y tamaños con vista previa real.</p></li>
-          <li class="reveal"><span class="steps__n">02</span><h3>Confirma</h3><p>Te escribimos por WhatsApp, revisamos la resolución y ajustamos el encuadre contigo.</p></li>
-          <li class="reveal"><span class="steps__n">03</span><h3>Fabricamos</h3><p>Imprimimos en papel de algodón y armamos a mano tu marco en nuestro taller.</p></li>
-          <li class="reveal"><span class="steps__n">04</span><h3>Recibe</h3><p>Llega embalado con esquineros, ganchos y nivel incluidos. Solo cuélgalo.</p></li>
+          <li><span>01</span><h3>Elige</h3><p>Guarda los cuadros que te gusten en tu selección. Míralos en tu pared, uno solo o en tríptico.</p></li>
+          <li><span>02</span><h3>Pide por WhatsApp</h3><p>Te llega el pedido armado con nombres y precios. Ahí confirmamos la dirección y el pago: Yape, Plin, transferencia o tarjeta.</p></li>
+          <li><span>03</span><h3>Recíbelo listo</h3><p>Lo imprimimos y enmarcamos en Lima en 4 a 6 días hábiles. A provincia va por agencia con esquineros.</p></li>
         </ol>
-      </div>
-    </section>
-
-    <!-- QUALITY -->
-    <section class="section section--dark">
-      <div class="wrap quality">
-        <div class="quality__copy reveal">
-          <p class="eyebrow eyebrow--light">Calidad de galería</p>
-          <h2>Detalles que se notan de cerca.</h2>
-          <ul class="checks">
-            <li><strong>Madera maciza</strong> — pino radiata y nogal seleccionado, nunca MDF.</li>
-            <li><strong>Impresión giclée</strong> — tintas pigmentadas con más de 100 años de duración.</li>
-            <li><strong>Paspartú libre de ácido</strong> — protege tu obra del amarillamiento.</li>
-            <li><strong>Garantía de 12 meses</strong> — si llega dañado, lo reponemos sin costo.</li>
-          </ul>
-        </div>
-        <div class="quality__visual reveal" aria-hidden="true">
-          <div class="corner">
-            <div class="corner__moulding"></div>
-            <div class="corner__mat"></div>
-            <div class="corner__art art--andes"></div>
-          </div>
-        </div>
-      </div>
-    </section>
-
-    <!-- TESTIMONIALS -->
-    <section class="section">
-      <div class="wrap">
-        <header class="section__head reveal">
-          <p class="eyebrow">Opiniones</p>
-          <h2>Lo que dicen nuestros clientes</h2>
-        </header>
-        <div class="quotes">
-          <figure class="quote reveal"><blockquote>“Enmarqué la foto de mi boda y quedó espectacular. La vista previa fue idéntica al resultado.”</blockquote><figcaption><span class="avatar">MV</span>María V. · Miraflores</figcaption></figure>
-          <figure class="quote reveal"><blockquote>“Pedí tres cuadros para mi consultorio. Llegaron en dos días, perfectamente embalados.”</blockquote><figcaption><span class="avatar">JR</span>Jorge R. · Arequipa</figcaption></figure>
-          <figure class="quote reveal"><blockquote>“La moldura de nogal es preciosa. Se nota el trabajo artesanal. Ya voy por mi cuarto pedido.”</blockquote><figcaption><span class="avatar">LC</span>Lucía C. · San Isidro</figcaption></figure>
+        <div class="spec">
+          <div class="spec__item"><strong>30 × 37 cm</strong><span>Medida única con marco. Vertical u horizontal.</span></div>
+          <div class="spec__item"><strong>Marco negro</strong><span>Impresión + marco, listo para colgar.</span></div>
+          <div class="spec__item"><strong>Tríptico ≈ 98 cm</strong><span>3 piezas iguales con separación, ideal sobre un sofá.</span></div>
+          <div class="spec__item"><strong>Garantía</strong><span>Si llega dañado, se repone.</span></div>
         </div>
       </div>
     </section>
 
     <!-- FAQ -->
-    <section class="section section--tint" id="faq">
+    <section class="sec" id="faq">
       <div class="wrap faq">
-        <header class="section__head reveal">
-          <p class="eyebrow">Preguntas frecuentes</p>
-          <h2>Todo lo que necesitas saber</h2>
+        <header class="sec__head sec__head--stack">
+          <p class="kicker">Preguntas frecuentes</p>
+          <h2>Lo que nos preguntan</h2>
+          <p class="muted">¿Otra duda? <a href="#" class="u" data-wa="Hola, tengo una consulta sobre los cuadros.">Escríbenos por WhatsApp</a>.</p>
         </header>
-        <div class="faq__list reveal">
-          <details open><summary>¿Cuánto demora mi pedido?</summary><p>La producción toma de 48 a 72 horas. En Lima Metropolitana entregamos en 1–2 días adicionales; a provincias, de 2 a 5 días hábiles.</p></details>
-          <details><summary>¿Qué resolución necesita mi foto?</summary><p>Para un cuadro de 30×40 cm recomendamos al menos 2 MP. Las fotos de celulares actuales funcionan muy bien. Si la calidad no alcanza, te avisamos antes de imprimir.</p></details>
-          <details><summary>¿Enmarcan obras o láminas que ya tengo?</summary><p>Sí. Tráelas a nuestro taller o coordinamos el recojo. Hacemos enmarcado a medida para óleos, acuarelas, diplomas, camisetas y objetos.</p></details>
-          <details><summary>¿Cómo pago?</summary><p>Yape, Plin, transferencia o tarjeta. El pago se realiza al confirmar tu pedido por WhatsApp, nunca antes.</p></details>
-          <details><summary>¿Y si llega dañado?</summary><p>Todos los envíos van asegurados. Envíanos una foto y lo reponemos sin costo.</p></details>
-          <details><summary>¿Hacen pedidos corporativos?</summary><p>Sí, equipamos oficinas, hoteles y restaurantes con precios por volumen y factura. Escríbenos para una cotización.</p></details>
+        <div class="faq__list">
+          <details open><summary>¿Cuánto cuesta un cuadro con marco?</summary><p>S/ 84 cada cuadro de 30 × 37 cm con marco negro incluido (por ahora es la única medida) y S/ 149 el tríptico de 3 piezas. Personalizar con nombre, fecha o lugar suma S/ 40.</p></details>
+          <details><summary>¿Cuánto demora?</summary><p>Se hace a pedido en 4 a 6 días hábiles en Lima. A provincia se suma el tiempo de la agencia.</p></details>
+          <details><summary>¿Hacen envíos a provincia?</summary><p>Sí, por agencia, con esquineros. Si llega dañado, se repone.</p></details>
+          <details><summary>¿Cómo se pide?</summary><p>Eliges el cuadro y lo pides por WhatsApp; ahí confirmamos la dirección y el pago. Puedes armar una selección con varios cuadros y mandarla en un solo mensaje.</p></details>
+          <details><summary>¿Cómo funcionan los personalizados?</summary><p>Escribes los datos (apellido, ciudad, fecha) al pedir. Te enviamos la vista previa por WhatsApp y solo imprimimos cuando nos das el OK.</p></details>
+          <details><summary>¿Hacen pedidos para empresas u oficinas?</summary><p>Sí. Escríbenos con la cantidad y el tipo de ambiente y te armamos una propuesta.</p></details>
         </div>
       </div>
     </section>
 
     <!-- CTA -->
     <section class="cta">
-      <div class="wrap cta__inner reveal">
-        <h2>¿Listo para darle a tu pared la atención que merece?</h2>
-        <div class="hero__actions">
-          <a class="btn btn--gold" href="#disena">Diseñar mi cuadro</a>
-          <a class="btn btn--ghost-light" data-wa="Hola Cuadros Finos, quisiera asesoría para un cuadro." href="#">Hablar con un asesor</a>
+      <div class="wrap cta__in">
+        <h2>¿No sabes cuál elegir?</h2>
+        <p>Dinos para qué pared es y te recomendamos tres en un minuto.</p>
+        <div class="hero__cta">
+          <button class="btn btn--light" data-open-quiz>Ayúdame a elegir</button>
+          <a class="btn btn--line" href="#" data-wa="Hola, quiero ayuda para elegir un cuadro.">Hablar con un asesor</a>
         </div>
       </div>
     </section>
@@ -263,21 +260,160 @@
 
   <footer class="footer">
     <div class="wrap footer__grid">
-      <div>
-        <a href="#top" class="brand brand--light"><span class="brand__mark" aria-hidden="true"></span><span class="brand__name">Cuadros <em>Finos</em></span></a>
-        <p>Enmarcado artesanal y arte decorativo hecho en Lima.</p>
+      <div class="footer__brand">
+        <img src="img/logo.png" alt="Plantify" width="123" height="40" loading="lazy">
+        <p>Cuadros en blanco y negro con marco, hechos a pedido en Lima y enviados a todo el Perú.</p>
+        <div class="social">
+          <a href="https://instagram.com/plantify.pe" target="_blank" rel="noopener" aria-label="Instagram"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="3" width="18" height="18" rx="5"/><circle cx="12" cy="12" r="4"/></svg></a>
+          <a href="https://tiktok.com/@plantifyperu" target="_blank" rel="noopener" aria-label="TikTok"><svg viewBox="0 0 24 24" aria-hidden="true" class="fill"><path d="M15.5 3c.4 2.4 1.9 3.9 4.5 4.1v3.1c-1.6 0-3.1-.5-4.4-1.3v6.4a6 6 0 1 1-6-6h.5v3.2a2.9 2.9 0 1 0 2.3 2.8V3z"/></svg></a>
+          <a href="https://www.facebook.com/plantify.peru" target="_blank" rel="noopener" aria-label="Facebook"><svg viewBox="0 0 24 24" aria-hidden="true" class="fill"><path d="M13.6 21v-7.4h2.5l.4-3h-2.9V8.8c0-.9.3-1.4 1.5-1.4h1.5V4.7c-.3 0-1.2-.1-2.2-.1-2.2 0-3.7 1.3-3.7 3.8v2.2H8.2v3h2.5V21z"/></svg></a>
+          <a href="https://www.pinterest.com/plantifyp/" target="_blank" rel="noopener" aria-label="Pinterest"><svg viewBox="0 0 24 24" aria-hidden="true" class="fill"><path d="M12 2a10 10 0 0 0-3.6 19.3c-.1-.8-.2-2 0-2.9l1.2-5s-.3-.6-.3-1.5c0-1.4.8-2.5 1.8-2.5.9 0 1.3.6 1.3 1.4 0 .9-.5 2.1-.8 3.3-.2 1 .5 1.8 1.5 1.8 1.8 0 3.2-1.9 3.2-4.6 0-2.4-1.7-4.1-4.2-4.1-2.9 0-4.5 2.1-4.5 4.4 0 .9.3 1.8.8 2.3l.1.4-.3 1.2c0 .2-.2.3-.4.2-1.3-.6-2.1-2.5-2.1-4 0-3.3 2.4-6.3 6.9-6.3 3.6 0 6.4 2.6 6.4 6 0 3.6-2.3 6.5-5.4 6.5-1.1 0-2.1-.6-2.4-1.2l-.7 2.5c-.2 1-.9 2.2-1.3 2.9A10 10 0 1 0 12 2z"/></svg></a>
+          <a href="https://youtube.com/@plantifyperu" target="_blank" rel="noopener" aria-label="YouTube"><svg viewBox="0 0 24 24" aria-hidden="true" class="fill"><path d="M21.6 7.2a2.6 2.6 0 0 0-1.8-1.8C18.2 5 12 5 12 5s-6.2 0-7.8.4A2.6 2.6 0 0 0 2.4 7.2 27 27 0 0 0 2 12a27 27 0 0 0 .4 4.8 2.6 2.6 0 0 0 1.8 1.8c1.6.4 7.8.4 7.8.4s6.2 0 7.8-.4a2.6 2.6 0 0 0 1.8-1.8A27 27 0 0 0 22 12a27 27 0 0 0-.4-4.8zM10 15V9l5.2 3z"/></svg></a>
+        </div>
       </div>
-      <div><h4>Tienda</h4><a href="#disena">Diseña tu cuadro</a><a href="#coleccion">Colección</a><a href="#faq">Envíos</a></div>
-      <div><h4>Contacto</h4><a href="#" data-wa="Hola Cuadros Finos">WhatsApp</a><a href="mailto:hola@cuadrosfinos.pe">hola@cuadrosfinos.pe</a><span>Lun–Sáb · 9:00–19:00</span></div>
+      <div>
+        <h4>Cuadros</h4>
+        <div id="footCols"></div>
+      </div>
+      <div>
+        <h4>Ayuda</h4>
+        <a href="#faq">Preguntas frecuentes</a>
+        <a href="https://cuadros.plantify.pe/envios" target="_blank" rel="noopener">Envíos</a>
+        <a href="https://cuadros.plantify.pe/devoluciones" target="_blank" rel="noopener">Garantía y devoluciones</a>
+        <a href="https://cuadros.plantify.pe/libro-reclamaciones" target="_blank" rel="noopener">Libro de reclamaciones</a>
+        <a href="https://cuadros.plantify.pe/corporativo" target="_blank" rel="noopener">Ventas corporativas</a>
+      </div>
+      <div>
+        <h4>Contacto</h4>
+        <a href="#" data-wa="Hola, quiero hacer un pedido de cuadros.">WhatsApp cuadros<br><small>944 136 347</small></a>
+        <a href="mailto:hello@plantify.pe">hello@plantify.pe</a>
+        <span>Guardia Civil Sur 595, Chorrillos, Lima</span>
+      </div>
     </div>
-    <div class="wrap footer__bottom"><span>© <span id="year"></span> Cuadros Finos</span><a href="#top">Volver arriba ↑</a></div>
+    <div class="wrap footer__bottom">
+      <span>© <span id="year"></span> Plantify · RUC 10723870670</span>
+      <span class="pay"><b>Visa</b><b>Mastercard</b><b>Yape</b><b>Plin</b></span>
+    </div>
   </footer>
 
-  <a class="wa-float" href="#" data-wa="Hola Cuadros Finos, tengo una consulta." aria-label="Escríbenos por WhatsApp">
-    <svg viewBox="0 0 32 32" width="28" height="28" aria-hidden="true"><path fill="currentColor" d="M16 3C9 3 3.3 8.7 3.3 15.7c0 2.5.7 4.8 2 6.9L3 29l6.6-2.2c2 1.1 4.2 1.7 6.4 1.7 7 0 12.7-5.7 12.7-12.7S23 3 16 3zm0 23.2c-2 0-4-.6-5.7-1.6l-.4-.2-3.9 1.3 1.3-3.8-.3-.4a10.4 10.4 0 1 1 9 4.7zm5.7-7.8c-.3-.2-1.8-.9-2.1-1s-.5-.2-.7.2-.8 1-1 1.2-.4.2-.7.1a8.5 8.5 0 0 1-4.2-3.7c-.3-.5.3-.5.9-1.6.1-.2 0-.4 0-.5l-1-2.3c-.2-.6-.5-.5-.7-.5h-.6c-.2 0-.5.1-.8.4s-1 1-1 2.5 1.1 2.9 1.2 3.1 2.1 3.2 5.1 4.5c1.9.8 2.6.9 3.6.7.6-.1 1.8-.7 2-1.4s.3-1.3.2-1.4l-.5-.3z"/></svg>
+  <!-- WhatsApp float -->
+  <a class="wa-float" href="#" data-wa="Hola, quiero ayuda con un cuadro." aria-label="Escríbenos por WhatsApp">
+    <svg viewBox="0 0 32 32" width="26" height="26" aria-hidden="true"><path fill="currentColor" d="M16 3C9 3 3.3 8.7 3.3 15.7c0 2.5.7 4.8 2 6.9L3 29l6.6-2.2c2 1.1 4.2 1.7 6.4 1.7 7 0 12.7-5.7 12.7-12.7S23 3 16 3zm0 23.2c-2 0-4-.6-5.7-1.6l-.4-.2-3.9 1.3 1.3-3.8-.3-.4a10.4 10.4 0 1 1 9 4.7zm5.7-7.8c-.3-.2-1.8-.9-2.1-1s-.5-.2-.7.2-.8 1-1 1.2-.4.2-.7.1a8.5 8.5 0 0 1-4.2-3.7c-.3-.5.3-.5.9-1.6.1-.2 0-.4 0-.5l-1-2.3c-.2-.6-.5-.5-.7-.5h-.6c-.2 0-.5.1-.8.4s-1 1-1 2.5 1.1 2.9 1.2 3.1 2.1 3.2 5.1 4.5c1.9.8 2.6.9 3.6.7.6-.1 1.8-.7 2-1.4s.3-1.3.2-1.4l-.5-.3z"/></svg>
   </a>
 
+  <!-- PRODUCT DIALOG -->
+  <dialog class="modal" id="product" aria-labelledby="pTitle">
+    <button class="modal__close" data-close aria-label="Cerrar">×</button>
+    <div class="pd">
+      <div class="pd__media">
+        <div class="tabs" role="tablist">
+          <button role="tab" aria-selected="true" data-tab="obra">Obra</button>
+          <button role="tab" aria-selected="false" data-tab="pared">En tu pared</button>
+        </div>
+        <div class="pd__stage" id="pStage"></div>
+        <div class="pd__wall" id="pWall" hidden>
+          <div class="scene" id="pScene">
+            <div class="scene__art" id="pSceneArt"></div>
+            <div class="scene__furn"></div>
+            <span class="scene__measure" id="pMeasure"></span>
+          </div>
+          <div class="wall-ctrl">
+            <div class="seg" id="sceneRoom" role="radiogroup" aria-label="Ambiente">
+              <button role="radio" aria-checked="true" data-v="sala">Sala</button>
+              <button role="radio" aria-checked="false" data-v="dormitorio">Dormitorio</button>
+              <button role="radio" aria-checked="false" data-v="oficina">Oficina</button>
+              <button role="radio" aria-checked="false" data-v="comedor">Comedor</button>
+            </div>
+            <div class="walls" id="wallColors" aria-label="Color de pared">
+              <button style="--c:#e9e6df" aria-label="Pared blanca" class="is-on"></button>
+              <button style="--c:#cfc7ba" aria-label="Pared arena"></button>
+              <button style="--c:#9aa39a" aria-label="Pared salvia"></button>
+              <button style="--c:#6d7378" aria-label="Pared gris"></button>
+              <button style="--c:#2a2a2a" aria-label="Pared negra"></button>
+              <label class="walls__custom" aria-label="Elegir color"><input type="color" id="wallPick" value="#b9a78f"></label>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="pd__info">
+        <p class="kicker" id="pCol"></p>
+        <h2 id="pTitle"></h2>
+        <p class="pd__phrase" id="pPhrase"></p>
+        <p class="pd__price" id="pPrice"></p>
+        <p class="muted small" id="pPriceNote"></p>
+
+        <div class="pd__opt" id="pOrientBox">
+          <p class="label">Formato</p>
+          <div class="seg seg--full" id="pOrient" role="radiogroup" aria-label="Formato"></div>
+        </div>
+
+        <form class="pd__opt" id="pFields" hidden>
+          <p class="label">Personalización <span class="muted">+ S/ 40</span></p>
+          <div id="pFieldList"></div>
+          <p class="muted small">Te mandamos la vista previa por WhatsApp antes de imprimir.</p>
+        </form>
+
+        <div class="pd__buy">
+          <button class="btn btn--light btn--block" id="pAdd">Agregar a mi selección</button>
+          <a class="btn btn--wa btn--block" id="pWa" href="#" target="_blank" rel="noopener">Pedir este por WhatsApp</a>
+        </div>
+
+        <dl class="pd__specs">
+          <div><dt>Medida</dt><dd id="pSize">30 × 37 cm con marco</dd></div>
+          <div><dt>Marco</dt><dd>Negro, listo para colgar</dd></div>
+          <div><dt>Va bien en</dt><dd id="pRooms"></dd></div>
+          <div><dt>Entrega</dt><dd>4 a 6 días hábiles en Lima; provincia por agencia</dd></div>
+          <div><dt>Garantía</dt><dd>Si llega dañado, se repone</dd></div>
+        </dl>
+        <button class="link-btn small" id="pShare">Copiar enlace de este cuadro</button>
+      </div>
+    </div>
+    <div class="pd__related">
+      <p class="kicker">Combinan con este</p>
+      <div class="cards cards--mini" id="pRelated"></div>
+    </div>
+  </dialog>
+
+  <!-- BAG -->
+  <aside class="drawer" id="bag" aria-labelledby="bagTitle" aria-hidden="true">
+    <div class="drawer__panel" role="dialog" aria-modal="true">
+      <header class="drawer__head">
+        <h2 id="bagTitle">Mi selección</h2>
+        <button class="modal__close" data-close-bag aria-label="Cerrar">×</button>
+      </header>
+      <div class="drawer__body" id="bagList"></div>
+      <footer class="drawer__foot" id="bagFoot">
+        <div class="bag-total"><span>Total</span><strong id="bagTotal">S/ 0</strong></div>
+        <p class="muted small">Envío y pago se confirman por WhatsApp. Sin pago por adelantado en la web.</p>
+        <a class="btn btn--wa btn--block" id="bagWa" href="#" target="_blank" rel="noopener">Enviar pedido por WhatsApp</a>
+      </footer>
+    </div>
+    <div class="drawer__scrim" data-close-bag></div>
+  </aside>
+
+  <!-- QUIZ -->
+  <dialog class="modal modal--quiz" id="quiz" aria-labelledby="qTitle">
+    <button class="modal__close" data-close aria-label="Cerrar">×</button>
+    <div class="quiz">
+      <p class="kicker" id="qStep">Paso 1 de 3</p>
+      <h2 id="qTitle"></h2>
+      <div class="quiz__opts" id="qOpts"></div>
+      <div class="quiz__res" id="qRes" hidden></div>
+    </div>
+  </dialog>
+
+  <!-- SEARCH -->
+  <dialog class="modal modal--search" id="search" aria-label="Buscar">
+    <label class="search search--big">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
+      <input type="search" id="sq" placeholder="¿Qué buscas? león, fe, mar, abogado…" autocomplete="off">
+    </label>
+    <div class="search__res" id="sRes"></div>
+  </dialog>
+
   <div class="toast" id="toast" role="status" aria-live="polite"></div>
-  <script src="app.js" defer></script>
+
+  <script src="data.js"></script>
+  <script src="app.js"></script>
 </body>
 </html>
