@@ -664,3 +664,12 @@ html.lock{overflow:hidden}
 .pd__wall,.pd__stage,.pd__photo{animation:none}
 .zoom-btn{right:auto;left:36px}
 @media (max-width:620px){.zoom-btn{left:26px;right:auto}}
+
+/* Personalizados en vivo */
+.pf>svg{position:absolute;inset:4.4% 5.5%;width:89%;height:91.2%;display:block}
+.zoom__svg{width:min(92vw,calc(84dvh * .77));aspect-ratio:600/780;transition:transform .35s var(--ease);box-shadow:0 30px 80px rgba(0,0,0,.6)}
+.zoom__svg svg{width:100%;height:100%;display:block}
+.zoom.is-z .zoom__svg{transform:scale(2.2)}
+.zoom__stage>img[hidden]{display:none}
+#pPersNote{margin-top:4px}
+.pf>svg,.zoom__svg svg{fill:#000;stroke:none;stroke-width:1;stroke-linecap:butt;stroke-linejoin:miter}

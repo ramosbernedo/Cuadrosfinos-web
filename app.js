@@ -185,6 +185,7 @@ function openProduct(slug, tab, { push = true } = {}) {
   $("#pRooms").textContent = x.a.map(r => r[0].toUpperCase() + r.slice(1)).join(", ");
   $("#pFields").hidden = !x.p;
   restoreFields();
+  livePreview();
   if (x.q) {
     $("#pPrice").textContent = "Cotiza por WhatsApp";
     $("#pPriceNote").textContent = "Recuerdo de la visita del Papa: precio a consultar.";
@@ -257,16 +258,31 @@ function setTab(t, btn) {
     img.src = btn.dataset.src; img.alt = btn.dataset.alt;
     $("#pPhotoCap").textContent = btn.dataset.alt;
   }
-  $("#pZoom").hidden = t === "pared" || (t === "obra" && !(S.x && S.x.i));
+  $("#pZoom").hidden = t === "pared" || (t === "obra" && !(S.x && (S.x.i || personal(S.x))));
 }
 function zoomSrc() {
   if (S.tab === "foto") return [$("#pPhotoImg").src, $("#pPhotoImg").alt];
+  if (personal(S.x)) return ["", S.x.n, $("#pStage .pf").innerHTML];
   const x = S.x; return [`/img/cuadros/${x.s}${piezas(x) > 1 ? "-1" : ""}.webp`, x.n];
 }
-function openZoom([src, alt]) {
-  const z = $("#zoom"), img = $("#zoomImg");
-  img.src = src; img.alt = alt; z.classList.remove("is-z");
+function openZoom([src, alt, html]) {
+  const z = $("#zoom"), img = $("#zoomImg"), st = $("#zoomStage");
+  $("#zoomSvg")?.remove();
+  img.hidden = !!html;
+  if (html) st.insertAdjacentHTML("beforeend", `<div class="zoom__svg" id="zoomSvg" role="img" aria-label="${esc(alt)}">${html}</div>`);
+  else { img.src = src; img.alt = alt; }
+  z.classList.remove("is-z");
   z.showModal();
+}
+/* Vista previa en vivo de los personalizados */
+const personal = x => !!(x && window.CFPersonal && CFPersonal.tiene(x.s));
+function livePreview() {
+  const x = S.x; if (!personal(x)) return;
+  const vals = $$("#pFieldList input").map(i => i.value.trim());
+  const draw = el => { if (el) { el.classList.remove("pf--h"); el.innerHTML = CFPersonal.svg(x.s, vals); } };
+  draw($("#pStage .pf")); draw($("#pSceneArt .pf"));
+  const nota = CFPersonal.nota(x.s);
+  $("#pPersNote").textContent = (nota ? nota + " " : "") + "Te mandamos la final por WhatsApp antes de imprimir.";
 }
 let wallsReady = false;
 function preloadWalls() {
@@ -300,12 +316,12 @@ function bindProduct() {
     setTab(n.dataset.tab, n); n.focus(); n.scrollIntoView({ block: "nearest", inline: "nearest" });
   });
   $("#pZoom").addEventListener("click", () => openZoom(zoomSrc()));
-  $("#pStage").addEventListener("click", e => { if (S.x && S.x.i && e.target.closest("img")) openZoom(zoomSrc()); });
+  $("#pStage").addEventListener("click", e => { if (S.x && (S.x.i || personal(S.x)) && e.target.closest("img,svg")) openZoom(zoomSrc()); });
   $("#pPhoto").addEventListener("click", () => openZoom(zoomSrc()));
   $("#sceneRoom").addEventListener("click", e => { const b = e.target.closest("[data-v]"); if (b) { S.room = b.dataset.v; renderScene(); } });
   $("#pFields").addEventListener("input", () => {
     store.set(fieldKey(), Object.fromEntries($$("#pFieldList input").map(i => [i.name, i.value])));
-    updateProductWa();
+    updateProductWa(); livePreview();
   });
   $("#pFields").addEventListener("submit", e => e.preventDefault());
   const firstMissing = () => $$("#pFieldList input[required]").find(i => !i.value.trim());
@@ -558,7 +574,13 @@ function bindGeneral() {
   if (z) {
     const st = $("#zoomStage"), zi = $("#zoomImg");
     const aim = e => { const r = zi.getBoundingClientRect(); zi.style.transformOrigin = `${((e.clientX - r.left) / r.width) * 100}% ${((e.clientY - r.top) / r.height) * 100}%`; };
-    st.addEventListener("click", e => { if (e.target !== zi) return z.close(); aim(e); z.classList.toggle("is-z"); });
+    st.addEventListener("click", e => {
+      const target = e.target === zi ? zi : e.target.closest("#zoomSvg");
+      if (!target) return z.close();
+      const r = target.getBoundingClientRect(), o = `${((e.clientX - r.left) / r.width) * 100}% ${((e.clientY - r.top) / r.height) * 100}%`;
+      zi.style.transformOrigin = o; if ($("#zoomSvg")) $("#zoomSvg").style.transformOrigin = o;
+      z.classList.toggle("is-z");
+    });
     st.addEventListener("pointermove", e => { if (z.classList.contains("is-z") && e.pointerType === "mouse") aim(e); });
   }
   // Portada: fotos que rotan cada 6 s (se detiene al pasar el mouse o si se prefiere menos movimiento)

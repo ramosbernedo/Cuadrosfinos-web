@@ -199,6 +199,17 @@ async function newPage(b, vp = { width: 1366, height: 860 }) {
     await q.waitForFunction(() => document.querySelector("#pSceneBg").getAttribute("src").includes("dormitorio") && !document.querySelector("#pScene").classList.contains("is-swapping"));
     const dt = Date.now() - t0;
     ok("Cambiar de ambiente es inmediato (fotos precargadas)", dt < 400, `${dt} ms`);
+    for (const [slug, txt] of [["familia-apellido", "Quispe Mamani"], ["bendice-este-hogar", "Familia Torres"], ["tu-ciudad", "Trujillo"], ["nuestra-fecha", "Rosa & Juan"], ["tu-cielo", "12/05/2019"]]) {
+      await q.goto(BASE + "/cuadro/" + slug + "/", { waitUntil: "networkidle" });
+      await q.fill("#pFieldList input >> nth=0", txt); await q.waitForTimeout(150);
+      const inStage = await q.evaluate(t => (document.querySelector("#pStage svg")?.textContent || "").toUpperCase().includes(t.toUpperCase().replace(/^FAMILIA /, "")), txt);
+      ok(`Personalizado ${slug}: la vista previa muestra lo que escribes`, inStage);
+    }
+    await q.click("#tabPared"); await q.waitForTimeout(300);
+    ok("Personalizado: también se ve en la pared", await q.evaluate(() => !!document.querySelector("#pSceneArt svg")));
+    await q.click("#tabObra"); await q.click("#pZoom"); await q.waitForTimeout(300);
+    ok("Personalizado: el zoom muestra la vista previa", await q.evaluate(() => !!document.querySelector("#zoomSvg svg")));
+    await q.keyboard.press("Escape"); await q.waitForTimeout(300);
     await q.click("#navToggle"); await q.waitForTimeout(450);
     ok("Menú móvil abre", (await q.getAttribute("#navToggle", "aria-expanded")) === "true" && await q.isVisible("#navLinks a"));
     await q.keyboard.press("Escape");

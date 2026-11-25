@@ -742,7 +742,8 @@
      "Frase (opcional)",
      "Ej.: La noche que dijimos sí"
     ]
-   ]
+   ],
+   "i": 1
   },
   {
    "s": "tu-ciudad",
@@ -1366,7 +1367,8 @@
      "Lugar",
      "Ej.: Barranco, Lima"
     ]
-   ]
+   ],
+   "i": 1
   },
   {
    "s": "familia-apellido",
@@ -1390,7 +1392,8 @@
      "Desde (año)",
      "Ej.: 2015"
     ]
-   ]
+   ],
+   "i": 1
   },
   {
    "s": "papa-frente-a-machu-picchu",

@@ -161,7 +161,7 @@ def head(title, desc, path, og_img="/img/og/inicio.jpg", ld=(), preload="", og_t
   <link rel="manifest" href="/manifest.webmanifest">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@112,300;112,400;112,500&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@112,300;112,400;112,500&family=Cormorant+Garamond:ital,wght@0,500;1,400;1,500&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="/styles.css?v={ver('styles.css')}">
   {preload}
   {"".join(jsonld(o) for o in ld)}
@@ -286,7 +286,7 @@ def pd_markup(x=None, page=False):
         <form class="pd__opt" id="pFields"{"" if (x and x.get("p")) else " hidden"}>
           <p class="label">Personalización <span class="muted">+ {soles(P["personalizar"])}</span></p>
           <div id="pFieldList">{fields}</div>
-          <p class="muted small">Te mandamos la vista previa por WhatsApp antes de imprimir.</p>
+          <p class="muted small" id="pPersNote">Mira la vista previa mientras escribes. Te mandamos la final por WhatsApp antes de imprimir.</p>
         </form>
         <div class="pd__buy" id="pBuy">
           <button class="btn btn--light btn--block" id="pAdd"{" hidden" if (x and x.get("q")) else ""}>Agregar a mi selección</button>
@@ -347,6 +347,7 @@ def overlays(with_product_dialog=True):
   <dialog class="zoom" id="zoom" aria-label="Imagen ampliada"><button class="modal__close" data-close aria-label="Cerrar">×</button><div class="zoom__stage" id="zoomStage"><img id="zoomImg" alt=""></div><p class="zoom__hint">Toca la imagen para acercar</p></dialog>
   <div class="toast" id="toast" role="status" aria-live="polite"></div>
   <script src="/data.js?v={ver('data.js')}" defer></script>
+  <script src="/personaliza.js?v={ver('personaliza.js')}" defer></script>
   <script src="/app.js?v={ver('app.js')}" defer></script>
 </body>
 </html>
@@ -760,6 +761,8 @@ Sitemap: {h('/sitemap.xml')}
 /styles.css
   Cache-Control: public, max-age=31536000, immutable
 /app.js
+  Cache-Control: public, max-age=31536000, immutable
+/personaliza.js
   Cache-Control: public, max-age=31536000, immutable
 /data.js
   Cache-Control: public, max-age=31536000, immutable
