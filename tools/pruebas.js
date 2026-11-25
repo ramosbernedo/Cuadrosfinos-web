@@ -191,6 +191,14 @@ async function newPage(b, vp = { width: 1366, height: 860 }) {
     ok("Tocar la imagen acerca", await q.evaluate(() => document.querySelector("#zoom").classList.contains("is-z")));
     await q.keyboard.press("Escape"); await q.waitForTimeout(300);
     ok("Escape cierra el zoom", !(await q.evaluate(() => document.querySelector("#zoom").open)));
+    await q.goto(BASE + "/cuadro/manos-en-oracion/", { waitUntil: "networkidle" });
+    const lastView = await q.getAttribute("#pViews .view >> nth=-1", "data-src");
+    ok("El detalle del marco es del mismo cuadro", lastView === "/img/ambiente/detalle-manos-en-oracion.webp");
+    await q.click("#tabPared"); await q.waitForTimeout(1500);
+    const t0 = Date.now(); await q.click('#sceneRoom [data-v="dormitorio"]');
+    await q.waitForFunction(() => document.querySelector("#pSceneBg").getAttribute("src").includes("dormitorio") && !document.querySelector("#pScene").classList.contains("is-swapping"));
+    const dt = Date.now() - t0;
+    ok("Cambiar de ambiente es inmediato (fotos precargadas)", dt < 400, `${dt} ms`);
     await q.click("#navToggle"); await q.waitForTimeout(450);
     ok("Menú móvil abre", (await q.getAttribute("#navToggle", "aria-expanded")) === "true" && await q.isVisible("#navLinks a"));
     await q.keyboard.press("Escape");

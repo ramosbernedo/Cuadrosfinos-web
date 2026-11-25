@@ -147,6 +147,44 @@ def icons():
     print("íconos: ok")
 
 
+def detalles():
+    """Detalle del marco de cada cuadro: su propia obra, de cerca, sobre una pared clara."""
+    out_dir = os.path.join(ROOT, "img", "ambiente")
+    n = 0
+    for x in CAT["productos"]:
+        if not x.get("i"): continue
+        out = os.path.join(out_dir, f"detalle-{x['s']}.webp")
+        if not need(out): continue
+        k = 3 if x["o"] == "triptico" else 2 if x["o"] == "diptico" else 1
+        src = f"{x['s']}.webp" if k == 1 else f"{x['s']}-1.webp"
+        art = Image.open(os.path.join(SRC, src)).convert("RGB")
+        fr = framed(art, 1500)
+        W = H = 1000
+        # pared clara con luz suave desde arriba a la izquierda
+        wall = Image.new("RGB", (W, H), (226, 222, 214))
+        g = Image.new("L", (W, H), 0)
+        ImageDraw.Draw(g).ellipse((-500, -600, 900, 700), fill=90)
+        wall.paste((243, 240, 234), (0, 0), g.filter(ImageFilter.GaussianBlur(160)))
+        # el marco ocupa la parte superior izquierda; se ve su esquina inferior derecha
+        ox, oy = W - fr.width - 170, H - fr.height - 200
+        sh = Image.new("L", (W, H), 0)
+        ImageDraw.Draw(sh).rectangle((ox + 26, oy + 34, ox + fr.width + 26, oy + fr.height + 34), fill=150)
+        wall.paste((40, 36, 32), (0, 0), sh.filter(ImageFilter.GaussianBlur(26)))
+        wall.paste(fr, (ox, oy))
+        # bisel del marco: luz arriba/izquierda del borde y sombra interior
+        d = ImageDraw.Draw(wall)
+        mx = round(fr.width * .055) if fr.width < fr.height else round(fr.width * .044)
+        my = round(fr.height * .044) if fr.width < fr.height else round(fr.height * .055)
+        x1, y1 = ox + fr.width, oy + fr.height
+        d.line((ox, y1 - 1, x1, y1 - 1), fill=(4, 4, 4), width=3)
+        d.line((x1 - 1, oy, x1 - 1, y1), fill=(4, 4, 4), width=3)
+        d.line((x1 - mx, oy, x1 - mx, y1 - my), fill=(38, 38, 38), width=2)
+        d.line((ox, y1 - my, x1 - mx, y1 - my), fill=(38, 38, 38), width=2)
+        wall.save(out, "WEBP", quality=78, method=6)
+        n += 1
+    print("detalles del marco:", n)
+
+
 def ambiente():
     """Miniaturas de 520 px de las fotos de ambiente (img/ambiente/t/)."""
     d = os.path.join(ROOT, "img", "ambiente")
@@ -163,4 +201,4 @@ def ambiente():
 
 
 if __name__ == "__main__":
-    thumbs(); ogs(); icons(); ambiente()
+    thumbs(); ogs(); icons(); detalles(); ambiente()

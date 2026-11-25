@@ -657,3 +657,10 @@ html.lock{overflow:hidden}
   .faq{grid-template-columns:minmax(0,1fr);gap:20px}
 }
 .bag-item .qty{width:max-content;margin-top:8px}
+
+/* v4: cambio de pared con fundido y zoom a la izquierda */
+.scene__bg,.scene__art{transition:opacity .25s ease}
+.scene.is-swapping .scene__bg,.scene.is-swapping .scene__art{opacity:.35}
+.pd__wall,.pd__stage,.pd__photo{animation:none}
+.zoom-btn{right:auto;left:36px}
+@media (max-width:620px){.zoom-btn{left:26px;right:auto}}

@@ -233,7 +233,7 @@ def scene_html(x, room, lazy=True, ident=False, thumb=False):
 
 
 def fotos(x):
-    return list(x.get("fotos") or []) + [C["fotoMarco"]]
+    return list(x.get("fotos") or []) + ([[f"detalle-{x['s']}", "El marco negro de cerca"]] if x.get("i") else [])
 
 
 def views_html(x):

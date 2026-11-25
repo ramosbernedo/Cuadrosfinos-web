@@ -75,7 +75,7 @@ function card(x, { mini = false } = {}) {
 
 function viewsHtml(x) {
   const obra = `/img/cuadros/t/${x.s}${piezas(x) > 1 ? "-1" : ""}.webp`;
-  const fotos = [...(x.fotos || []), CONFIG.fotoMarco];
+  const fotos = [...(x.fotos || []), ...(x.i ? [[`detalle-${x.s}`, "El marco negro de cerca"]] : [])];
   return `<button class="view is-on" role="tab" id="tabObra" aria-selected="true" aria-controls="pStage" data-tab="obra">${x.i ? `<img src="${obra}" alt="" loading="lazy">` : '<span class="view__ph"></span>'}<span>Obra</span></button>` +
     `<button class="view" role="tab" id="tabPared" aria-selected="false" aria-controls="pWall" data-tab="pared"><img src="/img/ambiente/t/${PAREDES[roomFor(x)].img}.webp" alt="" loading="lazy"><span>En tu pared</span></button>` +
     fotos.map(([f, alt]) => `<button class="view" role="tab" aria-selected="false" aria-controls="pPhoto" data-tab="foto" data-src="/img/ambiente/${f}.webp" data-alt="${esc(alt)}"><img src="/img/ambiente/t/${f}.webp" alt="" loading="lazy"><span class="sr">${esc(alt)}</span></button>`).join("");
@@ -195,6 +195,7 @@ function openProduct(slug, tab, { push = true } = {}) {
     $("#pAdd").hidden = false; $("#pWa").textContent = "Pedir este por WhatsApp";
   }
   updateProductWa(); refreshAddBtn();
+  if (window.requestIdleCallback) requestIdleCallback(preloadWalls, { timeout: 2500 }); else setTimeout(preloadWalls, 1200);
   S.room = roomFor(x);
   setTab(tab || "obra"); renderScene();
   if (!inline) {
@@ -249,6 +250,7 @@ function setTab(t, btn) {
   views.forEach(v => { const on = v === btn; v.classList.toggle("is-on", on); v.setAttribute("aria-selected", String(on)); v.tabIndex = on ? 0 : -1; });
   $("#pStage").hidden = t !== "obra";
   $("#pWall").hidden = t !== "pared";
+  if (t === "pared") preloadWalls();
   $("#pPhoto").hidden = t !== "foto";
   if (t === "foto") {
     const img = $("#pPhotoImg");
@@ -266,12 +268,27 @@ function openZoom([src, alt]) {
   img.src = src; img.alt = alt; z.classList.remove("is-z");
   z.showModal();
 }
+let wallsReady = false;
+function preloadWalls() {
+  if (wallsReady) return; wallsReady = true;
+  Object.values(PAREDES).forEach(w => { const i = new Image(); i.decoding = "async"; i.src = `/img/ambiente/${w.img}.webp`; });
+}
 function renderScene() {
-  const s = $("#pScene"), w = PAREDES[S.room];
-  [["--cx", w.cx], ["--cy", w.cy], ["--cm", w.cm], ["--gap", w.gap]].forEach(([k, v]) => s.style.setProperty(k, v));
-  const bg = $("#pSceneBg");
-  if (!bg.src.endsWith(`/${w.img}.webp`)) { bg.src = `/img/ambiente/${w.img}.webp`; bg.alt = `Pared de ${w.nombre.toLowerCase()} con el cuadro a escala`; }
+  const s = $("#pScene"), w = PAREDES[S.room], bg = $("#pSceneBg");
+  const apply = () => {
+    [["--cx", w.cx], ["--cy", w.cy], ["--cm", w.cm], ["--gap", w.gap]].forEach(([k, v]) => s.style.setProperty(k, v));
+    s.classList.remove("is-swapping");
+  };
   $$("#sceneRoom [data-v]").forEach(b => b.setAttribute("aria-checked", String(b.dataset.v === S.room)));
+  const src = `/img/ambiente/${w.img}.webp`;
+  if (bg.getAttribute("src") === src) return apply();
+  // Fundido: se cambia la foto recién cuando está decodificada (sin parpadeo)
+  s.classList.add("is-swapping");
+  const next = new Image(); next.src = src;
+  (next.decode ? next.decode() : Promise.resolve()).catch(() => {}).then(() => {
+    if (PAREDES[S.room] !== w) return;
+    bg.src = src; bg.alt = `Pared de ${w.nombre.toLowerCase()} con el cuadro a escala`; apply();
+  });
 }
 function bindProduct() {
   if (!$("#pTitle")) return;
