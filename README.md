@@ -1,6 +1,7 @@
-# Plantify Cuadros — sitio nuevo
+# Cuadros Finos — sitio web
 
-Versión rediseñada de https://cuadros.plantify.pe/ como sitio estático: HTML, CSS y JS, sin build ni dependencias.
+Tienda de cuadros en blanco y negro con marco, como sitio estático: HTML, CSS y JS, sin build ni dependencias.
+Catálogo e imágenes tomados de cuadros.plantify.pe (mismos dueños), con marca propia.
 
 ## Qué incluye
 - **Los 84 cuadros reales** (`data.js`) con sus colecciones, subcolecciones, ambientes, etiquetas “Más pedido” / “Nuevo” y campos de personalización. Las imágenes están en `img/cuadros/`.
@@ -9,7 +10,7 @@ Versión rediseñada de https://cuadros.plantify.pe/ como sitio estático: HTML,
 - **Mi selección**: se guardan varios cuadros, incluso personalizados, y se mandan en **un solo mensaje de WhatsApp** con total.
 - **Ayúdame a elegir**: 3 preguntas (pared, estilo, formato) → 6 recomendaciones.
 - Catálogo con filtros por colección y subcolección, ambiente, orden y búsqueda sin tildes. Búsqueda rápida con la tecla `/`.
-- Personalizados (+ S/ 40) con sus campos; los del Papa León XIV se cotizan al 912 012 451.
+- Personalizados (+ S/ 40) con sus campos; los del Papa León XIV se cotizan por WhatsApp.
 - Responsive y accesible (teclado, `prefers-reduced-motion`, ARIA).
 
 ## Cambiar precios, WhatsApp o colecciones
@@ -21,3 +22,7 @@ Para agregar un cuadro: una línea en `data.js` + su imagen en `img/cuadros/<slu
 ```bash
 python3 -m http.server 8000   # y abrir http://localhost:8000
 ```
+
+## Publicar en Cloudflare Pages
+Workers & Pages → Create → Pages → Connect to Git → este repositorio y su rama.
+Build command: (vacío) · Build output directory: `/`. Luego, en Custom domains, agrega tu dominio.

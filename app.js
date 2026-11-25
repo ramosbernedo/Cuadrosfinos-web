@@ -1,12 +1,11 @@
 /* =========================================================
-   Plantify Cuadros — lógica del sitio
+   Cuadros Finos — lógica del sitio
    Todo lo que el negocio cambia está en CONFIG y COLECCIONES.
    ========================================================= */
 const CONFIG = {
   wa: "51944136347",        // WhatsApp de cuadros (todos los pedidos)
-  waPapa: "51912012451",    // Cuadros del Papa: solo cotización
+  waPapa: "51944136347",    // Cuadros del Papa: solo cotización (puede ser otro número)
   precio: { pieza: 84, triptico: 149, diptico: 168, personalizar: 40 },
-  dominio: "https://cuadros.plantify.pe/",
 };
 
 const COLECCIONES = [
@@ -31,6 +30,7 @@ const $$ = (s, el = document) => [...el.querySelectorAll(s)];
 const esc = s => String(s).replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
 const norm = s => String(s).normalize("NFD").replace(/[̀-ͯ]/g, "").toLowerCase();
 const soles = n => "S/ " + n.toLocaleString("es-PE");
+const linkDe = x => location.origin + location.pathname + "#cuadro/" + x.s;
 const waLink = (msg, num = CONFIG.wa) => `https://wa.me/${num}?text=${encodeURIComponent(msg)}`;
 const store = {
   get(k, d) { try { return JSON.parse(localStorage.getItem(k)) ?? d; } catch { return d; } },
@@ -219,9 +219,9 @@ function fieldValues() {
 }
 function productMsg() {
   const x = P.x;
-  if (x.q) return `Hola, quiero cotizar el cuadro «${x.n}» (Papa León XIV).\n${CONFIG.dominio}cuadro/${x.s}/`;
+  if (x.q) return `Hola, quiero cotizar el cuadro «${x.n}» (Papa León XIV).\n${linkDe(x)}`;
   const f = x.p ? fieldValues().filter(([, v]) => v).map(([l, v]) => `  · ${l}: ${v}`).join("\n") : "";
-  return `Hola, quiero pedir este cuadro:\n• ${x.n} — ${medida(x)} — ${$("#pPrice").textContent}` + (f ? `\n${f}` : "") + `\n${CONFIG.dominio}cuadro/${x.s}/\n\n¿Me confirman el envío a mi dirección?`;
+  return `Hola, quiero pedir este cuadro:\n• ${x.n} — ${medida(x)} — ${$("#pPrice").textContent}` + (f ? `\n${f}` : "") + `\n${linkDe(x)}\n\n¿Me confirman el envío a mi dirección?`;
 }
 function updateProductWa() { $("#pWa").href = waLink(productMsg(), P.x.q ? CONFIG.waPapa : CONFIG.wa); }
 function refreshAddBtn() {

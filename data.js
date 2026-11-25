@@ -1,4 +1,4 @@
-/* Catálogo de Plantify Cuadros (84 piezas). Generado desde cuadros.plantify.pe.
+/* Catálogo de Cuadros Finos (84 piezas).
    s=slug c=colección u=subcolección n=nombre f=frase a=ambientes o=orientación i=tiene imagen
    t=más pedido nw=nuevo p=personalizable k=campos q=solo cotizar */
 window.CUADROS = [{"s":"triptico-fuerza-vision-lealtad","c":"poder","u":"animales","n":"Tríptico Fuerza · Visión · Lealtad","f":"León, águila y lobo: las tres cosas que sostienen a un equipo.","a":["oficina","sala"],"o":"triptico","i":1,"t":1},
