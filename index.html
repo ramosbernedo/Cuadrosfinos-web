@@ -1,0 +1,283 @@
+<!doctype html>
+<html lang="es-PE">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Cuadros Finos — Enmarcado y cuadros a medida en Lima</title>
+  <meta name="description" content="Cuadros personalizados, enmarcado a medida y arte decorativo. Diseña tu cuadro en línea, mira el precio al instante y pídelo por WhatsApp. Envíos a todo el Perú.">
+  <meta property="og:title" content="Cuadros Finos — Tu historia, bien enmarcada">
+  <meta property="og:description" content="Diseña tu cuadro a medida en minutos. Molduras premium, vidrio antirreflejo y envío a todo el Perú.">
+  <meta name="theme-color" content="#1d1a17">
+  <link rel="icon" href="assets/favicon.svg" type="image/svg+xml">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,300;9..144,500;9..144,600&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <a class="skip" href="#main">Saltar al contenido</a>
+
+  <header class="nav" id="top">
+    <div class="wrap nav__inner">
+      <a href="#top" class="brand" aria-label="Cuadros Finos, inicio">
+        <span class="brand__mark" aria-hidden="true"></span>
+        <span class="brand__name">Cuadros <em>Finos</em></span>
+      </a>
+      <nav class="nav__links" aria-label="Principal">
+        <a href="#disena">Diseña tu cuadro</a>
+        <a href="#coleccion">Colección</a>
+        <a href="#proceso">Cómo funciona</a>
+        <a href="#faq">Preguntas</a>
+      </nav>
+      <a class="btn btn--sm btn--dark nav__cta" href="#disena">Empezar</a>
+      <button class="nav__toggle" aria-label="Abrir menú" aria-expanded="false"><span></span><span></span></button>
+    </div>
+  </header>
+
+  <main id="main">
+    <!-- HERO -->
+    <section class="hero">
+      <div class="wrap hero__grid">
+        <div class="hero__copy reveal">
+          <p class="eyebrow">Enmarcado artesanal · Lima, Perú</p>
+          <h1>Tu historia,<br><em>bien enmarcada.</em></h1>
+          <p class="lead">Convierte tus fotos, láminas y recuerdos en cuadros que se ven como en galería. Elige la moldura, mira el resultado en tu pared y recíbelo listo para colgar.</p>
+          <div class="hero__actions">
+            <a class="btn btn--dark" href="#disena">Diseñar mi cuadro <span aria-hidden="true">→</span></a>
+            <a class="btn btn--ghost" href="#coleccion">Ver colección</a>
+          </div>
+          <ul class="trust">
+            <li><strong>4.9★</strong><span>+1,200 clientes</span></li>
+            <li><strong>72 h</strong><span>producción</span></li>
+            <li><strong>Todo el Perú</strong><span>envío asegurado</span></li>
+          </ul>
+        </div>
+        <div class="hero__art reveal" aria-hidden="true">
+          <div class="wall">
+            <div class="frame frame--walnut f-lg float-1"><div class="mat"><div class="art art--sunset"></div></div></div>
+            <div class="frame frame--black f-sm float-2"><div class="mat"><div class="art art--lines"></div></div></div>
+            <div class="frame frame--gold f-md float-3"><div class="mat"><div class="art art--botanic"></div></div></div>
+            <div class="shelf"></div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- MARQUEE -->
+    <div class="marquee" aria-hidden="true">
+      <div class="marquee__track">
+        <span>Molduras de madera maciza</span><span>✦</span><span>Vidrio antirreflejo</span><span>✦</span><span>Impresión giclée</span><span>✦</span><span>Paspartú libre de ácido</span><span>✦</span><span>Listo para colgar</span><span>✦</span>
+        <span>Molduras de madera maciza</span><span>✦</span><span>Vidrio antirreflejo</span><span>✦</span><span>Impresión giclée</span><span>✦</span><span>Paspartú libre de ácido</span><span>✦</span><span>Listo para colgar</span><span>✦</span>
+      </div>
+    </div>
+
+    <!-- CONFIGURATOR -->
+    <section class="section" id="disena">
+      <div class="wrap">
+        <header class="section__head reveal">
+          <p class="eyebrow">Estudio en línea</p>
+          <h2>Diseña tu cuadro en vivo</h2>
+          <p>Sube tu imagen, elige cada detalle y ve el precio al instante. Cuando esté perfecto, lo pedimos por WhatsApp.</p>
+        </header>
+
+        <div class="studio reveal">
+          <div class="studio__preview">
+            <div class="room" id="room" data-room="sala">
+              <div class="room__frame-wrap" id="previewWrap">
+                <div class="frame" id="previewFrame">
+                  <div class="mat" id="previewMat">
+                    <div class="art art--sunset" id="previewArt"></div>
+                  </div>
+                </div>
+              </div>
+              <div class="room__sofa" aria-hidden="true"></div>
+              <div class="room__plant" aria-hidden="true"></div>
+            </div>
+            <div class="room-switch" role="radiogroup" aria-label="Ambiente">
+              <button role="radio" aria-checked="true" data-room="sala">Sala</button>
+              <button role="radio" aria-checked="false" data-room="dormitorio">Dormitorio</button>
+              <button role="radio" aria-checked="false" data-room="oficina">Oficina</button>
+            </div>
+          </div>
+
+          <form class="studio__panel" id="configForm" novalidate>
+            <fieldset>
+              <legend><span>1</span> Tu imagen</legend>
+              <label class="upload" for="upload">
+                <input type="file" id="upload" accept="image/*">
+                <span class="upload__icon" aria-hidden="true">⤒</span>
+                <span><strong>Sube una foto</strong> o arrástrala aquí<br><small>JPG o PNG · se queda en tu dispositivo</small></span>
+              </label>
+              <div class="swatches swatches--art" id="sampleArts" aria-label="O usa una obra de muestra">
+                <button type="button" class="is-active" data-art="sunset" aria-label="Atardecer"></button>
+                <button type="button" data-art="botanic" aria-label="Botánico"></button>
+                <button type="button" data-art="lines" aria-label="Líneas"></button>
+                <button type="button" data-art="ocean" aria-label="Océano"></button>
+                <button type="button" data-art="andes" aria-label="Andes"></button>
+              </div>
+            </fieldset>
+
+            <fieldset>
+              <legend><span>2</span> Moldura</legend>
+              <div class="chips" id="frameOptions"></div>
+            </fieldset>
+
+            <fieldset>
+              <legend><span>3</span> Tamaño</legend>
+              <div class="chips" id="sizeOptions"></div>
+              <div class="orient" role="radiogroup" aria-label="Orientación">
+                <button type="button" role="radio" aria-checked="true" data-orient="v">Vertical</button>
+                <button type="button" role="radio" aria-checked="false" data-orient="h">Horizontal</button>
+              </div>
+            </fieldset>
+
+            <fieldset>
+              <legend><span>4</span> Acabados</legend>
+              <label class="toggle"><input type="checkbox" id="optMat" checked><span class="toggle__ui"></span> Paspartú blanco <small>+ S/ 25</small></label>
+              <label class="toggle"><input type="checkbox" id="optGlass"><span class="toggle__ui"></span> Vidrio antirreflejo museo <small>+ 30%</small></label>
+              <label class="toggle"><input type="checkbox" id="optGift"><span class="toggle__ui"></span> Empaque de regalo <small>+ S/ 15</small></label>
+            </fieldset>
+
+            <div class="summary">
+              <div>
+                <p class="summary__label">Total estimado</p>
+                <p class="summary__price"><span id="price">S/ 0</span></p>
+                <p class="summary__meta" id="summaryText"></p>
+              </div>
+              <div class="qty">
+                <button type="button" id="qtyMinus" aria-label="Menos">−</button>
+                <output id="qty">1</output>
+                <button type="button" id="qtyPlus" aria-label="Más">+</button>
+              </div>
+            </div>
+            <button type="submit" class="btn btn--gold btn--block">Pedir por WhatsApp</button>
+            <p class="fine">Sin pago por adelantado. Te confirmamos detalles y tiempo de entrega en minutos.</p>
+          </form>
+        </div>
+      </div>
+    </section>
+
+    <!-- COLLECTION -->
+    <section class="section section--tint" id="coleccion">
+      <div class="wrap">
+        <header class="section__head section__head--row reveal">
+          <div>
+            <p class="eyebrow">Colección</p>
+            <h2>Arte listo para tu pared</h2>
+          </div>
+          <div class="filters" role="tablist" aria-label="Filtrar colección">
+            <button role="tab" aria-selected="true" data-filter="all">Todo</button>
+            <button role="tab" aria-selected="false" data-filter="abstracto">Abstracto</button>
+            <button role="tab" aria-selected="false" data-filter="naturaleza">Naturaleza</button>
+            <button role="tab" aria-selected="false" data-filter="peru">Perú</button>
+            <button role="tab" aria-selected="false" data-filter="minimal">Minimal</button>
+          </div>
+        </header>
+        <div class="grid" id="catalog"></div>
+      </div>
+    </section>
+
+    <!-- PROCESS -->
+    <section class="section" id="proceso">
+      <div class="wrap">
+        <header class="section__head reveal">
+          <p class="eyebrow">Cómo funciona</p>
+          <h2>De tu idea a tu pared en 4 pasos</h2>
+        </header>
+        <ol class="steps">
+          <li class="reveal"><span class="steps__n">01</span><h3>Diseña</h3><p>Sube tu foto o elige una obra. Prueba molduras y tamaños con vista previa real.</p></li>
+          <li class="reveal"><span class="steps__n">02</span><h3>Confirma</h3><p>Te escribimos por WhatsApp, revisamos la resolución y ajustamos el encuadre contigo.</p></li>
+          <li class="reveal"><span class="steps__n">03</span><h3>Fabricamos</h3><p>Imprimimos en papel de algodón y armamos a mano tu marco en nuestro taller.</p></li>
+          <li class="reveal"><span class="steps__n">04</span><h3>Recibe</h3><p>Llega embalado con esquineros, ganchos y nivel incluidos. Solo cuélgalo.</p></li>
+        </ol>
+      </div>
+    </section>
+
+    <!-- QUALITY -->
+    <section class="section section--dark">
+      <div class="wrap quality">
+        <div class="quality__copy reveal">
+          <p class="eyebrow eyebrow--light">Calidad de galería</p>
+          <h2>Detalles que se notan de cerca.</h2>
+          <ul class="checks">
+            <li><strong>Madera maciza</strong> — pino radiata y nogal seleccionado, nunca MDF.</li>
+            <li><strong>Impresión giclée</strong> — tintas pigmentadas con más de 100 años de duración.</li>
+            <li><strong>Paspartú libre de ácido</strong> — protege tu obra del amarillamiento.</li>
+            <li><strong>Garantía de 12 meses</strong> — si llega dañado, lo reponemos sin costo.</li>
+          </ul>
+        </div>
+        <div class="quality__visual reveal" aria-hidden="true">
+          <div class="corner">
+            <div class="corner__moulding"></div>
+            <div class="corner__mat"></div>
+            <div class="corner__art art--andes"></div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- TESTIMONIALS -->
+    <section class="section">
+      <div class="wrap">
+        <header class="section__head reveal">
+          <p class="eyebrow">Opiniones</p>
+          <h2>Lo que dicen nuestros clientes</h2>
+        </header>
+        <div class="quotes">
+          <figure class="quote reveal"><blockquote>“Enmarqué la foto de mi boda y quedó espectacular. La vista previa fue idéntica al resultado.”</blockquote><figcaption><span class="avatar">MV</span>María V. · Miraflores</figcaption></figure>
+          <figure class="quote reveal"><blockquote>“Pedí tres cuadros para mi consultorio. Llegaron en dos días, perfectamente embalados.”</blockquote><figcaption><span class="avatar">JR</span>Jorge R. · Arequipa</figcaption></figure>
+          <figure class="quote reveal"><blockquote>“La moldura de nogal es preciosa. Se nota el trabajo artesanal. Ya voy por mi cuarto pedido.”</blockquote><figcaption><span class="avatar">LC</span>Lucía C. · San Isidro</figcaption></figure>
+        </div>
+      </div>
+    </section>
+
+    <!-- FAQ -->
+    <section class="section section--tint" id="faq">
+      <div class="wrap faq">
+        <header class="section__head reveal">
+          <p class="eyebrow">Preguntas frecuentes</p>
+          <h2>Todo lo que necesitas saber</h2>
+        </header>
+        <div class="faq__list reveal">
+          <details open><summary>¿Cuánto demora mi pedido?</summary><p>La producción toma de 48 a 72 horas. En Lima Metropolitana entregamos en 1–2 días adicionales; a provincias, de 2 a 5 días hábiles.</p></details>
+          <details><summary>¿Qué resolución necesita mi foto?</summary><p>Para un cuadro de 30×40 cm recomendamos al menos 2 MP. Las fotos de celulares actuales funcionan muy bien. Si la calidad no alcanza, te avisamos antes de imprimir.</p></details>
+          <details><summary>¿Enmarcan obras o láminas que ya tengo?</summary><p>Sí. Tráelas a nuestro taller o coordinamos el recojo. Hacemos enmarcado a medida para óleos, acuarelas, diplomas, camisetas y objetos.</p></details>
+          <details><summary>¿Cómo pago?</summary><p>Yape, Plin, transferencia o tarjeta. El pago se realiza al confirmar tu pedido por WhatsApp, nunca antes.</p></details>
+          <details><summary>¿Y si llega dañado?</summary><p>Todos los envíos van asegurados. Envíanos una foto y lo reponemos sin costo.</p></details>
+          <details><summary>¿Hacen pedidos corporativos?</summary><p>Sí, equipamos oficinas, hoteles y restaurantes con precios por volumen y factura. Escríbenos para una cotización.</p></details>
+        </div>
+      </div>
+    </section>
+
+    <!-- CTA -->
+    <section class="cta">
+      <div class="wrap cta__inner reveal">
+        <h2>¿Listo para darle a tu pared la atención que merece?</h2>
+        <div class="hero__actions">
+          <a class="btn btn--gold" href="#disena">Diseñar mi cuadro</a>
+          <a class="btn btn--ghost-light" data-wa="Hola Cuadros Finos, quisiera asesoría para un cuadro." href="#">Hablar con un asesor</a>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <footer class="footer">
+    <div class="wrap footer__grid">
+      <div>
+        <a href="#top" class="brand brand--light"><span class="brand__mark" aria-hidden="true"></span><span class="brand__name">Cuadros <em>Finos</em></span></a>
+        <p>Enmarcado artesanal y arte decorativo hecho en Lima.</p>
+      </div>
+      <div><h4>Tienda</h4><a href="#disena">Diseña tu cuadro</a><a href="#coleccion">Colección</a><a href="#faq">Envíos</a></div>
+      <div><h4>Contacto</h4><a href="#" data-wa="Hola Cuadros Finos">WhatsApp</a><a href="mailto:hola@cuadrosfinos.pe">hola@cuadrosfinos.pe</a><span>Lun–Sáb · 9:00–19:00</span></div>
+    </div>
+    <div class="wrap footer__bottom"><span>© <span id="year"></span> Cuadros Finos</span><a href="#top">Volver arriba ↑</a></div>
+  </footer>
+
+  <a class="wa-float" href="#" data-wa="Hola Cuadros Finos, tengo una consulta." aria-label="Escríbenos por WhatsApp">
+    <svg viewBox="0 0 32 32" width="28" height="28" aria-hidden="true"><path fill="currentColor" d="M16 3C9 3 3.3 8.7 3.3 15.7c0 2.5.7 4.8 2 6.9L3 29l6.6-2.2c2 1.1 4.2 1.7 6.4 1.7 7 0 12.7-5.7 12.7-12.7S23 3 16 3zm0 23.2c-2 0-4-.6-5.7-1.6l-.4-.2-3.9 1.3 1.3-3.8-.3-.4a10.4 10.4 0 1 1 9 4.7zm5.7-7.8c-.3-.2-1.8-.9-2.1-1s-.5-.2-.7.2-.8 1-1 1.2-.4.2-.7.1a8.5 8.5 0 0 1-4.2-3.7c-.3-.5.3-.5.9-1.6.1-.2 0-.4 0-.5l-1-2.3c-.2-.6-.5-.5-.7-.5h-.6c-.2 0-.5.1-.8.4s-1 1-1 2.5 1.1 2.9 1.2 3.1 2.1 3.2 5.1 4.5c1.9.8 2.6.9 3.6.7.6-.1 1.8-.7 2-1.4s.3-1.3.2-1.4l-.5-.3z"/></svg>
+  </a>
+
+  <div class="toast" id="toast" role="status" aria-live="polite"></div>
+  <script src="app.js" defer></script>
+</body>
+</html>
