@@ -14,7 +14,7 @@ Catálogo e imágenes tomados de cuadros.plantify.pe (mismos dueños), con marca
 | `tools/marco3d.py` | Genera los marcos 3D a tamaño real (`3d/*.glb`) para la vista 3D y la realidad aumentada |
 | `tools/paredes.py` | Convierte fotos reales en paredes vacías calibradas a escala para «En tu pared» |
 | `personaliza.js`, `tools/personalizados.js` | Diseños en vivo de los personalizados y sus imágenes de catálogo |
-| `tools/pruebas.js` | 63 pruebas de navegación, SEO y accesibilidad con Playwright |
+| `tools/pruebas.js` | 81 pruebas de navegación, SEO, 3D y accesibilidad con Playwright |
 | `app.js`, `styles.css` | Interacción y diseño |
 | `index.html`, `cuadro/…`, `cuadros-…/` | Páginas generadas (no editar a mano) |
 
@@ -34,7 +34,7 @@ node tools/pruebas.js
 
 ## Qué incluye
 - 100 páginas: inicio, 84 fichas (`/cuadro/<slug>/`), 8 colecciones, 3 especiales (más pedidos, nuevos, personalizados) y 4 por ambiente (sala, dormitorio, oficina, comedor).
-- Ficha en ventana con URL propia (Atrás/Adelante funcionan) y como página independiente para Google.
+- Cada cuadro tiene su página propia para compartir (WhatsApp, Facebook, copiar enlace) y para Google; Atrás vuelve al catálogo en el mismo lugar.
 - “En tu pared”: el cuadro a escala sobre fotos reales de sala, dormitorio, oficina y escritorio.
 - **3D y realidad aumentada**: el cuadro en 3D girable y «Ver en mi pared» con la cámara del celular, a tamaño real (model-viewer 4.3.1, alojado en `vendor/`).
 - Personalizados con vista previa en vivo.
