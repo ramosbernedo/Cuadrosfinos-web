@@ -1,0 +1,35 @@
+# Cuadros Finos
+
+> Tienda peruana de cuadros decorativos en blanco y negro con marco negro, hechos a pedido en Lima y enviados a todo el Perú. Los pedidos se hacen por WhatsApp (+51 944 136 347).
+
+## Datos clave
+- Precio: S/ 84 por cuadro de 30 × 37 cm con marco negro (medida única, vertical u horizontal).
+- Tríptico (3 piezas, unos 98 cm de ancho): S/ 149. Díptico: S/ 168.
+- Personalización con nombre, fecha, apellido o mapa: + S/ 40, con vista previa por WhatsApp antes de imprimir.
+- Producción: 4 a 6 días hábiles en Lima. Envío a provincias por agencia, con esquineros.
+- Garantía: si llega dañado, se repone.
+- Pago: Yape, Plin, transferencia o tarjeta (se coordina por WhatsApp; no se paga en la web).
+- Catálogo: 84 cuadros. Sitio: https://cuadrosfinos.pages.dev/
+
+## Colecciones
+- [Cuadros motivacionales y de animales](https://cuadrosfinos.pages.dev/cuadros-motivacionales/): Cuadros de león, águila, lobo, gorila y tigre en blanco y negro, y frases de disciplina para la oficina. Con marco a S/ 84, tríptico S/ 149.
+- [Cuadros religiosos](https://cuadrosfinos.pages.dev/cuadros-religiosos/): Cuadros religiosos con marco: La Última Cena, Señor de los Milagros, Sagrado Corazón, Virgen María y Bendice este hogar con tu apellido. Desde S/ 84.
+- [Cuadros abstractos y minimalistas](https://cuadrosfinos.pages.dev/cuadros-abstractos/): Cuadros abstractos de textura, piedra, mármol y arte en línea, minimalistas y con toques de color. Con marco negro, listos para colgar, a S/ 84.
+- [Cuadros botánicos](https://cuadrosfinos.pages.dev/cuadros-botanicos/): Láminas botánicas con marco negro: monstera, ave del paraíso, olivo y helechos. Para sala, comedor y dormitorio. S/ 84, envío a todo el Perú.
+- [Cuadros de Perú y ciudades](https://cuadrosfinos.pages.dev/cuadros-de-peru-y-ciudades/): Cuadros de Machu Picchu, el cóndor de los Andes, las dunas de Ica, el mar y el mapa personalizado de tu ciudad. Con marco, hechos en Lima, desde S/ 84.
+- [Cuadros de geometría sagrada, luna y cielo](https://cuadrosfinos.pages.dev/cuadros-de-geometria-sagrada/): Flor de la vida, cubo de Metatrón, árbol de la vida, fases de la luna y el mapa del cielo de tu fecha. Cuadros con marco desde S/ 84.
+- [Cuadros para abogados, médicos, arquitectos y contadores](https://cuadrosfinos.pages.dev/cuadros-para-profesionales/): Cuadros para el estudio de abogados, el consultorio, arquitectos y contadores: Themis, vara de Esculapio y más. Regalo de graduación con marco, S/ 84.
+- [Cuadros de la visita del Papa León XIV al Perú](https://cuadrosfinos.pages.dev/cuadros-del-papa-leon-xiv/): Cuadros recuerdo de la visita del Papa León XIV al Perú: Machu Picchu, la Catedral del Cusco, el mar y la Amazonía. Con marco, hechos en Lima.
+- [Los cuadros más pedidos](https://cuadrosfinos.pages.dev/mas-pedidos/): Los cuadros en blanco y negro que más se cuelgan en casas y oficinas de Lima: León Fuerza, trípticos, La Última Cena y más. Con marco desde S/ 84.
+- [Cuadros nuevos](https://cuadrosfinos.pages.dev/nuevos/): Los últimos cuadros de la casa: tigre, gorila, jaguar, cóndor, Jesús sobre las aguas y más. Con marco, desde S/ 84, envío a todo el Perú.
+- [Cuadros personalizados](https://cuadrosfinos.pages.dev/cuadros-personalizados/): Cuadros personalizados con el mapa de tu ciudad, el cielo de tu fecha, nombres o tu apellido. Vista previa por WhatsApp antes de imprimir. S/ 124.
+
+## Por ambiente
+- [Cuadros para sala](https://cuadrosfinos.pages.dev/cuadros-para-sala/): Cuadros para sala en blanco y negro con marco: trípticos de 98 cm para encima del sofá, animales, abstractos y botánicos. Desde S/ 84 en Lima.
+- [Cuadros para dormitorio](https://cuadrosfinos.pages.dev/cuadros-para-dormitorio/): Cuadros para dormitorio con marco: piezas tranquilas, botánicas, de fe y de luna para encima de la cama. 30 × 37 cm a S/ 84, envío a todo el Perú.
+- [Cuadros para oficina](https://cuadrosfinos.pages.dev/cuadros-para-oficina/): Cuadros para oficina con marco: león, águila, lobo, frases de disciplina y cuadros para abogados, médicos y arquitectos. Desde S/ 84, también para empresas.
+- [Cuadros para comedor](https://cuadrosfinos.pages.dev/cuadros-para-comedor/): Cuadros para comedor con marco: La Última Cena, láminas botánicas, Bendice este hogar con tu apellido y abstractos cálidos. Desde S/ 84 en Lima.
+
+## Más
+- [Catálogo completo con descripciones](https://cuadrosfinos.pages.dev/llms-full.txt)
+- [Preguntas frecuentes](https://cuadrosfinos.pages.dev/#faq)

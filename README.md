@@ -1,28 +1,42 @@
 # Cuadros Finos — sitio web
 
-Tienda de cuadros en blanco y negro con marco, como sitio estático: HTML, CSS y JS, sin build ni dependencias.
+Tienda de cuadros en blanco y negro con marco. Sitio estático (HTML, CSS y JS) generado con Python y publicado en Cloudflare Pages.
 Catálogo e imágenes tomados de cuadros.plantify.pe (mismos dueños), con marca propia.
 
-## Qué incluye
-- **Los 84 cuadros reales** (`data.js`) con sus colecciones, subcolecciones, ambientes, etiquetas “Más pedido” / “Nuevo” y campos de personalización. Las imágenes están en `img/cuadros/`.
-- **Ficha de cada cuadro** en ventana propia, con enlace compartible (`#cuadro/slug`).
-- **“En tu pared”**: el cuadro a escala real (30 × 37 cm, tríptico ≈ 98 cm) sobre un sofá, una cama, un escritorio o un aparador, con color de pared a elección.
-- **Mi selección**: se guardan varios cuadros, incluso personalizados, y se mandan en **un solo mensaje de WhatsApp** con total.
-- **Ayúdame a elegir**: 3 preguntas (pared, estilo, formato) → 6 recomendaciones.
-- Catálogo con filtros por colección y subcolección, ambiente, orden y búsqueda sin tildes. Búsqueda rápida con la tecla `/`.
-- Personalizados (+ S/ 40) con sus campos; los del Papa León XIV se cotizan por WhatsApp.
-- Responsive y accesible (teclado, `prefers-reduced-motion`, ARIA).
+**En línea (provisional):** https://cuadrosfinos.pages.dev
 
-## Cambiar precios, WhatsApp o colecciones
-En `app.js`, arriba del todo: `CONFIG` (WhatsApp, precios) y `COLECCIONES`.
-Para agregar un cuadro: una línea en `data.js` + su imagen en `img/cuadros/<slug>.webp`
-(trípticos y dípticos: `<slug>-1.webp`, `-2.webp`, `-3.webp`).
+## Cómo está armado
+| Archivo / carpeta | Qué es |
+|---|---|
+| `data/catalogo.json` | **Única fuente de datos**: precios, WhatsApp, dominio, colecciones, ambientes y los 84 cuadros |
+| `tools/build.py` | Genera todas las páginas, `data.js`, `sitemap.xml`, `robots.txt`, `llms.txt`… |
+| `tools/imagenes.py` | Genera miniaturas (`img/cuadros/t/`), imágenes para compartir (`img/og/`) e íconos |
+| `tools/pruebas.js` | 63 pruebas de navegación, SEO y accesibilidad con Playwright |
+| `app.js`, `styles.css` | Interacción y diseño |
+| `index.html`, `cuadro/…`, `cuadros-…/` | Páginas generadas (no editar a mano) |
 
-## Ver en local
+## Cambiar algo
+1. Edita `data/catalogo.json` (precio, número de WhatsApp, textos, un cuadro nuevo…).
+2. Si agregaste imágenes nuevas en `img/cuadros/`: `python3 tools/imagenes.py`
+3. `python3 tools/build.py`
+4. Sube los cambios a GitHub: Cloudflare publica solo.
+
+**Pasar al dominio propio:** cambia `config.sitio` a `https://cuadrosfinos.pe` en `data/catalogo.json`, ejecuta `build.py` y súbelo.
+
+## Probar
 ```bash
-python3 -m http.server 8000   # y abrir http://localhost:8000
+python3 -m http.server 8765 &
+node tools/pruebas.js
 ```
 
-## Publicar en Cloudflare Pages
-Workers & Pages → Create → Pages → Connect to Git → este repositorio y su rama.
-Build command: (vacío) · Build output directory: `/`. Luego, en Custom domains, agrega tu dominio.
+## Qué incluye
+- 100 páginas: inicio, 84 fichas (`/cuadro/<slug>/`), 8 colecciones, 3 especiales (más pedidos, nuevos, personalizados) y 4 por ambiente (sala, dormitorio, oficina, comedor).
+- Ficha en ventana con URL propia (Atrás/Adelante funcionan) y como página independiente para Google.
+- “En tu pared” a escala real con ambiente y color de pared.
+- Selección de varios cuadros → un solo pedido por WhatsApp; se puede compartir por enlace (`?seleccion=`).
+- “Ayúdame a elegir”, búsqueda sin tildes (tecla `/`), filtros compartibles (`?q=`, `?c=`, `?amb=`).
+- **SEO:** títulos y descripciones únicos, canonical, Open Graph con imagen propia por cuadro (WhatsApp/Facebook), datos estructurados (Store/LocalBusiness, Product con precio en PEN y envío, BreadcrumbList, FAQPage, ItemList, WebSite con buscador), sitemap con imágenes.
+- **GEO (buscadores con IA):** `llms.txt` y `llms-full.txt` con datos clave y catálogo completo, `robots.txt` que permite a GPTBot, ClaudeBot, PerplexityBot, etc.; descripciones factuales por cuadro.
+- **SEO local:** Lima / Perú en datos estructurados, `geo.region`, páginas por ambiente y menciones de envío a provincias.
+- Rendimiento: miniaturas de 400 px, imagen principal precargada, caché larga con versión, cabeceras de seguridad (`_headers`).
+- Accesibilidad: teclado completo, foco atrapado en ventanas, `aria-*`, contraste, `prefers-reduced-motion`.
