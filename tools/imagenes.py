@@ -147,5 +147,20 @@ def icons():
     print("íconos: ok")
 
 
+def ambiente():
+    """Miniaturas de 520 px de las fotos de ambiente (img/ambiente/t/)."""
+    d = os.path.join(ROOT, "img", "ambiente")
+    os.makedirs(os.path.join(d, "t"), exist_ok=True)
+    n = 0
+    for f in sorted(os.listdir(d)):
+        if not f.endswith(".webp"): continue
+        out = os.path.join(d, "t", f)
+        if not need(out): continue
+        im = Image.open(os.path.join(d, f)).convert("RGB")
+        im.thumbnail((520, 520), Image.LANCZOS)
+        im.save(out, "WEBP", quality=76, method=6); n += 1
+    print("ambiente:", n)
+
+
 if __name__ == "__main__":
-    thumbs(); ogs(); icons()
+    thumbs(); ogs(); icons(); ambiente()

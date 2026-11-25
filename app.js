@@ -73,6 +73,14 @@ function card(x, { mini = false } = {}) {
     `<a class="card__open" href="${purl(x)}" aria-label="Ver ${esc(x.n)}"></a></article>`;
 }
 
+function viewsHtml(x) {
+  const obra = `/img/cuadros/t/${x.s}${piezas(x) > 1 ? "-1" : ""}.webp`;
+  const fotos = [...(x.fotos || []), CONFIG.fotoMarco];
+  return `<button class="view is-on" role="tab" id="tabObra" aria-selected="true" aria-controls="pStage" data-tab="obra">${x.i ? `<img src="${obra}" alt="" loading="lazy">` : '<span class="view__ph"></span>'}<span>Obra</span></button>` +
+    `<button class="view" role="tab" id="tabPared" aria-selected="false" aria-controls="pWall" data-tab="pared"><span class="view__wall"><i></i></span><span>En tu pared</span></button>` +
+    fotos.map(([f, alt]) => `<button class="view" role="tab" aria-selected="false" aria-controls="pPhoto" data-tab="foto" data-src="/img/ambiente/${f}.webp" data-alt="${esc(alt)}"><img src="/img/ambiente/t/${f}.webp" alt="" loading="lazy"><span class="sr">${esc(alt)}</span></button>`).join("");
+}
+
 /* ---------- aparición suave ---------- */
 const io = !reduced && "IntersectionObserver" in window ? new IntersectionObserver(es => es.forEach(e => {
   if (e.isIntersecting) { e.target.classList.add("in"); io.unobserve(e.target); }
@@ -169,6 +177,7 @@ function openProduct(slug, tab, { push = true } = {}) {
     const rel = DATA.filter(y => y.c === x.c && y.s !== x.s && y.i).sort((a, b) => rank(a) - rank(b)).slice(0, 4);
     $("#pRelated").innerHTML = rel.map(y => card(y, { mini: true })).join("");
     $("#pPage").href = purl(x);
+    $("#pViews").innerHTML = viewsHtml(x);
   }
   $("#pMeasure").textContent = x.o === "triptico" ? "≈ 98 cm de ancho" : x.o === "diptico" ? "≈ 64 cm de ancho" : esH(x) ? "37 × 30 cm" : "30 × 37 cm";
   $("#pSize").textContent = medida(x);
@@ -231,11 +240,29 @@ function refreshAddBtn() {
   const n = bag.filter(b => b.s === S.x.s).reduce((a, b) => a + b.qty, 0);
   $("#pAdd").textContent = n && !S.x.p ? `En tu selección (${n}) · Agregar otro` : "Agregar a mi selección";
 }
-function setTab(t) {
+function setTab(t, btn) {
   S.tab = t;
-  $$(".tabs [data-tab]").forEach(b => { b.setAttribute("aria-selected", String(b.dataset.tab === t)); b.tabIndex = b.dataset.tab === t ? 0 : -1; });
+  const views = $$("#pViews .view");
+  btn = btn || views.find(v => v.dataset.tab === t) || views[0];
+  views.forEach(v => { const on = v === btn; v.classList.toggle("is-on", on); v.setAttribute("aria-selected", String(on)); v.tabIndex = on ? 0 : -1; });
   $("#pStage").hidden = t !== "obra";
   $("#pWall").hidden = t !== "pared";
+  $("#pPhoto").hidden = t !== "foto";
+  if (t === "foto") {
+    const img = $("#pPhotoImg");
+    img.src = btn.dataset.src; img.alt = btn.dataset.alt;
+    $("#pPhotoCap").textContent = btn.dataset.alt;
+  }
+  $("#pZoom").hidden = t === "pared" || (t === "obra" && !(S.x && S.x.i));
+}
+function zoomSrc() {
+  if (S.tab === "foto") return [$("#pPhotoImg").src, $("#pPhotoImg").alt];
+  const x = S.x; return [`/img/cuadros/${x.s}${piezas(x) > 1 ? "-1" : ""}.webp`, x.n];
+}
+function openZoom([src, alt]) {
+  const z = $("#zoom"), img = $("#zoomImg");
+  img.src = src; img.alt = alt; z.classList.remove("is-z");
+  z.showModal();
 }
 function renderScene() {
   const s = $("#pScene");
@@ -249,10 +276,16 @@ function renderScene() {
 }
 function bindProduct() {
   if (!$("#pTitle")) return;
-  $$(".tabs [data-tab]").forEach(b => b.addEventListener("click", () => setTab(b.dataset.tab)));
-  $(".tabs").addEventListener("keydown", e => {
-    if (["ArrowRight", "ArrowLeft"].includes(e.key)) { e.preventDefault(); const t = S.tab === "obra" ? "pared" : "obra"; setTab(t); $(`.tabs [data-tab="${t}"]`).focus(); }
+  $("#pViews").addEventListener("click", e => { const b = e.target.closest(".view"); if (b) setTab(b.dataset.tab, b); });
+  $("#pViews").addEventListener("keydown", e => {
+    if (!["ArrowRight", "ArrowLeft"].includes(e.key)) return;
+    const v = $$("#pViews .view"), i = v.indexOf(document.activeElement); if (i < 0) return;
+    e.preventDefault(); const n = v[(i + (e.key === "ArrowRight" ? 1 : -1) + v.length) % v.length];
+    setTab(n.dataset.tab, n); n.focus(); n.scrollIntoView({ block: "nearest", inline: "nearest" });
   });
+  $("#pZoom").addEventListener("click", () => openZoom(zoomSrc()));
+  $("#pStage").addEventListener("click", e => { if (S.x && S.x.i && e.target.closest("img")) openZoom(zoomSrc()); });
+  $("#pPhoto").addEventListener("click", () => openZoom(zoomSrc()));
   $("#sceneRoom").addEventListener("click", e => { const b = e.target.closest("[data-v]"); if (b) { S.room = b.dataset.v; renderScene(); } });
   $("#wallColors").addEventListener("click", e => {
     const b = e.target.closest("button"); if (!b) return;
@@ -493,6 +526,35 @@ function bindGeneral() {
     if (dlg && m && BY[m[1]]) { S.pushed = false; openProduct(m[1], null, { push: false }); }
     else if (dlg && dlg.open) { S.pushed = false; dlg.close(); }
   });
+  // Zoom: tocar acerca (2,4x) hacia ese punto; mover el puntero recorre la imagen
+  const z = $("#zoom");
+  if (z) {
+    const st = $("#zoomStage"), zi = $("#zoomImg");
+    const aim = e => { const r = zi.getBoundingClientRect(); zi.style.transformOrigin = `${((e.clientX - r.left) / r.width) * 100}% ${((e.clientY - r.top) / r.height) * 100}%`; };
+    st.addEventListener("click", e => { if (e.target !== zi) return z.close(); aim(e); z.classList.toggle("is-z"); });
+    st.addEventListener("pointermove", e => { if (z.classList.contains("is-z") && e.pointerType === "mouse") aim(e); });
+  }
+  // Portada: fotos que rotan cada 6 s (se detiene al pasar el mouse o si se prefiere menos movimiento)
+  const slides = $$(".hero__slide"), dots = $$(".hero__dots button");
+  if (slides.length > 1) {
+    let i = 0, timer = null;
+    const go = n => {
+      i = (n + slides.length) % slides.length;
+      slides.forEach((sl, k) => sl.classList.toggle("is-on", k === i));
+      dots.forEach((d, k) => d.setAttribute("aria-selected", String(k === i)));
+      if (slides[i].loading === "lazy") slides[i].loading = "eager";
+      $("#heroCapTxt").textContent = slides[i].dataset.pie; $("#heroCap").href = slides[i].dataset.url;
+    };
+    const play = () => { if (!reduced && !timer) timer = setInterval(() => go(i + 1), 6000); };
+    const stop = () => { clearInterval(timer); timer = null; };
+    dots.forEach((d, k) => d.addEventListener("click", () => { stop(); go(k); }));
+    const hero = $(".hero");
+    hero.addEventListener("mouseenter", stop); hero.addEventListener("mouseleave", play);
+    hero.addEventListener("focusin", stop);
+    document.addEventListener("visibilitychange", () => document.hidden ? stop() : play());
+    setTimeout(() => slides.forEach(sl => (sl.loading = "eager")), 2500);
+    play();
+  }
   // Enlaces antiguos tipo #cuadro/slug
   const old = location.hash.match(/^#cuadro\/([a-z0-9-]+)/);
   if (old && BY[old[1]]) location.replace(purl(BY[old[1]]));

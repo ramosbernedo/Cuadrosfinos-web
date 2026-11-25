@@ -13,7 +13,11 @@
   },
   "ciudad": "Lima",
   "pais": "PE",
-  "entrega": "4 a 6 días hábiles en Lima; provincias por agencia"
+  "entrega": "4 a 6 días hábiles en Lima; provincias por agencia",
+  "fotoMarco": [
+   "foco-detalle-marco",
+   "El marco negro de cerca (ejemplo)"
+  ]
  },
  "colecciones": [
   {
@@ -39,7 +43,8 @@
    ],
    "h1": "Cuadros motivacionales y de animales",
    "seoTitle": "Cuadros motivacionales y de animales con marco",
-   "seoDesc": "Cuadros de león, águila, lobo, gorila y tigre en blanco y negro, y frases de disciplina para la oficina. Con marco a S/ 84, tríptico S/ 149."
+   "seoDesc": "Cuadros de león, águila, lobo, gorila y tigre en blanco y negro, y frases de disciplina para la oficina. Con marco a S/ 84, tríptico S/ 149.",
+   "foto": "col-poder"
   },
   {
    "id": "fe",
@@ -68,7 +73,8 @@
    ],
    "h1": "Cuadros religiosos",
    "seoTitle": "Cuadros religiosos con marco: Jesús, Virgen y santos",
-   "seoDesc": "Cuadros religiosos con marco: La Última Cena, Señor de los Milagros, Sagrado Corazón, Virgen María y Bendice este hogar con tu apellido. Desde S/ 84."
+   "seoDesc": "Cuadros religiosos con marco: La Última Cena, Señor de los Milagros, Sagrado Corazón, Virgen María y Bendice este hogar con tu apellido. Desde S/ 84.",
+   "foto": "col-fe"
   },
   {
    "id": "abstracto",
@@ -97,7 +103,8 @@
    ],
    "h1": "Cuadros abstractos y minimalistas",
    "seoTitle": "Cuadros abstractos y minimalistas con marco",
-   "seoDesc": "Cuadros abstractos de textura, piedra, mármol y arte en línea, minimalistas y con toques de color. Con marco negro, listos para colgar, a S/ 84."
+   "seoDesc": "Cuadros abstractos de textura, piedra, mármol y arte en línea, minimalistas y con toques de color. Con marco negro, listos para colgar, a S/ 84.",
+   "foto": "col-abstracto"
   },
   {
    "id": "botanico",
@@ -309,7 +316,65 @@
    ],
    "o": "triptico",
    "i": 1,
-   "nw": 1
+   "nw": 1,
+   "fotos": [
+    [
+     "foco-amb-1",
+     "El tríptico en una sala con vista al mar"
+    ],
+    [
+     "foco-mod-4",
+     "En la oficina, sobre el escritorio de trabajo"
+    ],
+    [
+     "foco-esc-3",
+     "Sobre un escritorio de 1,20 m"
+    ],
+    [
+     "foco-mod-3",
+     "Colgado sobre un aparador en la sala"
+    ],
+    [
+     "foco-esc-5",
+     "Sobre la cabecera de la cama"
+    ],
+    [
+     "foco-2-medidas",
+     "Medidas reales: 98 cm los tres juntos, cada uno 30 × 37 cm"
+    ],
+    [
+     "foco-esc-6",
+     "En un setup gamer"
+    ],
+    [
+     "foco-esc-1",
+     "El cuadro Disciplina en las manos: así de grande es"
+    ],
+    [
+     "foco-esc-2",
+     "Recién llegados en su caja"
+    ],
+    [
+     "foco-mod-2",
+     "Colgando el último cuadro"
+    ],
+    [
+     "foco-zoom-2",
+     "El león de cerca"
+    ],
+    [
+     "foco-amb-2",
+     "En una oficina de noche"
+    ],
+    [
+     "foco-amb-3",
+     "En una sala de madera oscura"
+    ],
+    [
+     "foco-amb-4",
+     "En una sala con luz natural"
+    ]
+   ]
   },
   {
    "s": "leon-fuerza",
@@ -1471,5 +1536,42 @@
    "i": 1,
    "q": 1
   }
+ ],
+ "portada": [
+  {
+   "img": "hero",
+   "alt": "Cuadro de león con marco negro en una pared oscura iluminada",
+   "pie": "León · Fuerza",
+   "url": "/cuadro/leon-fuerza/"
+  },
+  {
+   "img": "foco-amb-1",
+   "alt": "Tríptico de águila, león y lobo en una sala con vista al mar",
+   "pie": "Tríptico Foco · Disciplina · Ejecución",
+   "url": "/cuadro/foco-disciplina-ejecucion/"
+  },
+  {
+   "img": "col-fe",
+   "alt": "Cuadro de La Última Cena sobre la mesa de un comedor",
+   "pie": "La Última Cena",
+   "url": "/cuadro/ultima-cena/"
+  },
+  {
+   "img": "foco-mod-4",
+   "alt": "Mujer trabajando en su escritorio con el tríptico en la pared",
+   "pie": "Para la oficina",
+   "url": "/cuadros-para-oficina/"
+  }
+ ],
+ "enCasa": [
+  "foco-mod-2",
+  "foco-esc-3",
+  "foco-esc-5",
+  "foco-mod-3",
+  "foco-esc-6",
+  "foco-esc-8",
+  "foco-esc-1",
+  "foco-amb-3",
+  "foco-amb-2"
  ]
 }

@@ -19,6 +19,7 @@ for i, x in enumerate(PRODS):
     x["idx"] = i
 BY = {x["s"]: x for x in PRODS}
 COLS = CAT["colecciones"]
+PORTADA = CAT["portada"]
 COL = {c["id"]: c for c in COLS}
 VIRT = CAT["virtuales"]
 AMB = CAT["ambientes"]
@@ -211,6 +212,21 @@ def footer():
   </footer>'''
 
 
+def fotos(x):
+    return list(x.get("fotos") or []) + [C["fotoMarco"]]
+
+
+def views_html(x):
+    """Miniaturas: la obra, la vista en pared y las fotos reales."""
+    obra = f'/img/cuadros/t/{x["s"]}.webp' if piezas(x) == 1 else f'/img/cuadros/t/{x["s"]}-1.webp'
+    thumb_obra = f'<img src="{obra}" alt="" loading="lazy">' if x.get("i") else '<span class="view__ph"></span>'
+    out = [f'<button class="view is-on" role="tab" id="tabObra" aria-selected="true" aria-controls="pStage" data-tab="obra">{thumb_obra}<span>Obra</span></button>',
+           f'<button class="view" role="tab" id="tabPared" aria-selected="false" aria-controls="pWall" data-tab="pared"><span class="view__wall"><i></i></span><span>En tu pared</span></button>']
+    for f, alt in fotos(x):
+        out.append(f'<button class="view" role="tab" aria-selected="false" aria-controls="pPhoto" data-tab="foto" data-src="/img/ambiente/{f}.webp" data-alt="{e(alt)}"><img src="/img/ambiente/t/{f}.webp" alt="" loading="lazy"><span class="sr">{e(alt)}</span></button>')
+    return "".join(out)
+
+
 def pd_markup(x=None, page=False):
     """Ficha del cuadro. Vacía dentro del diálogo; llena en /cuadro/<slug>/."""
     g = lambda f, d="": f(x) if x else d
@@ -229,11 +245,8 @@ def pd_markup(x=None, page=False):
     return f'''
     <div class="pd">
       <div class="pd__media">
-        <div class="tabs" role="tablist" aria-label="Vista">
-          <button role="tab" aria-selected="true" data-tab="obra" id="tabObra" aria-controls="pStage">Obra</button>
-          <button role="tab" aria-selected="false" data-tab="pared" id="tabPared" aria-controls="pWall">En tu pared</button>
-        </div>
         <div class="pd__stage" id="pStage" role="tabpanel" aria-labelledby="tabObra">{stage}</div>
+        <figure class="pd__photo" id="pPhoto" role="tabpanel" hidden><img id="pPhotoImg" alt=""><figcaption id="pPhotoCap"></figcaption></figure>
         <div class="pd__wall" id="pWall" role="tabpanel" aria-labelledby="tabPared" hidden>
           <div class="scene scene--sala" id="pScene"><div class="scene__art" id="pSceneArt">{scene_art}</div><div class="scene__furn"></div><span class="scene__measure" id="pMeasure">{measure}</span></div>
           <div class="wall-ctrl">
@@ -246,6 +259,8 @@ def pd_markup(x=None, page=False):
             </div>
           </div>
         </div>
+        <button class="zoom-btn" id="pZoom" aria-label="Ampliar imagen"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 3h6v6M9 21H3v-6M21 3l-7 7M3 21l7-7"/></svg></button>
+        <div class="views" id="pViews" role="tablist" aria-label="Vistas del cuadro">{g(views_html)}</div>
       </div>
       <div class="pd__info">
         <p class="kicker" id="pCol">{e(col)}</p>
@@ -309,6 +324,7 @@ def overlays(with_product_dialog=True):
     </form>
     <div class="search__res" id="sRes" role="list"></div>
   </dialog>
+  <dialog class="zoom" id="zoom" aria-label="Imagen ampliada"><button class="modal__close" data-close aria-label="Cerrar">×</button><div class="zoom__stage" id="zoomStage"><img id="zoomImg" alt=""></div><p class="zoom__hint">Toca la imagen para acercar</p></dialog>
   <div class="toast" id="toast" role="status" aria-live="polite"></div>
   <script src="/data.js?v={ver('data.js')}" defer></script>
   <script src="/app.js?v={ver('app.js')}" defer></script>
@@ -396,7 +412,9 @@ def cols_grid():
     out = []
     for i, c in enumerate(COLS):
         k = len([x for x in PRODS if x["c"] == c["id"]])
-        out.append(f'<a class="col rv" href="/{c["url"]}/"><span class="col__n">0{i + 1} · {k} cuadros</span><span class="col__img">{pf(BY[c["img"]], thumb=True)}</span>'
+        media = (f'<img class="col__photo" src="/img/ambiente/t/{c["foto"]}.webp" alt="" loading="lazy">' if c.get("foto")
+                 else f'<span class="col__img">{pf(BY[c["img"]], thumb=True)}</span>')
+        out.append(f'<a class="col rv{" col--photo" if c.get("foto") else ""}" href="/{c["url"]}/"><span class="col__n">0{i + 1} · {k} cuadros</span>{media}'
                    f'<h3>{e(c["nombre"])}</h3><p>{e(c["bajada"])}</p><small>Ver colección →</small></a>')
     return "".join(out)
 
@@ -411,29 +429,39 @@ def write(path, content):
 def build_home():
     top = [x for x in sorted(PRODS, key=lambda x: x["idx"]) if x.get("t")] + [x for x in PRODS if x.get("nw") and x.get("i")][:4]
     rail = "".join(f'<a href="/{c["url"]}/"><img src="/img/cuadros/t/{c["img"]}.webp" alt="" loading="lazy" width="68" height="68">{e(c["nombre"])}</a>' for c in VIRT + COLS)
+    slides = "".join(f'<img class="hero__slide{" is-on" if i == 0 else ""}" src="/img/ambiente/{sl["img"]}.webp" alt="{e(sl["alt"])}" data-pie="{e(sl["pie"])}" data-url="{sl["url"]}"{" fetchpriority=\"high\"" if i == 0 else " loading=\"lazy\""}>' for i, sl in enumerate(PORTADA))
+    dots = "".join(f'<button role="tab" aria-selected="{"true" if i == 0 else "false"}" aria-label="Foto {i + 1}: {e(sl["pie"])}" data-i="{i}"></button>' for i, sl in enumerate(PORTADA))
+    en_casa = "".join(f'<a class="home-shot rv" href="/cuadro/foco-disciplina-ejecucion/"><img src="/img/ambiente/t/{f}.webp" alt="{e(dict((k, v) for k, v in BY["foco-disciplina-ejecucion"]["fotos"]).get(f, "Cuadros en una casa"))}" loading="lazy"></a>' for f in CAT["enCasa"])
     amb = "".join(f'<a class="amb rv" href="/{a["url"]}/"><span class="amb__img">{pf(BY[a["img"]], thumb=True)}</span><span><b>Cuadros para {a["nombre"].lower()}</b><small>{e(a["bajada"])}</small></span></a>' for a in AMB)
     website = {"@context": "https://schema.org", "@type": "WebSite", "@id": h("/#web"), "name": C["marca"], "url": h("/"), "inLanguage": "es-PE",
                "publisher": {"@id": h("/#tienda")},
                "potentialAction": {"@type": "SearchAction", "target": {"@type": "EntryPoint", "urlTemplate": h("/?q={search_term_string}")}, "query-input": "required name=search_term_string"}}
     body = f'''
   <main id="main">
-    <section class="hero">
-      <div class="hero__light" aria-hidden="true"></div>
-      <div class="wrap hero__grid">
+    <section class="hero" aria-label="Portada">
+      <div class="hero__slides" id="heroSlides">{slides}</div>
+      <div class="hero__shade" aria-hidden="true"></div>
+      <div class="wrap hero__in">
         <div class="hero__copy">
           <p class="kicker">Cuadros Finos · Lima, Perú</p>
           <h1>Cuadros que dicen<br><span>quién vive aquí</span></h1>
           <p class="hero__lead">Cuadros en blanco y negro con marco para la sala, el despacho y el dormitorio. Hechos a pedido en Lima, listos para colgar y enviados a todo el Perú.</p>
           <div class="hero__cta"><a href="#catalogo" class="btn btn--light">Ver los {len(PRODS)} cuadros</a><button class="btn btn--line" data-open-quiz>Ayúdame a elegir</button></div>
-          <dl class="hero__facts"><div><dt>{soles(P['pieza'])}</dt><dd>con marco incluido</dd></div><div><dt>4–6 días</dt><dd>hecho a pedido</dd></div><div><dt>Todo el Perú</dt><dd>envío protegido</dd></div></dl>
         </div>
-        <div class="hero__wall">
-          <a class="hero__piece" href="/cuadro/leon-fuerza/" aria-label="Ver León · Fuerza"><span class="pf pf--hero"><img src="/img/cuadros/leon-fuerza.webp" alt="León en blanco y negro, cuadro con marco negro" width="800" height="1200" fetchpriority="high"></span></a>
-          <div class="hero__label"><span>León · Fuerza</span><small>El que no necesita rugir. · {soles(P['pieza'])}</small></div>
+        <div class="hero__foot">
+          <a class="hero__cap" id="heroCap" href="{PORTADA[0]["url"]}"><span>En la foto</span><b id="heroCapTxt">{e(PORTADA[0]["pie"])}</b> →</a>
+          <div class="hero__dots" role="tablist" aria-label="Fotos de portada">{dots}</div>
         </div>
       </div>
-      <div class="wrap"><nav class="rail" aria-label="Colecciones">{rail}</nav></div>
     </section>
+    <ul class="trust" aria-label="Por qué comprar aquí">
+      <li><b>{soles(P['pieza'])}</b><span>con marco incluido</span></li>
+      <li><b>4–6 días</b><span>hecho a pedido en Lima</span></li>
+      <li><b>Todo el Perú</b><span>envío con esquineros</span></li>
+      <li><b>Yape · Plin · tarjeta</b><span>pagas al confirmar</span></li>
+      <li><b>Garantía</b><span>si llega dañado, se repone</span></li>
+    </ul>
+    <div class="wrap"><nav class="rail" aria-label="Colecciones">{rail}</nav></div>
 
     <section class="sec" id="top" aria-labelledby="topTitle">
       <div class="wrap">
@@ -454,6 +482,12 @@ def build_home():
         </div>
       </div>
     </section>
+    <section class="sec sec--tight" aria-labelledby="casaTitle">
+      <div class="wrap">
+        <header class="sec__head"><div><p class="kicker">Así se ven en casa</p><h2 id="casaTitle">En salas, oficinas y dormitorios</h2></div><a class="link-arrow" href="/cuadro/foco-disciplina-ejecucion/">Ver el tríptico de las fotos</a></header>
+        <div class="home-shots">{en_casa}</div>
+      </div>
+    </section>
 {catalog_section("Todos los cuadros", "Catálogo completo", PRODS)}
     <section class="sec sec--alt" id="colecciones" aria-labelledby="colTitle">
       <div class="wrap">
@@ -472,6 +506,21 @@ def build_home():
           <p>Tu ciudad, tu apellido, tu fecha o tu cielo. Escribes los datos y te mandamos la vista previa por WhatsApp <strong>antes de imprimir</strong>.</p>
           <ul class="ticks"><li>Mapa de tu ciudad o de cualquier lugar</li><li>“Bendice este hogar” con el apellido de tu familia</li><li>El cielo y la fecha de un día que importa</li></ul>
           <a class="btn btn--light" href="/cuadros-personalizados/">Ver personalizados</a>
+        </div>
+      </div>
+    </section>
+
+    <section class="sec craft" aria-labelledby="craftTitle">
+      <div class="wrap craft__grid">
+        <div class="craft__media">
+          <img class="craft__big rv" src="/img/ambiente/taller.webp" alt="Armado a mano de un cuadro con marco negro en el taller" loading="lazy">
+          <img class="craft__sm rv" src="/img/ambiente/t/foco-detalle-marco.webp" alt="Detalle del marco negro de cerca" loading="lazy">
+          <img class="craft__sm2 rv" src="/img/ambiente/t/foco-esc-2.webp" alt="Cuadros recién llegados en su caja con esquineros" loading="lazy">
+        </div>
+        <div class="craft__copy">
+          <p class="kicker">Hecho a mano en Lima</p><h2 id="craftTitle">Cada cuadro se arma a pedido</h2>
+          <p>Imprimimos la obra, la montamos en su marco negro y la protegemos con esquineros para el viaje. Por eso tarda 4 a 6 días: no sale de un almacén, sale del taller.</p>
+          <ul class="ticks"><li>Marco negro listo para colgar, con su colgador</li><li>Embalaje con esquineros, también a provincia</li><li>Si llega dañado, se repone</li></ul>
         </div>
       </div>
     </section>
@@ -498,7 +547,7 @@ def build_home():
     page = head(f"{C['marca']} · Cuadros en blanco y negro con marco en Lima",
                 f"{len(PRODS)} cuadros en blanco y negro con marco, listos para colgar: {soles(P['pieza'])}, tríptico {soles(P['triptico'])}. Hechos a pedido en Lima, envío a todo el Perú.",
                 "/", ld=[{"@context": "https://schema.org", **ORG}, website, faq_ld(FAQ), itemlist_ld(top, "Los cuadros más pedidos")],
-                preload='<link rel="preload" as="image" href="/img/cuadros/leon-fuerza.webp" fetchpriority="high">')
+                preload='<link rel="preload" as="image" href="/img/ambiente/hero.webp" fetchpriority="high">')
     write("index.html", page + header({"tipo": "home"}) + body + footer() + overlays())
 
 

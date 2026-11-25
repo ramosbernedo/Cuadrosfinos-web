@@ -24,7 +24,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@112,300;112,400;112,500&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="/styles.css?v=5f04698d">
+  <link rel="stylesheet" href="/styles.css?v=5efdaf61">
   
   
 </head><body data-page="404">
@@ -74,11 +74,8 @@
     
     <div class="pd">
       <div class="pd__media">
-        <div class="tabs" role="tablist" aria-label="Vista">
-          <button role="tab" aria-selected="true" data-tab="obra" id="tabObra" aria-controls="pStage">Obra</button>
-          <button role="tab" aria-selected="false" data-tab="pared" id="tabPared" aria-controls="pWall">En tu pared</button>
-        </div>
         <div class="pd__stage" id="pStage" role="tabpanel" aria-labelledby="tabObra"></div>
+        <figure class="pd__photo" id="pPhoto" role="tabpanel" hidden><img id="pPhotoImg" alt=""><figcaption id="pPhotoCap"></figcaption></figure>
         <div class="pd__wall" id="pWall" role="tabpanel" aria-labelledby="tabPared" hidden>
           <div class="scene scene--sala" id="pScene"><div class="scene__art" id="pSceneArt"></div><div class="scene__furn"></div><span class="scene__measure" id="pMeasure"></span></div>
           <div class="wall-ctrl">
@@ -91,6 +88,8 @@
             </div>
           </div>
         </div>
+        <button class="zoom-btn" id="pZoom" aria-label="Ampliar imagen"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 3h6v6M9 21H3v-6M21 3l-7 7M3 21l7-7"/></svg></button>
+        <div class="views" id="pViews" role="tablist" aria-label="Vistas del cuadro"></div>
       </div>
       <div class="pd__info">
         <p class="kicker" id="pCol"></p>
@@ -144,8 +143,9 @@
     </form>
     <div class="search__res" id="sRes" role="list"></div>
   </dialog>
+  <dialog class="zoom" id="zoom" aria-label="Imagen ampliada"><button class="modal__close" data-close aria-label="Cerrar">×</button><div class="zoom__stage" id="zoomStage"><img id="zoomImg" alt=""></div><p class="zoom__hint">Toca la imagen para acercar</p></dialog>
   <div class="toast" id="toast" role="status" aria-live="polite"></div>
-  <script src="/data.js?v=df08dedd" defer></script>
-  <script src="/app.js?v=af3e1945" defer></script>
+  <script src="/data.js?v=f06b2b4f" defer></script>
+  <script src="/app.js?v=b0078079" defer></script>
 </body>
 </html>

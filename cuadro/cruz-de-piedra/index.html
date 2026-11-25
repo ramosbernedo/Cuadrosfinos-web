@@ -24,7 +24,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@112,300;112,400;112,500&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="/styles.css?v=5f04698d">
+  <link rel="stylesheet" href="/styles.css?v=5efdaf61">
   <link rel="preload" as="image" href="/img/cuadros/cruz-de-piedra.webp" fetchpriority="high">
   <script type="application/ld+json">{"@context":"https://schema.org","@type":"Product","name":"Cruz de piedra","description":"Sobria, para cualquier ambiente. Cuadro de 30 × 37 cm con marco negro, impreso y armado a pedido en Lima, listo para colgar. De la colección Fe · Símbolos; va bien en sala, dormitorio, oficina. Precio: S/ 84. Envío a todo el Perú.","sku":"cruz-de-piedra","url":"https://cuadrosfinos.pages.dev/cuadro/cruz-de-piedra/","category":"Cuadros decorativos > Fe","brand":{"@type":"Brand","name":"Cuadros Finos"},"material":"Impresión con marco negro","size":"30 × 37 cm con marco","image":["https://cuadrosfinos.pages.dev/img/cuadros/cruz-de-piedra.webp","https://cuadrosfinos.pages.dev/img/og/cruz-de-piedra.jpg"],"offers":{"@type":"Offer","url":"https://cuadrosfinos.pages.dev/cuadro/cruz-de-piedra/","priceCurrency":"PEN","price":"84","availability":"https://schema.org/InStock","itemCondition":"https://schema.org/NewCondition","seller":{"@id":"https://cuadrosfinos.pages.dev/#tienda"},"priceValidUntil":"2027-12-31","shippingDetails":{"@type":"OfferShippingDetails","shippingDestination":{"@type":"DefinedRegion","addressCountry":"PE"},"deliveryTime":{"@type":"ShippingDeliveryTime","handlingTime":{"@type":"QuantitativeValue","minValue":4,"maxValue":6,"unitCode":"DAY"},"transitTime":{"@type":"QuantitativeValue","minValue":0,"maxValue":4,"unitCode":"DAY"}}}}}</script><script type="application/ld+json">{"@context":"https://schema.org","@type":"BreadcrumbList","itemListElement":[{"@type":"ListItem","position":1,"name":"Inicio","item":"https://cuadrosfinos.pages.dev/"},{"@type":"ListItem","position":2,"name":"Fe","item":"https://cuadrosfinos.pages.dev/cuadros-religiosos/"},{"@type":"ListItem","position":3,"name":"Cruz de piedra","item":"https://cuadrosfinos.pages.dev/cuadro/cruz-de-piedra/"}]}</script><script type="application/ld+json">{"@context":"https://schema.org","@type":"FAQPage","mainEntity":[{"@type":"Question","name":"¿Qué medida tiene?","acceptedAnswer":{"@type":"Answer","text":"30 × 37 cm con marco. Listo para colgar."}},{"@type":"Question","name":"¿Cuánto demora?","acceptedAnswer":{"@type":"Answer","text":"Se hace a pedido en 4 a 6 días hábiles en Lima. A provincia se suma el tiempo de la agencia."}},{"@type":"Question","name":"¿Cómo lo pido?","acceptedAnswer":{"@type":"Answer","text":"Agrégalo a tu selección o pídelo directo por WhatsApp; ahí confirmamos dirección y pago (Yape, Plin, transferencia o tarjeta)."}}]}</script>
 </head><body data-page="product" data-slug="cruz-de-piedra">
@@ -46,11 +46,8 @@
     <article class="wrap pd-page" id="pdRoot" data-slug="cruz-de-piedra">
     <div class="pd">
       <div class="pd__media">
-        <div class="tabs" role="tablist" aria-label="Vista">
-          <button role="tab" aria-selected="true" data-tab="obra" id="tabObra" aria-controls="pStage">Obra</button>
-          <button role="tab" aria-selected="false" data-tab="pared" id="tabPared" aria-controls="pWall">En tu pared</button>
-        </div>
         <div class="pd__stage" id="pStage" role="tabpanel" aria-labelledby="tabObra"><span class="pf"><img src="/img/cuadros/cruz-de-piedra.webp" alt="Cruz de piedra — cuadro con marco negro"></span></div>
+        <figure class="pd__photo" id="pPhoto" role="tabpanel" hidden><img id="pPhotoImg" alt=""><figcaption id="pPhotoCap"></figcaption></figure>
         <div class="pd__wall" id="pWall" role="tabpanel" aria-labelledby="tabPared" hidden>
           <div class="scene scene--sala" id="pScene"><div class="scene__art" id="pSceneArt"><span class="pf"><img src="/img/cuadros/cruz-de-piedra.webp" alt="Cruz de piedra — cuadro con marco negro"></span></div><div class="scene__furn"></div><span class="scene__measure" id="pMeasure">30 × 37 cm</span></div>
           <div class="wall-ctrl">
@@ -63,6 +60,8 @@
             </div>
           </div>
         </div>
+        <button class="zoom-btn" id="pZoom" aria-label="Ampliar imagen"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 3h6v6M9 21H3v-6M21 3l-7 7M3 21l7-7"/></svg></button>
+        <div class="views" id="pViews" role="tablist" aria-label="Vistas del cuadro"><button class="view is-on" role="tab" id="tabObra" aria-selected="true" aria-controls="pStage" data-tab="obra"><img src="/img/cuadros/t/cruz-de-piedra.webp" alt="" loading="lazy"><span>Obra</span></button><button class="view" role="tab" id="tabPared" aria-selected="false" aria-controls="pWall" data-tab="pared"><span class="view__wall"><i></i></span><span>En tu pared</span></button><button class="view" role="tab" aria-selected="false" aria-controls="pPhoto" data-tab="foto" data-src="/img/ambiente/foco-detalle-marco.webp" data-alt="El marco negro de cerca (ejemplo)"><img src="/img/ambiente/t/foco-detalle-marco.webp" alt="" loading="lazy"><span class="sr">El marco negro de cerca (ejemplo)</span></button></div>
       </div>
       <div class="pd__info">
         <p class="kicker" id="pCol">Colección Fe · Símbolos</p>
@@ -148,8 +147,9 @@
     </form>
     <div class="search__res" id="sRes" role="list"></div>
   </dialog>
+  <dialog class="zoom" id="zoom" aria-label="Imagen ampliada"><button class="modal__close" data-close aria-label="Cerrar">×</button><div class="zoom__stage" id="zoomStage"><img id="zoomImg" alt=""></div><p class="zoom__hint">Toca la imagen para acercar</p></dialog>
   <div class="toast" id="toast" role="status" aria-live="polite"></div>
-  <script src="/data.js?v=df08dedd" defer></script>
-  <script src="/app.js?v=af3e1945" defer></script>
+  <script src="/data.js?v=f06b2b4f" defer></script>
+  <script src="/app.js?v=b0078079" defer></script>
 </body>
 </html>
