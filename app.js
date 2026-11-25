@@ -151,8 +151,17 @@ function bindCatalog() {
   $("#clearFilters").addEventListener("click", () => setFilter({ col: "", sub: "", q: "", room: "" }));
   const changed = F.q || F.col !== F0.col || F.room !== F0.room;
   renderFilters();
-  if (changed) { renderGrid(); if (F.q || F.col || F.room) setTimeout(() => $("#catalogo").scrollIntoView(), 50); }
-  else reveal($("#grid"));
+  // Al volver con «Atrás» se recupera la posición exacta (el catálogo se vuelve a armar)
+  const navEntry = performance.getEntriesByType ? performance.getEntriesByType("navigation")[0] : null;
+  const key = "cf_scroll:" + location.pathname + location.search;
+  let saved = null; try { saved = sessionStorage.getItem(key); } catch {}
+  if ("scrollRestoration" in history) history.scrollRestoration = "manual";
+  addEventListener("pagehide", () => { try { sessionStorage.setItem("cf_scroll:" + location.pathname + location.search, String(scrollY)); } catch {} });
+  if (changed) renderGrid(); else reveal($("#grid"));
+  if (navEntry && navEntry.type === "back_forward" && saved !== null) {
+    $$("#grid .rv").forEach(el => el.classList.add("in"));
+    requestAnimationFrame(() => scrollTo(0, Number(saved)));
+  } else if (changed && (F.q || F.col || F.room) && PAGE === "home") setTimeout(() => $("#catalogo").scrollIntoView(), 50);
 }
 
 /* ---------- ficha del cuadro (diálogo o página) ---------- */
@@ -333,12 +342,25 @@ function bindProduct() {
   $("#pWa").addEventListener("click", e => {
     if (S.x.p && firstMissing()) { e.preventDefault(); firstMissing().focus(); toast("Completa los datos para personalizar"); }
   });
-  $("#pShare").addEventListener("click", async () => {
+  // Compartir: WhatsApp, Facebook, copiar y el menú del celular
+  const shareText = () => `${S.x.n} · ${precioTxt(S.x)} — Cuadros Finos`;
+  const syncShare = () => {
+    if (!S.x) return;
     const url = absUrl(S.x);
-    try {
-      if (navigator.share) await navigator.share({ title: S.x.n, text: `${S.x.n} · ${precioTxt(S.x)}`, url });
-      else { await navigator.clipboard.writeText(url); toast("Enlace copiado"); }
-    } catch {}
+    $("#shWa").href = `https://wa.me/?text=${encodeURIComponent(shareText() + "\n" + url)}`;
+    $("#shFb").href = `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(url)}`;
+    $("#pShare").hidden = !navigator.share;
+  };
+  $("#pTitle") && new MutationObserver(syncShare).observe($("#pTitle"), { childList: true });
+  $("#shCopy").addEventListener("click", async () => {
+    const url = absUrl(S.x);
+    try { await navigator.clipboard.writeText(url); }
+    catch { const t = document.createElement("textarea"); t.value = url; document.body.append(t); t.select(); document.execCommand("copy"); t.remove(); }
+    $("#shCopy span").textContent = "¡Copiado!"; toast("Enlace copiado: pégalo donde quieras");
+    setTimeout(() => ($("#shCopy span").textContent = "Copiar enlace"), 2200);
+  });
+  $("#pShare").addEventListener("click", async () => {
+    try { await navigator.share({ title: S.x.n, text: shareText(), url: absUrl(S.x) }); } catch {}
   });
   if (dlg) {
     dlg.addEventListener("close", onDialogClosed);

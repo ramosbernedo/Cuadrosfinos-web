@@ -292,6 +292,14 @@ def pd_markup(x=None, page=False):
           <button class="btn btn--light btn--block" id="pAdd"{" hidden" if (x and x.get("q")) else ""}>Agregar a mi selección</button>
           <a class="btn btn--wa btn--block" id="pWa" href="https://wa.me/{C['whatsapp']}" target="_blank" rel="noopener">{"Cotizar por WhatsApp" if (x and x.get("q")) else "Pedir este por WhatsApp"}</a>
         </div>
+        <div class="share" id="pShareBox">
+          <p class="label">Compartir este cuadro</p>
+          <div class="share__row">
+            <a class="share__btn share__btn--wa" id="shWa" href="#" target="_blank" rel="noopener" aria-label="Compartir por WhatsApp"><svg viewBox="0 0 32 32" aria-hidden="true" class="fill"><path d="M16 3C9 3 3.3 8.7 3.3 15.7c0 2.5.7 4.8 2 6.9L3 29l6.6-2.2c2 1.1 4.2 1.7 6.4 1.7 7 0 12.7-5.7 12.7-12.7S23 3 16 3zm0 23.2c-2 0-4-.6-5.7-1.6l-.4-.2-3.9 1.3 1.3-3.8-.3-.4a10.4 10.4 0 1 1 9 4.7z"/></svg>WhatsApp</a>
+            <a class="share__btn" id="shFb" href="#" target="_blank" rel="noopener" aria-label="Compartir en Facebook"><svg viewBox="0 0 24 24" aria-hidden="true" class="fill"><path d="M13.6 21v-7.4h2.5l.4-3h-2.9V8.8c0-.9.3-1.4 1.5-1.4h1.5V4.7c-.3 0-1.2-.1-2.2-.1-2.2 0-3.7 1.3-3.7 3.8v2.2H8.2v3h2.5V21z"/></svg>Facebook</a>
+            <button class="share__btn" id="shCopy" type="button"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="9" y="9" width="11" height="11" rx="1"/><path d="M5 15V5a1 1 0 0 1 1-1h10"/></svg><span>Copiar enlace</span></button>
+            <button class="share__btn" id="pShare" type="button" hidden><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3v12M7 8l5-5 5 5M5 13v7h14v-7"/></svg>Más</button>
+          </div>
         {desc}
         <dl class="pd__specs">
           <div><dt>Medida</dt><dd id="pSize">{e(g(medida, "30 × 37 cm con marco"))}</dd></div>
@@ -300,12 +308,12 @@ def pd_markup(x=None, page=False):
           <div><dt>Entrega</dt><dd>{C['entrega']}</dd></div>
           <div><dt>Garantía</dt><dd>Si llega dañado, se repone</dd></div>
         </dl>
-        <button class="link-btn small" id="pShare">Compartir este cuadro</button>
+        </div>
       </div>
     </div>'''
 
 
-def overlays(with_product_dialog=True):
+def overlays(with_product_dialog=False):
     pdlg = f'''
   <dialog class="modal" id="product" aria-labelledby="pTitle">
     <button class="modal__close" data-close aria-label="Cerrar">×</button>

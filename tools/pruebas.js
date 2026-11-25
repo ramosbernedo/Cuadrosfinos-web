@@ -68,24 +68,20 @@ async function newPage(b, vp = { width: 1366, height: 860 }) {
   }
   await p.close();
 
-  /* 2. Ficha en ventana + historial del navegador */
+  /* 2. Tarjeta → página del cuadro, Atrás conserva el catálogo */
   for (const [name, vp] of [["escritorio", { width: 1366, height: 860 }], ["celular", { width: 390, height: 844 }]]) {
     const q = await newPage(b, vp);
-    await q.goto(BASE + "/", { waitUntil: "networkidle" });
-    await q.click('#grid .card[data-s="gorila-respeto"] .card__open');
-    await q.waitForTimeout(400);
-    ok(`[${name}] Tocar un cuadro abre la ficha y cambia la URL`, await q.evaluate(() => document.querySelector("#product").open) && q.url().endsWith("/cuadro/gorila-respeto/"));
-    ok(`[${name}] El título de la pestaña cambia`, (await q.title()).startsWith("Gorila"));
-    await q.goBack(); await q.waitForTimeout(300);
-    ok(`[${name}] Botón Atrás cierra la ficha y vuelve al inicio`, !(await q.evaluate(() => document.querySelector("#product").open)) && new URL(q.url()).pathname === "/");
-    await q.click('#grid .card[data-s="leon-fuerza"] .card__open'); await q.waitForTimeout(300);
-    await q.click('#pRelated .card__open'); await q.waitForTimeout(300);
-    const relUrl = q.url();
-    await q.keyboard.press("Escape"); await q.waitForTimeout(400);
-    ok(`[${name}] Escape cierra la ficha (también tras abrir un relacionado)`, !(await q.evaluate(() => document.querySelector("#product").open)) && new URL(q.url()).pathname === "/", relUrl);
-    await q.goForward(); await q.waitForTimeout(400);
-    ok(`[${name}] Adelante reabre la ficha`, await q.evaluate(() => document.querySelector("#product").open));
-    await q.click("#product [data-close]"); await q.waitForTimeout(300);
+    await q.goto(BASE + "/?c=poder", { waitUntil: "networkidle" });
+    await q.locator('#grid .card[data-s="gorila-respeto"]').scrollIntoViewIfNeeded();
+    const y0 = await q.evaluate(() => scrollY);
+    await Promise.all([q.waitForURL("**/cuadro/gorila-respeto/"), q.click('#grid .card[data-s="gorila-respeto"] .card__open')]); await q.waitForLoadState("networkidle");
+    ok(`[${name}] Tocar un cuadro abre su página propia`, q.url().endsWith("/cuadro/gorila-respeto/") && (await q.textContent("h1")).includes("Gorila"));
+    const wa = decodeURIComponent(await q.getAttribute("#shWa", "href"));
+    ok(`[${name}] Compartir por WhatsApp lleva el enlace del cuadro`, wa.includes("/cuadro/gorila-respeto/") && wa.includes("Gorila"));
+    ok(`[${name}] Compartir en Facebook y copiar enlace están visibles`, await q.isVisible("#shFb") && await q.isVisible("#shCopy"));
+    await q.goBack(); await q.waitForLoadState("networkidle"); await q.waitForTimeout(300);
+    ok(`[${name}] Atrás vuelve al catálogo con el filtro`, new URL(q.url()).search.includes("c=poder") && /de 84/.test(await q.textContent("#count")));
+    ok(`[${name}] …y en el mismo lugar de la página`, Math.abs((await q.evaluate(() => scrollY)) - y0) < 400, `${y0} → ${await q.evaluate(() => scrollY)}`);
     ok(`[${name}] Sin errores de JavaScript`, !q._errors.length, q._errors.slice(0, 3).join(" | "));
     await q.close();
   }
@@ -98,15 +94,15 @@ async function newPage(b, vp = { width: 1366, height: 860 }) {
     ok("Primer Tab: enlace «Saltar al contenido»", (await q.evaluate(() => document.activeElement.className)) === "skip");
     await q.keyboard.press("Enter");
     ok("«Saltar al contenido» lleva al contenido", (await q.evaluate(() => location.hash)) === "#main");
-    await q.focus('#grid .card[data-s="tigre-en-el-agua"] .card__open'); await q.keyboard.press("Enter"); await q.waitForTimeout(300);
-    ok("Enter en un cuadro abre la ficha", await q.evaluate(() => document.querySelector("#product").open));
-    ok("El foco queda dentro de la ficha", await q.evaluate(() => document.querySelector("#product").contains(document.activeElement)));
-    await q.keyboard.press("Escape"); await q.waitForTimeout(300);
+    await q.focus('#grid .card[data-s="tigre-en-el-agua"] .card__open');
+    await Promise.all([q.waitForURL("**/cuadro/tigre-en-el-agua/"), q.keyboard.press("Enter")]);
+    ok("Enter en un cuadro abre su página", q.url().endsWith("/cuadro/tigre-en-el-agua/"));
+    await q.goto(BASE + "/", { waitUntil: "networkidle" });
     await q.keyboard.press("/"); await q.waitForTimeout(200);
     ok("Tecla / abre la búsqueda", await q.evaluate(() => document.querySelector("#search").open));
     await q.keyboard.type("machu"); await q.waitForTimeout(150); await q.keyboard.press("Enter"); await q.waitForTimeout(400);
     ok("Buscar «machu» + Enter abre Machu Picchu", q.url().includes("/cuadro/machu-picchu"), q.url());
-    await q.keyboard.press("Escape"); await q.waitForTimeout(300);
+    await q.goto(BASE + "/", { waitUntil: "networkidle" });
     await q.focus('#colFilters [data-col="fe"]'); await q.keyboard.press("ArrowRight");
     ok("Flechas recorren las pestañas de colección", (await q.evaluate(() => document.activeElement.dataset.col)) === "abstracto");
     await q.close();
@@ -222,8 +218,8 @@ async function newPage(b, vp = { width: 1366, height: 860 }) {
     ok("Guía: «Volver» regresa al paso anterior", (await q.textContent("#qStep")) === "Paso 1 de 3");
     await q.click('#qOpts [data-v="sala"]'); await q.click('#qOpts [data-v="fe"]'); await q.click('#qOpts [data-v="set"]');
     ok("Guía: entrega 6 recomendaciones", (await q.$$eval("#qRes .card", c => c.length)) === 6);
-    await q.click("#qRes .card__open >> nth=0"); await q.waitForTimeout(400);
-    ok("Guía: tocar una recomendación abre su ficha", await q.evaluate(() => document.querySelector("#product").open));
+    await Promise.all([q.waitForURL("**/cuadro/**"), q.click("#qRes .card__open >> nth=0")]);
+    ok("Guía: tocar una recomendación abre su página", q.url().includes("/cuadro/"));
     await q.goto(BASE + "/#cuadro/tigre-en-el-agua", { waitUntil: "networkidle" });
     ok("Enlaces antiguos #cuadro/… redirigen", q.url().endsWith("/cuadro/tigre-en-el-agua/"));
     await q.goto(BASE + "/cuadro/leon-fuerza/", { waitUntil: "networkidle" });

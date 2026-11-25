@@ -673,3 +673,12 @@ html.lock{overflow:hidden}
 .zoom__stage>img[hidden]{display:none}
 #pPersNote{margin-top:4px}
 .pf>svg,.zoom__svg svg{fill:#000;stroke:none;stroke-width:1;stroke-linecap:butt;stroke-linejoin:miter}
+
+/* Compartir */
+.share{margin:6px 0 4px;padding-top:18px;border-top:1px solid var(--line)}
+.share__row{display:flex;flex-wrap:wrap;gap:8px}
+.share__btn{display:inline-flex;align-items:center;gap:8px;min-height:40px;padding:0 14px;border:1px solid var(--line-2);font:500 .66rem/1 var(--sans);letter-spacing:.12em;text-transform:uppercase;color:var(--fg-2);transition:.2s}
+.share__btn:hover{border-color:var(--fg);color:var(--fg)}
+.share__btn svg{width:16px;height:16px}
+.share__btn--wa:hover{border-color:var(--wa);color:var(--wa)}
+.pd__buy + .share{border-top:0;padding-top:14px;margin-top:10px}
