@@ -1542,25 +1542,29 @@
    "img": "hero",
    "alt": "Cuadro de león con marco negro en una pared oscura iluminada",
    "pie": "León · Fuerza",
-   "url": "/cuadro/leon-fuerza/"
+   "url": "/cuadro/leon-fuerza/",
+   "pos": "64% 50%"
   },
   {
    "img": "foco-amb-1",
    "alt": "Tríptico de águila, león y lobo en una sala con vista al mar",
    "pie": "Tríptico Foco · Disciplina · Ejecución",
-   "url": "/cuadro/foco-disciplina-ejecucion/"
+   "url": "/cuadro/foco-disciplina-ejecucion/",
+   "pos": "56% 30%"
   },
   {
    "img": "col-fe",
    "alt": "Cuadro de La Última Cena sobre la mesa de un comedor",
    "pie": "La Última Cena",
-   "url": "/cuadro/ultima-cena/"
+   "url": "/cuadro/ultima-cena/",
+   "pos": "50% 35%"
   },
   {
    "img": "foco-mod-4",
    "alt": "Mujer trabajando en su escritorio con el tríptico en la pared",
    "pie": "Para la oficina",
-   "url": "/cuadros-para-oficina/"
+   "url": "/cuadros-para-oficina/",
+   "pos": "50% 30%"
   }
  ],
  "enCasa": [
@@ -1573,5 +1577,43 @@
   "foco-esc-1",
   "foco-amb-3",
   "foco-amb-2"
- ]
+ ],
+ "paredes": {
+  "sala": {
+   "nombre": "Sala",
+   "img": "pared-sala",
+   "ar": 1.0,
+   "cx": 41.3,
+   "cy": 34.98,
+   "cm": 0.7022,
+   "gap": 2.7
+  },
+  "dormitorio": {
+   "nombre": "Dormitorio",
+   "img": "pared-dormitorio",
+   "ar": 1.0,
+   "cx": 50.35,
+   "cy": 30.25,
+   "cm": 0.7633,
+   "gap": 5.2
+  },
+  "oficina": {
+   "nombre": "Oficina",
+   "img": "pared-oficina",
+   "ar": 1.0,
+   "cx": 50.5,
+   "cy": 17.32,
+   "cm": 0.6367,
+   "gap": 5.3
+  },
+  "estudio": {
+   "nombre": "Escritorio",
+   "img": "pared-estudio",
+   "ar": 1.0,
+   "cx": 48.75,
+   "cy": 28.82,
+   "cm": 0.7789,
+   "gap": 4.5
+  }
+ }
 }

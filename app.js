@@ -77,7 +77,7 @@ function viewsHtml(x) {
   const obra = `/img/cuadros/t/${x.s}${piezas(x) > 1 ? "-1" : ""}.webp`;
   const fotos = [...(x.fotos || []), CONFIG.fotoMarco];
   return `<button class="view is-on" role="tab" id="tabObra" aria-selected="true" aria-controls="pStage" data-tab="obra">${x.i ? `<img src="${obra}" alt="" loading="lazy">` : '<span class="view__ph"></span>'}<span>Obra</span></button>` +
-    `<button class="view" role="tab" id="tabPared" aria-selected="false" aria-controls="pWall" data-tab="pared"><span class="view__wall"><i></i></span><span>En tu pared</span></button>` +
+    `<button class="view" role="tab" id="tabPared" aria-selected="false" aria-controls="pWall" data-tab="pared"><img src="/img/ambiente/t/${PAREDES[roomFor(x)].img}.webp" alt="" loading="lazy"><span>En tu pared</span></button>` +
     fotos.map(([f, alt]) => `<button class="view" role="tab" aria-selected="false" aria-controls="pPhoto" data-tab="foto" data-src="/img/ambiente/${f}.webp" data-alt="${esc(alt)}"><img src="/img/ambiente/t/${f}.webp" alt="" loading="lazy"><span class="sr">${esc(alt)}</span></button>`).join("");
 }
 
@@ -158,8 +158,9 @@ function bindCatalog() {
 /* ---------- ficha del cuadro (diálogo o página) ---------- */
 const dlg = $("#product");
 const inline = PAGE === "product";
-const S = { x: null, room: "sala", wall: store.get("cf_wall", "#e9e6df"), tab: "obra", pushed: false, prevUrl: null, prevTitle: document.title };
-const ROOM_TOP = { sala: "17%", dormitorio: "13%", oficina: "22%", comedor: "21%" };
+const S = { x: null, room: "sala", tab: "obra", pushed: false, prevUrl: null, prevTitle: document.title };
+const PAREDES = CAT.paredes;
+const roomFor = x => x.a.find(a => PAREDES[a]) || (x.a.includes("oficina") ? "estudio" : "sala");
 
 function openProduct(slug, tab, { push = true } = {}) {
   const x = BY[slug]; if (!x) return false;
@@ -194,6 +195,7 @@ function openProduct(slug, tab, { push = true } = {}) {
     $("#pAdd").hidden = false; $("#pWa").textContent = "Pedir este por WhatsApp";
   }
   updateProductWa(); refreshAddBtn();
+  S.room = roomFor(x);
   setTab(tab || "obra"); renderScene();
   if (!inline) {
     const wasOpen = dlg.open;
@@ -265,14 +267,11 @@ function openZoom([src, alt]) {
   z.showModal();
 }
 function renderScene() {
-  const s = $("#pScene");
-  s.className = "scene scene--" + S.room;
-  s.style.setProperty("--wall", S.wall);
-  s.style.setProperty("--top", ROOM_TOP[S.room]);
-  const rgb = parseInt(S.wall.slice(1), 16), lum = ((rgb >> 16) * .299 + ((rgb >> 8) & 255) * .587 + (rgb & 255) * .114);
-  $("#pMeasure").classList.toggle("on-dark", lum < 110);
+  const s = $("#pScene"), w = PAREDES[S.room];
+  [["--cx", w.cx], ["--cy", w.cy], ["--cm", w.cm], ["--gap", w.gap]].forEach(([k, v]) => s.style.setProperty(k, v));
+  const bg = $("#pSceneBg");
+  if (!bg.src.endsWith(`/${w.img}.webp`)) { bg.src = `/img/ambiente/${w.img}.webp`; bg.alt = `Pared de ${w.nombre.toLowerCase()} con el cuadro a escala`; }
   $$("#sceneRoom [data-v]").forEach(b => b.setAttribute("aria-checked", String(b.dataset.v === S.room)));
-  $$("#wallColors button").forEach(b => b.classList.toggle("is-on", getComputedStyle(b).getPropertyValue("--c").trim() === S.wall));
 }
 function bindProduct() {
   if (!$("#pTitle")) return;
@@ -287,11 +286,6 @@ function bindProduct() {
   $("#pStage").addEventListener("click", e => { if (S.x && S.x.i && e.target.closest("img")) openZoom(zoomSrc()); });
   $("#pPhoto").addEventListener("click", () => openZoom(zoomSrc()));
   $("#sceneRoom").addEventListener("click", e => { const b = e.target.closest("[data-v]"); if (b) { S.room = b.dataset.v; renderScene(); } });
-  $("#wallColors").addEventListener("click", e => {
-    const b = e.target.closest("button"); if (!b) return;
-    S.wall = getComputedStyle(b).getPropertyValue("--c").trim(); store.set("cf_wall", S.wall); renderScene();
-  });
-  $("#wallPick").addEventListener("input", e => { S.wall = e.target.value; store.set("cf_wall", S.wall); renderScene(); });
   $("#pFields").addEventListener("input", () => {
     store.set(fieldKey(), Object.fromEntries($$("#pFieldList input").map(i => [i.name, i.value])));
     updateProductWa();
@@ -326,6 +320,14 @@ function recordView(s) {
   v.unshift(s); store.set("cf_vistos", v.slice(0, 12));
 }
 
+function renderRecent() {
+  const sec = $("#recent"); if (!sec) return;
+  const cur = document.body.dataset.slug;
+  const list = store.get("cf_vistos", []).filter(s => s !== cur).map(s => BY[s]).filter(Boolean).slice(0, 8);
+  sec.hidden = list.length < 2;
+  if (!sec.hidden) { $("#recentGrid").innerHTML = list.map(x => card(x)).join(""); reveal(sec); }
+}
+
 /* ---------- selección (carrito por WhatsApp) ---------- */
 let bag = store.get("cf_bag", []).filter(b => b && BY[b.s] && !BY[b.s].q && b.qty > 0);
 const unit = b => precioBase(BY[b.s]) + (b.f && b.f.length ? P.personalizar : 0);
@@ -347,7 +349,9 @@ function bagMessage() {
     const f = b.f && b.f.length ? "\n" + b.f.map(([l, v]) => `    · ${l}: ${v}`).join("\n") : "";
     return `• ${b.qty} × ${x.n} (${medida(x)}) — ${soles(unit(b) * b.qty)}${f}\n  ${absUrl(x)}`;
   });
-  return `Hola, quiero pedir estos cuadros:\n${lines.join("\n")}\n\nTotal: ${soles(total)}\n¿Me confirman el envío a mi dirección?`;
+  const d = store.get("cf_entrega", {});
+  const extra = [d.lugar && `Entrega en: ${d.lugar}`, d.pago && `Pago: ${d.pago}`, d.regalo && "Es para regalo 🎁"].filter(Boolean).join("\n");
+  return `Hola, quiero pedir estos cuadros:\n${lines.join("\n")}\n\nTotal: ${soles(total)}` + (extra ? `\n${extra}` : "") + `\n¿Me confirman el envío${d.lugar ? "" : " a mi dirección"}?`;
 }
 function renderBag() {
   const n = bag.reduce((a, b) => a + b.qty, 0);
@@ -407,6 +411,12 @@ function bindBag() {
     const u = new URL("/", location.origin); u.searchParams.set("seleccion", bag.map(b => b.s + (b.qty > 1 ? "*" + b.qty : "")).join(","));
     try { if (navigator.share) await navigator.share({ title: "Mi selección de cuadros", url: u.href }); else { await navigator.clipboard.writeText(u.href); toast("Enlace de tu selección copiado"); } } catch {}
   });
+  // Datos de entrega: se recuerdan y van en el mensaje
+  const ent = store.get("cf_entrega", {});
+  $("#bagLugar").value = ent.lugar || ""; $("#bagPago").value = ent.pago || ""; $("#bagRegalo").checked = !!ent.regalo;
+  const saveEnt = () => { store.set("cf_entrega", { lugar: $("#bagLugar").value.trim(), pago: $("#bagPago").value, regalo: $("#bagRegalo").checked }); $("#bagWa").href = waLink(bagMessage()); };
+  $("#bagForm").addEventListener("input", saveEnt); $("#bagForm").addEventListener("change", saveEnt);
+  $("#bagForm").addEventListener("submit", e => e.preventDefault());
   // Selección compartida por enlace (?seleccion=slug,slug*2)
   const shared = new URLSearchParams(location.search).get("seleccion");
   if (shared) {
@@ -562,6 +572,8 @@ function bindGeneral() {
 
 renderBag();
 bindGeneral();
+renderRecent();
+$("#recentClear")?.addEventListener("click", () => { store.set("cf_vistos", []); renderRecent(); });
 bindCatalog();
 bindProduct();
 bindBag();

@@ -20,6 +20,7 @@ for i, x in enumerate(PRODS):
 BY = {x["s"]: x for x in PRODS}
 COLS = CAT["colecciones"]
 PORTADA = CAT["portada"]
+PAREDES = CAT["paredes"]
 COL = {c["id"]: c for c in COLS}
 VIRT = CAT["virtuales"]
 AMB = CAT["ambientes"]
@@ -212,6 +213,25 @@ def footer():
   </footer>'''
 
 
+def room_for(x):
+    """Ambiente inicial de la vista en pared según dónde va bien el cuadro."""
+    for a in x["a"]:
+        if a in PAREDES: return a
+    return "estudio" if "oficina" in x["a"] else "sala"
+
+
+def scene_html(x, room, lazy=True, ident=False, thumb=False):
+    """Cuadro colocado a escala sobre una foto real de pared vacía."""
+    w = PAREDES[room]
+    art = pf(x, lazy=lazy, thumb=thumb, scene=True) if x else ""
+    meas = ("" if not x else "≈ 98 cm de ancho" if x["o"] == "triptico" else "≈ 64 cm de ancho" if x["o"] == "diptico" else "37 × 30 cm" if es_h(x) else "30 × 37 cm")
+    ids = (' id="pScene"', ' id="pSceneBg"', ' id="pSceneArt"', ' id="pMeasure"') if ident else ("", "", "", "")
+    ld = ' loading="lazy"' if lazy else ""
+    return (f'<div class="scene"{ids[0]} style="--cx:{w["cx"]};--cy:{w["cy"]};--cm:{w["cm"]};--gap:{w["gap"]}">'
+            f'<img class="scene__bg"{ids[1]} src="/img/ambiente/{w["img"]}.webp" alt="Pared de {w["nombre"].lower()} con el cuadro a escala"{ld}>'
+            f'<div class="scene__art"{ids[2]}>{art}</div><span class="scene__measure"{ids[3]}>{meas}</span></div>')
+
+
 def fotos(x):
     return list(x.get("fotos") or []) + [C["fotoMarco"]]
 
@@ -221,7 +241,7 @@ def views_html(x):
     obra = f'/img/cuadros/t/{x["s"]}.webp' if piezas(x) == 1 else f'/img/cuadros/t/{x["s"]}-1.webp'
     thumb_obra = f'<img src="{obra}" alt="" loading="lazy">' if x.get("i") else '<span class="view__ph"></span>'
     out = [f'<button class="view is-on" role="tab" id="tabObra" aria-selected="true" aria-controls="pStage" data-tab="obra">{thumb_obra}<span>Obra</span></button>',
-           f'<button class="view" role="tab" id="tabPared" aria-selected="false" aria-controls="pWall" data-tab="pared"><span class="view__wall"><i></i></span><span>En tu pared</span></button>']
+           f'<button class="view" role="tab" id="tabPared" aria-selected="false" aria-controls="pWall" data-tab="pared"><img src="/img/ambiente/t/pared-{room_for(x)}.webp" alt="" loading="lazy"><span>En tu pared</span></button>']
     for f, alt in fotos(x):
         out.append(f'<button class="view" role="tab" aria-selected="false" aria-controls="pPhoto" data-tab="foto" data-src="/img/ambiente/{f}.webp" data-alt="{e(alt)}"><img src="/img/ambiente/t/{f}.webp" alt="" loading="lazy"><span class="sr">{e(alt)}</span></button>')
     return "".join(out)
@@ -248,15 +268,10 @@ def pd_markup(x=None, page=False):
         <div class="pd__stage" id="pStage" role="tabpanel" aria-labelledby="tabObra">{stage}</div>
         <figure class="pd__photo" id="pPhoto" role="tabpanel" hidden><img id="pPhotoImg" alt=""><figcaption id="pPhotoCap"></figcaption></figure>
         <div class="pd__wall" id="pWall" role="tabpanel" aria-labelledby="tabPared" hidden>
-          <div class="scene scene--sala" id="pScene"><div class="scene__art" id="pSceneArt">{scene_art}</div><div class="scene__furn"></div><span class="scene__measure" id="pMeasure">{measure}</span></div>
+          {scene_html(x, g(lambda x: room_for(x), "sala"), lazy=True, ident=True)}
           <div class="wall-ctrl">
-            <div class="seg" id="sceneRoom" role="radiogroup" aria-label="Ambiente">
-              <button role="radio" aria-checked="true" data-v="sala">Sala</button><button role="radio" aria-checked="false" data-v="dormitorio">Dormitorio</button><button role="radio" aria-checked="false" data-v="oficina">Oficina</button><button role="radio" aria-checked="false" data-v="comedor">Comedor</button>
-            </div>
-            <div class="walls" id="wallColors" role="group" aria-label="Color de pared">
-              <button style="--c:#e9e6df" aria-label="Pared blanca" class="is-on"></button><button style="--c:#cfc7ba" aria-label="Pared arena"></button><button style="--c:#9aa39a" aria-label="Pared salvia"></button><button style="--c:#6d7378" aria-label="Pared gris"></button><button style="--c:#2a2a2a" aria-label="Pared negra"></button>
-              <label class="walls__custom" title="Otro color"><span class="sr">Elegir otro color de pared</span><input type="color" id="wallPick" value="#b9a78f"></label>
-            </div>
+            <div class="seg" id="sceneRoom" role="radiogroup" aria-label="Ambiente">{"".join(f'<button role="radio" aria-checked="{str(k == g(room_for, "sala")).lower()}" data-v="{k}">{e(v["nombre"])}</button>' for k, v in PAREDES.items())}</div>
+            <p class="wall-note">Foto real a escala: cada cuadro mide {g(lambda x: "37 × 30" if es_h(x) else "30 × 37", "30 × 37")} cm.</p>
           </div>
         </div>
         <button class="zoom-btn" id="pZoom" aria-label="Ampliar imagen"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 3h6v6M9 21H3v-6M21 3l-7 7M3 21l7-7"/></svg></button>
@@ -305,6 +320,11 @@ def overlays(with_product_dialog=True):
       <header class="drawer__head"><h2 id="bagTitle">Mi selección</h2><button class="modal__close" data-close-bag aria-label="Cerrar selección">×</button></header>
       <div class="drawer__body" id="bagList"></div>
       <footer class="drawer__foot" id="bagFoot" hidden>
+        <form class="bag-form" id="bagForm" autocomplete="on">
+          <label class="field"><span>Distrito o ciudad de entrega</span><input name="lugar" id="bagLugar" placeholder="Ej.: Surco, Lima · Arequipa" autocomplete="address-level2"></label>
+          <label class="field"><span>Forma de pago</span><select name="pago" id="bagPago"><option value="">Lo veo por WhatsApp</option><option>Yape</option><option>Plin</option><option>Transferencia</option><option>Tarjeta</option></select></label>
+          <label class="check"><input type="checkbox" id="bagRegalo"> <span>Es para regalo</span></label>
+        </form>
         <div class="bag-total"><span>Total</span><strong id="bagTotal">S/ 0</strong></div>
         <p class="muted small">Envío y pago se confirman por WhatsApp. No pagas nada en la web.</p>
         <a class="btn btn--wa btn--block" id="bagWa" href="#" target="_blank" rel="noopener">Enviar pedido por WhatsApp</a>
@@ -429,7 +449,7 @@ def write(path, content):
 def build_home():
     top = [x for x in sorted(PRODS, key=lambda x: x["idx"]) if x.get("t")] + [x for x in PRODS if x.get("nw") and x.get("i")][:4]
     rail = "".join(f'<a href="/{c["url"]}/"><img src="/img/cuadros/t/{c["img"]}.webp" alt="" loading="lazy" width="68" height="68">{e(c["nombre"])}</a>' for c in VIRT + COLS)
-    slides = "".join(f'<img class="hero__slide{" is-on" if i == 0 else ""}" src="/img/ambiente/{sl["img"]}.webp" alt="{e(sl["alt"])}" data-pie="{e(sl["pie"])}" data-url="{sl["url"]}"{" fetchpriority=\"high\"" if i == 0 else " loading=\"lazy\""}>' for i, sl in enumerate(PORTADA))
+    slides = "".join(f'<img class="hero__slide{" is-on" if i == 0 else ""}" src="/img/ambiente/{sl["img"]}.webp" alt="{e(sl["alt"])}" style="--pos:{sl["pos"]}" data-pie="{e(sl["pie"])}" data-url="{sl["url"]}"{" fetchpriority=\"high\"" if i == 0 else " loading=\"lazy\""}>' for i, sl in enumerate(PORTADA))
     dots = "".join(f'<button role="tab" aria-selected="{"true" if i == 0 else "false"}" aria-label="Foto {i + 1}: {e(sl["pie"])}" data-i="{i}"></button>' for i, sl in enumerate(PORTADA))
     en_casa = "".join(f'<a class="home-shot rv" href="/cuadro/foco-disciplina-ejecucion/"><img src="/img/ambiente/t/{f}.webp" alt="{e(dict((k, v) for k, v in BY["foco-disciplina-ejecucion"]["fotos"]).get(f, "Cuadros en una casa"))}" loading="lazy"></a>' for f in CAT["enCasa"])
     amb = "".join(f'<a class="amb rv" href="/{a["url"]}/"><span class="amb__img">{pf(BY[a["img"]], thumb=True)}</span><span><b>Cuadros para {a["nombre"].lower()}</b><small>{e(a["bajada"])}</small></span></a>' for a in AMB)
@@ -474,11 +494,11 @@ def build_home():
       <div class="wrap wall-teaser">
         <div class="wall-teaser__copy">
           <p class="kicker">Antes de pedir</p><h2 id="wallTitle">Míralo en tu pared</h2>
-          <p>Cada cuadro se muestra a escala real sobre un sofá, una cama o un escritorio, con el color de pared que tú elijas. Sin sorpresas al colgarlo: 30 × 37 cm se ven así.</p>
+          <p>Cada cuadro se coloca a escala real en fotos de una sala, un dormitorio, una oficina y un escritorio. Sin sorpresas al colgarlo: 30 × 37 cm se ven así.</p>
           <a class="btn btn--light" href="/cuadro/tigre-en-el-agua/" data-tab="pared">Probar con un cuadro</a>
         </div>
         <div class="wall-teaser__scene" aria-hidden="true">
-          <div class="scene scene--sala scene--static" style="--wall:#d9d5cd"><div class="scene__art">{pf(BY["triptico-fuerza-vision-lealtad"], thumb=True, scene=True)}</div><div class="scene__furn"></div><span class="scene__measure">≈ 98 cm</span></div>
+          {scene_html(BY["triptico-fuerza-vision-lealtad"], "sala", thumb=True)}
         </div>
       </div>
     </section>
@@ -541,6 +561,11 @@ def build_home():
         </div>
       </div>
     </section>
+
+    <section class="sec sec--tight recent" id="recent" hidden aria-labelledby="recentTitle"><div class="wrap">
+      <header class="sec__head"><div><p class="kicker">Para retomar</p><h2 id="recentTitle">Vistos recientemente</h2></div><button class="link-btn small" id="recentClear">Borrar historial</button></header>
+      <div class="cards cards--scroll" id="recentGrid"></div>
+    </div></section>
 {faq_html(FAQ)}
 {cta()}
   </main>'''
@@ -632,6 +657,11 @@ def build_product(x):
       <div class="cards">{"".join(card(y) for y in rel)}</div>
       <div class="pills pills--top">{otros_amb}<a class="pill" href="/cuadros-personalizados/">Personalizados</a><a class="pill" href="/#catalogo">Todos los cuadros</a></div>
     </div></section>
+
+    <section class="sec sec--tight recent" id="recent" hidden aria-labelledby="recentTitle"><div class="wrap">
+      <header class="sec__head"><div><p class="kicker">Para retomar</p><h2 id="recentTitle">Vistos recientemente</h2></div><button class="link-btn small" id="recentClear">Borrar historial</button></header>
+      <div class="cards cards--scroll" id="recentGrid"></div>
+    </div></section>
 {faq_html(faqs)}
   </main>'''
     title = f"{x['n']} · Cuadro con marco" + (" · Visita del Papa León XIV" if x["c"] == "papa" else "")
@@ -657,7 +687,7 @@ def build_404():
 
 
 def build_data_js():
-    out = {"config": C, "colecciones": COLS, "virtuales": VIRT, "ambientes": AMB,
+    out = {"config": C, "colecciones": COLS, "virtuales": VIRT, "ambientes": AMB, "paredes": PAREDES,
            "productos": [{k: v for k, v in x.items() if k != "idx"} for x in PRODS]}
     write("data.js", "/* Generado por tools/build.py desde data/catalogo.json: no editar a mano. */\nwindow.CATALOGO=" + json.dumps(out, ensure_ascii=False, separators=(",", ":")) + ";\n")
 

@@ -153,6 +153,9 @@ async function newPage(b, vp = { width: 1366, height: 860 }) {
     ok("Los datos escritos se recuerdan", (await q.inputValue("#pFieldList input")) === "Familia Pérez");
     await q.click("#openBag"); await q.waitForTimeout(400);
     const msg = decodeURIComponent((await q.getAttribute("#bagWa", "href")).split("text=")[1]);
+    await q.fill("#bagLugar", "Surco, Lima"); await q.selectOption("#bagPago", "Yape"); await q.check("#bagRegalo");
+    const msg2 = decodeURIComponent((await q.getAttribute("#bagWa", "href")).split("text=")[1]);
+    ok("Entrega, pago y regalo van en el mensaje", /Entrega en: Surco, Lima/.test(msg2) && /Pago: Yape/.test(msg2) && /regalo/.test(msg2));
     ok("Mensaje de WhatsApp con los 3 cuadros, datos y total", /Gorila/.test(msg) && /Tríptico/.test(msg) && /Familia Pérez/.test(msg) && /Total: S\/ 357/.test(msg));
     ok("El número de WhatsApp es el de la tienda", (await q.getAttribute("#bagWa", "href")).startsWith("https://wa.me/51944136347"));
     await q.click(".rm >> nth=0"); await q.waitForTimeout(200);
@@ -174,7 +177,8 @@ async function newPage(b, vp = { width: 1366, height: 860 }) {
     ok("Página del cuadro: h1 con el nombre", (await q.textContent("h1")).includes("Gorila"));
     ok("?vista=pared abre la vista en la pared", await q.isVisible("#pScene"));
     await q.click('#sceneRoom [data-v="oficina"]');
-    ok("Cambiar ambiente en la pared", (await q.getAttribute("#pScene", "class")).includes("oficina"));
+    await q.waitForTimeout(300);
+    ok("Cambiar ambiente en la pared (foto real)", (await q.getAttribute("#pSceneBg", "src")).includes("pared-oficina") && await q.evaluate(() => document.querySelector("#pSceneBg").naturalWidth > 0));
     const sticky = await q.$eval("#pBuy", e => getComputedStyle(e).position);
     ok("Botones de compra fijos abajo en celular", sticky === "sticky");
     await q.goto(BASE + "/cuadro/foco-disciplina-ejecucion/", { waitUntil: "networkidle" });
@@ -203,6 +207,8 @@ async function newPage(b, vp = { width: 1366, height: 860 }) {
     ok("Guía: tocar una recomendación abre su ficha", await q.evaluate(() => document.querySelector("#product").open));
     await q.goto(BASE + "/#cuadro/tigre-en-el-agua", { waitUntil: "networkidle" });
     ok("Enlaces antiguos #cuadro/… redirigen", q.url().endsWith("/cuadro/tigre-en-el-agua/"));
+    await q.goto(BASE + "/cuadro/leon-fuerza/", { waitUntil: "networkidle" });
+    ok("«Vistos recientemente» aparece tras ver varios cuadros", await q.isVisible("#recent") && (await q.$$eval("#recentGrid .card", c => c.length)) >= 2);
     await q.goto(BASE + "/404.html", { waitUntil: "networkidle" });
     ok("Página 404 con salida al catálogo", (await q.textContent("h1")).length > 0 && (await q.$$eval(".card", c => c.length)) > 0);
     ok("Sin errores", !q._errors.length, q._errors.join(" | "));
