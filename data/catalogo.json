@@ -13,7 +13,12 @@
   },
   "ciudad": "Lima",
   "pais": "PE",
-  "entrega": "4 a 6 días hábiles en Lima; provincias por agencia"
+  "entrega": "4 a 6 días hábiles en Lima; provincias por agencia",
+  "medicion": {
+   "ga4": "",
+   "metaPixel": "",
+   "clarity": ""
+  }
  },
  "colecciones": [
   {

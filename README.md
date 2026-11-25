@@ -14,7 +14,8 @@ Catálogo e imágenes tomados de cuadros.plantify.pe (mismos dueños), con marca
 | `tools/marco3d.py` | Genera los marcos 3D a tamaño real (`3d/*.glb`) para la vista 3D y la realidad aumentada |
 | `tools/paredes.py` | Convierte fotos reales en paredes vacías calibradas a escala para «En tu pared» |
 | `personaliza.js`, `tools/personalizados.js` | Diseños en vivo de los personalizados y sus imágenes de catálogo |
-| `tools/pruebas.js` | 81 pruebas de navegación, SEO, 3D y accesibilidad con Playwright |
+| `medicion.js`, `docs/medicion.md` | Medición (GA4, Píxel de Meta, Clarity): embudo, código de pedido y guía para activarla |
+| `tools/pruebas.js` | 85 pruebas de navegación, SEO, 3D, medición y accesibilidad con Playwright |
 | `app.js`, `styles.css` | Interacción y diseño |
 | `index.html`, `cuadro/…`, `cuadros-…/` | Páginas generadas (no editar a mano) |
 

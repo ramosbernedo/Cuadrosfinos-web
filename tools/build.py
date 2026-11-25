@@ -361,6 +361,7 @@ def overlays(with_product_dialog=False):
   <div class="toast" id="toast" role="status" aria-live="polite"></div>
   <script src="/data.js?v={ver('data.js')}" defer></script>
   <script src="/personaliza.js?v={ver('personaliza.js')}" defer></script>
+  <script src="/medicion.js?v={ver('medicion.js')}" defer></script>
   <script src="/app.js?v={ver('app.js')}" defer></script>
 </body>
 </html>
@@ -776,6 +777,8 @@ Sitemap: {h('/sitemap.xml')}
 /app.js
   Cache-Control: public, max-age=31536000, immutable
 /personaliza.js
+  Cache-Control: public, max-age=31536000, immutable
+/medicion.js
   Cache-Control: public, max-age=31536000, immutable
 /data.js
   Cache-Control: public, max-age=31536000, immutable

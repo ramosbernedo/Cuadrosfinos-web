@@ -49,6 +49,13 @@ DATA.forEach(x => (x._q = norm([x.n, x.f, colDe(x.c)?.nombre, subNombre(x), x.a.
 const rank = x => (x.t ? 0 : 10) + (x.nw ? 0 : 3) + (x.i ? 0 : 20) + (x.c === "papa" ? 15 : 0) + x.idx / 100;
 const matches = (x, q) => norm(q).split(/\s+/).filter(Boolean).every(t => x._q.includes(t.replace(/s$/, "")));
 
+/* ---------- medición (medicion.js) ---------- */
+const T = (name, params) => { try { window.CFTrack && CFTrack.track(name, params); } catch {} };
+const LISTA = document.body.dataset.col || document.body.dataset.room || (PAGE === "home" ? "inicio" : PAGE);
+const item = (x, extra = {}) => ({ item_id: x.s, item_name: x.n, item_brand: CONFIG.marca, item_category: (colDe(x.c) || {}).nombre || x.c,
+  item_category2: subNombre(x) || undefined, item_variant: x.o, price: x.q ? 0 : precioBase(x) + (x.p ? P.personalizar : 0), quantity: 1, ...extra });
+const once = new Set(); const T1 = (key, name, params) => { if (once.has(key)) return; once.add(key); T(name, params); };
+
 /* ---------- render ---------- */
 function pf(x, { lazy = true, thumb = false, scene = false } = {}) {
   const ld = lazy ? ' loading="lazy" decoding="async"' : "";
@@ -122,6 +129,7 @@ function renderGrid() {
   $("#empty").hidden = list.length > 0;
   $("#count").textContent = list.length === DATA.length ? `${list.length} cuadros` : `${list.length} de ${DATA.length} cuadros`;
   reveal($("#grid"));
+  T("view_item_list", { item_list_id: F.col || F.room || "todos", item_list_name: listaNombre(), items: list.slice(0, 20).map((x, i) => item(x, { index: i })) });
 }
 function syncUrl() {
   if (PAGE !== "home") return;
@@ -129,7 +137,11 @@ function syncUrl() {
   [["q", F.q], ["c", F.col], ["amb", F.room]].forEach(([k, v]) => v ? u.searchParams.set(k, v) : u.searchParams.delete(k));
   history.replaceState(history.state, "", u.pathname + u.search + u.hash);
 }
+const listaNombre = () => [F.col && ((colDe(F.col) || VIRTUALES.find(v => v.id === F.col) || {}).nombre || F.col), F.room && "Ambiente " + F.room, F.q && "Búsqueda"].filter(Boolean).join(" · ") || "Todos los cuadros";
 function setFilter(patch, scroll) {
+  if (patch.col !== undefined || patch.room !== undefined || patch.sub !== undefined || patch.sort !== undefined)
+    T("filtrar", { coleccion: patch.col ?? F.col, subcoleccion: patch.sub ?? F.sub, ambiente: patch.room ?? F.room, orden: patch.sort ?? F.sort });
+  if (patch.q && patch.q.length >= 3) { clearTimeout(window.__tq); window.__tq = setTimeout(() => T("search", { search_term: patch.q, resultados: filtered().length }), 1200); }
   Object.assign(F, patch);
   renderFilters(); renderGrid(); syncUrl();
   if (scroll) $("#catalogo").scrollIntoView({ behavior: reduced ? "auto" : "smooth" });
@@ -223,6 +235,7 @@ function openProduct(slug, tab, { push = true } = {}) {
     document.title = `${x.n} · Cuadro con marco | ${CONFIG.marca}`;
   }
   recordView(x.s);
+  T("view_item", { currency: "PEN", value: item(x).price, items: [item(x)] });
   return true;
 }
 function closeProduct() {
@@ -243,11 +256,11 @@ function restoreFields() {
   const saved = store.get(fieldKey(), {});
   $$("#pFieldList input").forEach(i => { if (saved[i.name]) i.value = saved[i.name]; });
 }
-function productMsg() {
+function productMsg(code = "") {
   const x = S.x;
-  if (x.q) return `Hola, quiero cotizar el cuadro «${x.n}» (Papa León XIV).\n${absUrl(x)}`;
+  if (x.q) return `Hola, quiero cotizar el cuadro «${x.n}» (Papa León XIV).\n${absUrl(x)}` + (code ? `\nCódigo: ${code}` : "");
   const f = x.p ? fieldValues().filter(([, v]) => v).map(([l, v]) => `  · ${l}: ${v}`).join("\n") : "";
-  return `Hola, quiero pedir este cuadro:\n• ${x.n} — ${medida(x)} — ${$("#pPrice").textContent}` + (f ? `\n${f}` : "") + `\n${absUrl(x)}\n\n¿Me confirman el envío a mi dirección?`;
+  return `Hola, quiero pedir este cuadro:\n• ${x.n} — ${medida(x)} — ${$("#pPrice").textContent}` + (f ? `\n${f}` : "") + `\n${absUrl(x)}` + (code ? `\nCódigo: ${code}` : "") + `\n\n¿Me confirman el envío a mi dirección?`;
 }
 function updateProductWa() { $("#pWa").href = waLink(productMsg(), S.x.q ? CONFIG.whatsappPapa : CONFIG.whatsapp); }
 function refreshAddBtn() {
@@ -263,6 +276,7 @@ function setTab(t, btn) {
   $("#pWall").hidden = t !== "pared";
   if (t === "pared") preloadWalls();
   $("#pPhoto").hidden = t !== "foto";
+  if (S.x && t !== "obra") T1(t + S.x.s + (btn && btn.dataset.src || ""), "ver_" + t, { item_id: S.x.s, item_name: S.x.n, ...(t === "foto" ? { foto: (btn && btn.dataset.alt) || "" } : {}) });
   $("#p3d").hidden = t !== "3d";
   if (t === "3d") open3D();
   if (t === "foto") {
@@ -278,6 +292,7 @@ function zoomSrc() {
   const x = S.x; return [`/img/cuadros/${x.s}${piezas(x) > 1 ? "-1" : ""}.webp`, x.n];
 }
 function openZoom([src, alt, html]) {
+  if (S.x) T("zoom", { item_id: S.x.s });
   const z = $("#zoom"), img = $("#zoomImg"), st = $("#zoomStage");
   $("#zoomSvg")?.remove();
   img.hidden = !!html;
@@ -337,7 +352,7 @@ async function open3D() {
       <button slot="ar-button" class="btn btn--light ar-btn">Ver en mi pared</button>
       <div slot="progress-bar"></div></model-viewer>`;
     mv = $("#mv");
-    mv.addEventListener("ar-status", e => { if (e.detail.status === "failed") toast("Tu celular no permitió abrir la cámara para la realidad aumentada"); });
+    mv.addEventListener("ar-status", e => { if (e.detail.status === "session-started") T("realidad_aumentada", { item_id: S.x.s, item_name: S.x.n }); if (e.detail.status === "failed") toast("Tu celular no permitió abrir la cámara para la realidad aumentada"); });
   }
   mv.alt = `${x.n}: cuadro con marco negro en 3D`;
   const apply = async () => {
@@ -393,9 +408,10 @@ function bindProduct() {
   $("#pZoom").addEventListener("click", () => openZoom(zoomSrc()));
   $("#pStage").addEventListener("click", e => { if (S.x && (S.x.i || personal(S.x)) && e.target.closest("img,svg")) openZoom(zoomSrc()); });
   $("#pPhoto").addEventListener("click", () => openZoom(zoomSrc()));
-  $("#sceneRoom").addEventListener("click", e => { const b = e.target.closest("[data-v]"); if (b) { S.room = b.dataset.v; renderScene(); } });
+  $("#sceneRoom").addEventListener("click", e => { const b = e.target.closest("[data-v]"); if (b) { S.room = b.dataset.v; renderScene(); T("ver_pared_ambiente", { item_id: S.x.s, ambiente: S.room }); } });
   $("#pFields").addEventListener("input", () => {
     store.set(fieldKey(), Object.fromEntries($$("#pFieldList input").map(i => [i.name, i.value])));
+    T1("pers" + S.x.s, "personalizar", { item_id: S.x.s, item_name: S.x.n });
     updateProductWa(); livePreview();
     if (S.tab === "3d") { clearTimeout(window.__t3d); window.__t3d = setTimeout(open3D, 350); }
   });
@@ -407,27 +423,36 @@ function bindProduct() {
     refreshAddBtn();
   });
   $("#pWa").addEventListener("click", e => {
-    if (S.x.p && firstMissing()) { e.preventDefault(); firstMissing().focus(); toast("Completa los datos para personalizar"); }
+    if (S.x.p && firstMissing()) { e.preventDefault(); firstMissing().focus(); toast("Completa los datos para personalizar"); return; }
+    const code = window.CFTrack ? CFTrack.codigo() : "";
+    $("#pWa").href = waLink(productMsg(code), S.x.q ? CONFIG.whatsappPapa : CONFIG.whatsapp);
+    const it = item(S.x);
+    T("begin_checkout", { currency: "PEN", value: it.price, items: [it], via: "ficha" });
+    T("generate_lead", { currency: "PEN", value: it.price, transaction_id: code, items: [it], via: S.x.q ? "cotizar" : "ficha", ...((window.CFTrack && CFTrack.origen()) || {}) });
   });
   // Compartir: WhatsApp, Facebook, copiar y el menú del celular
   const shareText = () => `${S.x.n} · ${precioTxt(S.x)} — Cuadros Finos`;
   const syncShare = () => {
     if (!S.x) return;
-    const url = absUrl(S.x);
-    $("#shWa").href = `https://wa.me/?text=${encodeURIComponent(shareText() + "\n" + url)}`;
-    $("#shFb").href = `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(url)}`;
+    const url = absUrl(S.x), utm = (src, med) => `${url}?utm_source=${src}&utm_medium=${med}&utm_campaign=compartir`;
+    $("#shWa").href = `https://wa.me/?text=${encodeURIComponent(shareText() + "\n" + utm("whatsapp", "compartido"))}`;
+    $("#shFb").href = `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(utm("facebook", "compartido"))}`;
     $("#pShare").hidden = !navigator.share;
   };
   $("#pTitle") && new MutationObserver(syncShare).observe($("#pTitle"), { childList: true });
+  $("#shWa").addEventListener("click", () => T("share", { method: "whatsapp", content_type: "cuadro", item_id: S.x.s }));
+  $("#shFb").addEventListener("click", () => T("share", { method: "facebook", content_type: "cuadro", item_id: S.x.s }));
   $("#shCopy").addEventListener("click", async () => {
     const url = absUrl(S.x);
     try { await navigator.clipboard.writeText(url); }
     catch { const t = document.createElement("textarea"); t.value = url; document.body.append(t); t.select(); document.execCommand("copy"); t.remove(); }
+    T("share", { method: "copiar_enlace", content_type: "cuadro", item_id: S.x.s });
     $("#shCopy span").textContent = "¡Copiado!"; toast("Enlace copiado: pégalo donde quieras");
     setTimeout(() => ($("#shCopy span").textContent = "Copiar enlace"), 2200);
   });
   $("#pShare").addEventListener("click", async () => {
-    try { await navigator.share({ title: S.x.n, text: shareText(), url: absUrl(S.x) }); } catch {}
+    T("share", { method: "nativo", content_type: "cuadro", item_id: S.x.s });
+    try { await navigator.share({ title: S.x.n, text: shareText(), url: absUrl(S.x) + "?utm_source=compartido&utm_medium=nativo&utm_campaign=compartir" }); } catch {}
   });
   if (dlg) {
     dlg.addEventListener("close", onDialogClosed);
@@ -460,11 +485,12 @@ function addToBag(s, f = null) {
   const key = JSON.stringify(f);
   const ex = bag.find(b => b.s === s && JSON.stringify(b.f) === key);
   ex ? ex.qty++ : bag.push({ s, f, qty: 1 });
+  T("add_to_cart", { currency: "PEN", value: unit({ s, f }), items: [item(x, { price: unit({ s, f }) })], lista: LISTA });
   saveBag(); syncAddButtons();
   const badge = $("#bagCount"); badge.classList.remove("pop"); void badge.offsetWidth; badge.classList.add("pop");
   toast(`«${x.n}» está en tu selección`, { label: "Ver selección", fn: openBag });
 }
-function bagMessage() {
+function bagMessage(code = "") {
   const total = bag.reduce((a, b) => a + unit(b) * b.qty, 0);
   const lines = bag.map(b => {
     const x = BY[b.s];
@@ -473,7 +499,7 @@ function bagMessage() {
   });
   const d = store.get("cf_entrega", {});
   const extra = [d.lugar && `Entrega en: ${d.lugar}`, d.pago && `Pago: ${d.pago}`, d.regalo && "Es para regalo 🎁"].filter(Boolean).join("\n");
-  return `Hola, quiero pedir estos cuadros:\n${lines.join("\n")}\n\nTotal: ${soles(total)}` + (extra ? `\n${extra}` : "") + `\n¿Me confirman el envío${d.lugar ? "" : " a mi dirección"}?`;
+  return `Hola, quiero pedir estos cuadros:\n${lines.join("\n")}\n\nTotal: ${soles(total)}` + (extra ? `\n${extra}` : "") + (code ? `\nCódigo: ${code}` : "") + `\n¿Me confirman el envío${d.lugar ? "" : " a mi dirección"}?`;
 }
 function renderBag() {
   const n = bag.reduce((a, b) => a + b.qty, 0);
@@ -496,8 +522,11 @@ function renderBag() {
 }
 const drawer = $("#bag");
 let lastFocus = null;
+const bagItems = () => bag.map(b => item(BY[b.s], { price: unit(b), quantity: b.qty }));
+const bagTotal = () => bag.reduce((a, b) => a + unit(b) * b.qty, 0);
 function openBag() {
   if (dlg && dlg.open) closeProduct();
+  T("view_cart", { currency: "PEN", value: bagTotal(), items: bagItems() });
   lastFocus = document.activeElement;
   drawer.removeAttribute("inert"); drawer.setAttribute("aria-hidden", "false");
   document.documentElement.classList.add("lock");
@@ -512,10 +541,11 @@ function bindBag() {
   $("#openBag").addEventListener("click", openBag);
   drawer.addEventListener("click", e => {
     const q = e.target.closest("[data-q]");
-    if (q) { const b = bag[+q.dataset.q]; b.qty += +q.dataset.d; if (b.qty < 1) bag.splice(+q.dataset.q, 1); saveBag(); syncAddButtons(); return; }
+    if (q) { const b = bag[+q.dataset.q]; if (+q.dataset.d < 0) T("remove_from_cart", { currency: "PEN", value: unit(b), items: [item(BY[b.s], { price: unit(b) })] }); b.qty += +q.dataset.d; if (b.qty < 1) bag.splice(+q.dataset.q, 1); saveBag(); syncAddButtons(); return; }
     const rm = e.target.closest("[data-rm]");
     if (rm) {
       const [gone] = bag.splice(+rm.dataset.rm, 1); saveBag(); syncAddButtons();
+      T("remove_from_cart", { currency: "PEN", value: unit(gone) * gone.qty, items: [item(BY[gone.s], { price: unit(gone), quantity: gone.qty })] });
       toast(`Quitaste «${BY[gone.s].n}»`, { label: "Deshacer", fn: () => { bag.push(gone); saveBag(); syncAddButtons(); openBag(); } });
       return;
     }
@@ -530,6 +560,7 @@ function bindBag() {
     else if (!e.shiftKey && document.activeElement === f.at(-1)) { e.preventDefault(); f[0].focus(); }
   });
   $("#bagShare").addEventListener("click", async () => {
+    T("share", { method: "seleccion", content_type: "seleccion" });
     const u = new URL("/", location.origin); u.searchParams.set("seleccion", bag.map(b => b.s + (b.qty > 1 ? "*" + b.qty : "")).join(","));
     try { if (navigator.share) await navigator.share({ title: "Mi selección de cuadros", url: u.href }); else { await navigator.clipboard.writeText(u.href); toast("Enlace de tu selección copiado"); } } catch {}
   });
@@ -538,6 +569,14 @@ function bindBag() {
   $("#bagLugar").value = ent.lugar || ""; $("#bagPago").value = ent.pago || ""; $("#bagRegalo").checked = !!ent.regalo;
   const saveEnt = () => { store.set("cf_entrega", { lugar: $("#bagLugar").value.trim(), pago: $("#bagPago").value, regalo: $("#bagRegalo").checked }); $("#bagWa").href = waLink(bagMessage()); };
   $("#bagForm").addEventListener("input", saveEnt); $("#bagForm").addEventListener("change", saveEnt);
+  $("#bagLugar").addEventListener("change", () => $("#bagLugar").value.trim() && T("add_shipping_info", { currency: "PEN", value: bagTotal(), shipping_tier: $("#bagLugar").value.trim(), items: bagItems() }));
+  $("#bagPago").addEventListener("change", () => $("#bagPago").value && T("add_payment_info", { currency: "PEN", value: bagTotal(), payment_type: $("#bagPago").value, items: bagItems() }));
+  $("#bagWa").addEventListener("click", () => {
+    const code = window.CFTrack ? CFTrack.codigo() : "";
+    $("#bagWa").href = waLink(bagMessage(code));
+    T("begin_checkout", { currency: "PEN", value: bagTotal(), items: bagItems(), via: "seleccion" });
+    T("generate_lead", { currency: "PEN", value: bagTotal(), transaction_id: code, items: bagItems(), via: "seleccion", piezas: bag.reduce((a, b) => a + b.qty, 0), ...((window.CFTrack && CFTrack.origen()) || {}) });
+  });
   $("#bagForm").addEventListener("submit", e => e.preventDefault());
   // Selección compartida por enlace (?seleccion=slug,slug*2)
   const shared = new URLSearchParams(location.search).get("seleccion");
@@ -567,7 +606,7 @@ const STYLE = { poder: x => x.c === "poder", fe: x => x.c === "fe" || x.c === "p
 const STYLE_COL = { poder: "poder", fe: "fe", calma: "abstracto", lugares: "lugares", oficio: "oficio", pers: "personalizados" };
 let QA = {};
 const quiz = $("#quiz");
-function openQuiz() { QA = {}; quizStep(0); quiz.showModal(); }
+function openQuiz() { QA = {}; quizStep(0); quiz.showModal(); T("ayuda_inicio", { lista: LISTA }); }
 function quizStep(i) {
   $("#qRes").hidden = true; $("#qOpts").hidden = false;
   const q = QUIZ[i];
@@ -586,6 +625,7 @@ function quizResult() {
   const score = x => (x.a.includes(QA.room) ? 4 : 0) + (STYLE[QA.style](x) ? 8 : 0) +
     (QA.fmt === "set" ? (piezas(x) > 1 ? 6 : 0) : QA.fmt === "uno" ? (piezas(x) === 1 ? 2 : -4) : 0) + (x.t ? 2 : 0) + (x.i ? 3 : -10) + (x.q ? -3 : 0);
   const res = DATA.filter(x => STYLE[QA.style](x)).sort((a, b) => score(b) - score(a) || a.idx - b.idx).slice(0, 6);
+  T("ayuda_resultado", { ambiente: QA.room, estilo: QA.style, formato: QA.fmt });
   $("#qStep").textContent = "Tu recomendación";
   $("#qTitle").textContent = "Estos van con tu pared";
   $("#qOpts").hidden = true;
@@ -627,6 +667,11 @@ function bindGeneral() {
   $$("[data-wa]").forEach(a => { a.href = waLink(a.dataset.wa); a.target = "_blank"; a.rel = "noopener"; });
 
   document.addEventListener("click", e => {
+    const wa = e.target.closest("a[data-wa]");
+    if (wa) T("contacto_whatsapp", { ubicacion: wa.classList.contains("wa-float") ? "boton_flotante" : (wa.closest("footer") ? "pie" : "pagina"), ...((window.CFTrack && CFTrack.origen()) || {}) });
+    const card = e.target.closest("a.card__open, a.s-item:not(.s-item--col)");
+    if (card) { const slug = card.getAttribute("href").split("/")[2], x = BY[slug];
+      if (x) T("select_item", { item_list_id: e.target.closest("#qRes") ? "ayuda" : e.target.closest("#sRes") ? "busqueda" : e.target.closest("#recent") ? "vistos" : e.target.closest("#topGrid") ? "mas_pedidos" : e.target.closest(".pd__related, .sec--tight") ? "relacionados" : LISTA, items: [item(x)] }); }
     if (e.target.closest("[data-open-quiz]")) { e.preventDefault(); return openQuiz(); }
     const add = e.target.closest("[data-add]");
     if (add) { e.preventDefault(); e.stopPropagation(); return addToBag(add.dataset.add); }
@@ -644,7 +689,7 @@ function bindGeneral() {
   $$("dialog").forEach(d => d.addEventListener("click", e => { if (d !== dlg && (e.target === d || e.target.closest("[data-close]"))) d.close(); }));
   $("#openSearch").addEventListener("click", openSearch);
   $("#nfSearch")?.addEventListener("click", openSearch);
-  $("#sq").addEventListener("input", e => renderSearch(e.target.value));
+  $("#sq").addEventListener("input", e => { renderSearch(e.target.value); const v = e.target.value.trim(); clearTimeout(window.__ts); if (v.length >= 3) window.__ts = setTimeout(() => T("search", { search_term: v, lugar: "buscador" }), 1200); });
   $("#search form").addEventListener("submit", e => {
     e.preventDefault();
     const first = $("#sRes a.s-item"); if (first) return first.click();

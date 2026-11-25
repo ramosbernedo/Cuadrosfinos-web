@@ -694,3 +694,8 @@ html.lock{overflow:hidden}
 .ar-btn{position:absolute;left:50%;bottom:16px;transform:translateX(-50%);box-shadow:0 10px 30px -10px rgba(0,0,0,.5)}
 .pd__3d .wall-note b{color:var(--fg);font-weight:500}
 .ar-btn{bottom:12px;min-height:44px;padding:0 22px}
+
+/* Aviso de cookies */
+.consent{position:fixed;left:16px;right:16px;bottom:16px;z-index:150;max-width:560px;margin:auto;background:var(--bg-2);border:1px solid var(--line-2);padding:16px 18px;display:flex;gap:14px;align-items:center;justify-content:space-between;flex-wrap:wrap;box-shadow:0 20px 50px -20px rgba(0,0,0,.8);font-size:.85rem;color:var(--fg-2)}
+.consent p{flex:1 1 260px}
+.consent div{display:flex;gap:8px}

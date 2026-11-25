@@ -235,6 +235,35 @@ async function newPage(b, vp = { width: 1366, height: 860 }) {
     await q.close();
   }
 
+  /* 7. Medición: el embudo completo deja sus eventos */
+  {
+    const ctx2 = await b.newContext({ viewport: { width: 390, height: 844 } });
+    const q = await ctx2.newPage(); const ev = []; const ext = [];
+    q.on("console", m => { const t = m.text(); const mm = t.match(/\[medición\] (\S+)/); if (mm) ev.push(mm[1]); });
+    ctx2.on("request", r => { if (/googletagmanager|facebook\.net|clarity\.ms/.test(r.url())) ext.push(r.url()); });
+    ctx2.on("page", np => np.close().catch(() => {}));
+    await q.goto(BASE + "/?medir=debug", { waitUntil: "networkidle" });
+    await q.evaluate(() => { localStorage.removeItem("cf_bag"); });
+    await q.goto(BASE + "/?c=poder", { waitUntil: "networkidle" });
+    await Promise.all([q.waitForURL("**/cuadro/gorila-respeto/"), q.click('#grid .card[data-s="gorila-respeto"] .card__open')]);
+    await q.waitForLoadState("networkidle");
+    await q.click("#tabPared"); await q.click("#pAdd"); await q.waitForTimeout(200);
+    await q.click("#openBag"); await q.waitForTimeout(300);
+    await q.fill("#bagLugar", "Arequipa"); await q.press("#bagLugar", "Tab");
+    await q.selectOption("#bagPago", "Plin");
+    await q.click("#bagWa"); await q.waitForTimeout(300);
+    const href = decodeURIComponent(await q.getAttribute("#bagWa", "href"));
+    const need = ["view_item_list", "select_item", "view_item", "ver_pared", "add_to_cart", "view_cart", "add_shipping_info", "add_payment_info", "begin_checkout", "generate_lead"];
+    const miss = need.filter(n => !ev.includes(n));
+    ok("Medición: el embudo completo registra sus 10 pasos", !miss.length, miss.length ? "faltan: " + miss.join(", ") : ev.join(" → "));
+    ok("Medición: el pedido por WhatsApp lleva un código para identificarlo", /Código: CF-[2-9A-Z]{4}/.test(href), (href.match(/CF-\w+/) || [""])[0]);
+    ok("Medición: sin IDs configurados no se carga nada de terceros ni aviso de cookies", !ext.length && !(await q.$(".consent")));
+    await q.goto(BASE + "/cuadro/leon-fuerza/?utm_source=instagram&utm_campaign=prueba", { waitUntil: "networkidle" });
+    ok("Medición: guarda el origen de la visita (UTM) para atribuir el pedido", (await q.evaluate(() => CFTrack.origen().utm_source)) === "instagram");
+    await q.evaluate(() => localStorage.removeItem("cf_medir_debug"));
+    await ctx2.close();
+  }
+
   await b.close();
   console.log(results.join("\n"));
   console.log(`\n${results.length - fails} de ${results.length} pruebas OK`);
