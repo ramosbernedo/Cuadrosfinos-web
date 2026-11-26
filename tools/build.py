@@ -718,6 +718,8 @@ def build_seo(paths):
 User-agent: *
 Allow: /
 Disallow: /tools/
+Disallow: /admin/
+Disallow: /api/
 
 # Asistentes de IA bienvenidos (GEO)
 User-agent: GPTBot
@@ -790,6 +792,10 @@ Sitemap: {h('/sitemap.xml')}
 
 /tools/*
   X-Robots-Tag: noindex
+/admin/*
+  X-Robots-Tag: noindex, nofollow
+  Cache-Control: no-store
+  X-Frame-Options: DENY
 /data/*
   X-Robots-Tag: noindex
 """)

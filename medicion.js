@@ -83,13 +83,43 @@ function track(name, params = {}) {
     m ? window.fbq("track", m, mp) : window.fbq("trackCustom", name, mp);
   }
   if (IDS.clarity && clarityReady && window.clarity) window.clarity("event", name);
+  propio(name, p);
   if (DEBUG) console.log("%c[medición] " + name, "color:#25d366;font-weight:600", p);
 }
+// ---------- Medición propia → panel (/api/ev), por lotes y sin cookies ----------
+const PROPIOS = new Set(["page_view", "view_item", "select_item", "ver_pared", "ver_3d", "ver_foto", "realidad_aumentada", "personalizar", "add_to_cart",
+  "remove_from_cart", "view_cart", "add_shipping_info", "add_payment_info", "begin_checkout", "generate_lead", "search", "share", "contacto_whatsapp",
+  "ayuda_inicio", "ayuda_resultado", "filtrar", "zoom"]);
+const sid = (() => { try { let v = sessionStorage.getItem("cf_sid"); if (!v) { v = Math.random().toString(36).slice(2, 12) + Date.now().toString(36).slice(-4); sessionStorage.setItem("cf_sid", v); } return v; } catch { return "s" + Math.random().toString(36).slice(2, 10); } })();
+let cola = [], colaT = null;
+function enviarCola() {
+  if (!cola.length) return;
+  const body = JSON.stringify(cola.splice(0, 25)); clearTimeout(colaT); colaT = null;
+  try { if (!(navigator.sendBeacon && navigator.sendBeacon("/api/ev", new Blob([body], { type: "application/json" })))) fetch("/api/ev", { method: "POST", body, keepalive: true, headers: { "content-type": "application/json" } }).catch(() => {}); } catch {}
+}
+addEventListener("pagehide", enviarCola);
+document.addEventListener("visibilitychange", () => document.visibilityState === "hidden" && enviarCola());
+function propio(name, p) {
+  if (!PROPIOS.has(name) || DEBUG && qs.get("medir") === "debug-sin-panel") return;
+  const o = origen();
+  cola.push({ n: name, s: p.item_id || (p.items && p.items[0] && p.items[0].item_id) || null, v: p.value ?? null, t: p.search_term || p.method || null,
+    sid, p: location.pathname, fu: o.utm_source || null, me: o.utm_medium || null, ca: o.utm_campaign || null });
+  if (cola.length >= 10 || /^(page_view|view_item|add_to_cart|view_cart|begin_checkout|generate_lead)$/.test(name)) { clearTimeout(colaT); colaT = setTimeout(enviarCola, 60); }
+  else if (!colaT) colaT = setTimeout(enviarCola, 2500);
+}
+// Registra el pedido en el panel (se llama al tocar «Enviar por WhatsApp»)
+function pedido(datos) {
+  const body = JSON.stringify({ ...datos, origen: origen() });
+  try { if (!(navigator.sendBeacon && navigator.sendBeacon("/api/pedido", new Blob([body], { type: "application/json" })))) fetch("/api/pedido", { method: "POST", body, keepalive: true, headers: { "content-type": "application/json" } }).catch(() => {}); } catch {}
+}
+
 // Código corto para relacionar el chat de WhatsApp con la visita (sin 0/O/1/I)
 function codigo() {
   const A = "23456789ABCDEFGHJKLMNPQRSTUVWXYZ"; let c = "";
   for (let i = 0; i < 4; i++) c += A[Math.floor(Math.random() * A.length)];
   return "CF-" + c;
 }
-window.CFTrack = { track, codigo, origen, log, debug: DEBUG };
+window.CFTrack = { track, codigo, origen, pedido, log, debug: DEBUG };
+// Visita de página para el embudo del panel
+track("page_view", { page_location: location.pathname });
 })();

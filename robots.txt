@@ -2,6 +2,8 @@
 User-agent: *
 Allow: /
 Disallow: /tools/
+Disallow: /admin/
+Disallow: /api/
 
 # Asistentes de IA bienvenidos (GEO)
 User-agent: GPTBot

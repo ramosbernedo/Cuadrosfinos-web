@@ -429,6 +429,9 @@ function bindProduct() {
     const it = item(S.x);
     T("begin_checkout", { currency: "PEN", value: it.price, items: [it], via: "ficha" });
     T("generate_lead", { currency: "PEN", value: it.price, transaction_id: code, items: [it], via: S.x.q ? "cotizar" : "ficha", ...((window.CFTrack && CFTrack.origen()) || {}) });
+    const ent = store.get("cf_entrega", {});
+    window.CFTrack && CFTrack.pedido({ codigo: code, via: S.x.q ? "cotizar" : "ficha", lugar: ent.lugar || "", pago: ent.pago || "", regalo: !!ent.regalo,
+      items: [{ s: S.x.s, n: S.x.n, qty: 1, precio: it.price, f: S.x.p ? fieldValues().filter(([, v]) => v) : null }] });
   });
   // Compartir: WhatsApp, Facebook, copiar y el menú del celular
   const shareText = () => `${S.x.n} · ${precioTxt(S.x)} — Cuadros Finos`;
@@ -576,6 +579,8 @@ function bindBag() {
     $("#bagWa").href = waLink(bagMessage(code));
     T("begin_checkout", { currency: "PEN", value: bagTotal(), items: bagItems(), via: "seleccion" });
     T("generate_lead", { currency: "PEN", value: bagTotal(), transaction_id: code, items: bagItems(), via: "seleccion", piezas: bag.reduce((a, b) => a + b.qty, 0), ...((window.CFTrack && CFTrack.origen()) || {}) });
+    window.CFTrack && CFTrack.pedido({ codigo: code, via: "seleccion", lugar: $("#bagLugar").value.trim(), pago: $("#bagPago").value, regalo: $("#bagRegalo").checked,
+      items: bag.map(b => ({ s: b.s, n: BY[b.s].n, qty: b.qty, precio: unit(b), f: b.f && b.f.length ? b.f : null })) });
   });
   $("#bagForm").addEventListener("submit", e => e.preventDefault());
   // Selección compartida por enlace (?seleccion=slug,slug*2)
