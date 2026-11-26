@@ -581,9 +581,9 @@ async function vistaMarketing() {
 /* ---------- productos y creación de cuadros ---------- */
 // Estilos de imagen con IA (el prompt real se arma en el servidor)
 const ESTILOS_IA = {
-  oscuro: { n: "Fotográfico oscuro", cuantas: 4, ayuda: "Foto en blanco y negro, fondo negro y luz dramática. Ideal para animales, retratos y paisajes.", ej: "Ej.: puma andino mirando de frente, entre la niebla" },
-  claro: { n: "Minimalista claro", cuantas: 4, ayuda: "Fondo blanco, líneas finas y mucho espacio libre. Ideal para símbolos y diseños sencillos.", ej: "Ej.: cruz minimalista delgada negra, centrada" },
-  tipografico: { n: "Tipográfico", cuantas: 2, ayuda: "Para cuadros con palabras. Usa un modelo que escribe mejor las letras: genera 2 opciones y gasta más cuota diaria de IA. Revisa la ortografía antes de publicar.", ej: "Ej.: cruz delgada negra; en vez de la línea horizontal debe decir «JESUCRISTO»" },
+  oscuro: { n: "Fotográfico oscuro", cuantas: 2, ayuda: "Foto en blanco y negro, fondo negro y luz dramática. Ideal para animales, retratos y paisajes.", ej: "Ej.: puma andino mirando de frente, entre la niebla" },
+  claro: { n: "Minimalista claro", cuantas: 2, ayuda: "Fondo blanco, líneas finas y mucho espacio libre. Ideal para símbolos y diseños sencillos.", ej: "Ej.: cruz minimalista delgada negra, centrada" },
+  tipografico: { n: "Tipográfico", cuantas: 2, ayuda: "Para cuadros con palabras. Usa un modelo que escribe mejor las letras y gasta más cuota diaria de IA. Revisa la ortografía antes de publicar.", ej: "Ej.: cruz delgada negra; en vez de la línea horizontal debe decir «JESUCRISTO»" },
 };
 const PRECIO_STD = x => x.o === "triptico" ? CAT.config.precio.triptico : x.o === "diptico" ? CAT.config.precio.diptico : CAT.config.precio.pieza;
 const colNom = id => (CAT.colecciones.find(c => c.id === id) || {}).nombre || id;
@@ -683,10 +683,10 @@ function editorProducto(p, alGuardar) {
             <p class="muted small" id="estilo-ayuda" style="margin:4px 0 10px">${ESTILOS_IA.oscuro.ayuda}</p>
             <label class="f"><span>Describe el cuadro</span><textarea id="idea" rows="3" placeholder="${ESTILOS_IA.oscuro.ej}"></textarea></label>
             <label class="check" style="margin:8px 0"><input type="checkbox" id="color"> <span>Con algo de color (tonos tierra)</span></label>
-            <div style="display:flex;gap:8px;flex-wrap:wrap"><button class="btn btn--p" id="gen">✨ Generar 4 opciones</button><button class="btn" id="sugerir">Sugerir nombre y frase</button></div>
+            <div style="display:flex;gap:8px;flex-wrap:wrap"><button class="btn btn--p" id="gen">✨ Generar 2 opciones</button><button class="btn" id="sugerir">Sugerir nombre y frase</button></div>
             <p class="muted small" id="entendio" hidden></p>
             <div class="opciones" id="opciones"></div>
-            <p class="muted small">Usa la IA de Cloudflare. Cada imagen tarda unos segundos.</p>
+            <p class="muted small">Usa la IA de Cloudflare. Cada imagen tarda unos segundos. ¿La hiciste en ChatGPT? Descárgala y usa «Subir imagen».</p>
           </div>
           <div id="m-subir" ${esNuevo ? "hidden" : ""}>
             <label class="subir"><input type="file" id="archivo" accept="image/*"><span>${ic("productos")}<b>Elegir imagen</b><small>JPG, PNG o WebP · vertical 2:3 recomendado · mínimo 1000 px de alto</small></span></label>
