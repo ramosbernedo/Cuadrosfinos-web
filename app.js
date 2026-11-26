@@ -50,7 +50,9 @@ const imgSrc = (x, { thumb = false, panel = 0 } = {}) => x.m
   : `/img/cuadros/${thumb ? "t/" : ""}${x.s}${panel ? "-" + panel : ""}.webp`;
 const medida = x => x.o === "triptico" ? "Tríptico 3 × (30 × 37 cm) con marco" : x.o === "diptico" ? "Díptico 2 × (30 × 37 cm) con marco" : esH(x) ? "37 × 30 cm con marco (horizontal)" : "30 × 37 cm con marco";
 DATA.forEach(x => (x._q = norm([x.n, x.f, colDe(x.c)?.nombre, subNombre(x), x.a.join(" "), x.p || "", x.o].join(" "))));
-const rank = x => (x.t ? 0 : 10) + (x.nw ? 0 : 3) + (x.i ? 0 : 20) + (x.c === "papa" ? 15 : 0) + x.idx / 100;
+// cuadros «Nuevo» creados/editados desde el panel: el más reciente primero (x.m = fecha de la imagen en base 36)
+const fresco = x => x.nw && x.m ? parseInt(x.m, 36) || 0 : 0;
+const rank = x => (x.t ? 0 : 10) + (x.nw ? 0 : 3) + (x.i ? 0 : 20) + (x.c === "papa" ? 15 : 0) + (fresco(x) ? -0.5 : x.idx / 100);
 const matches = (x, q) => norm(q).split(/\s+/).filter(Boolean).every(t => x._q.includes(t.replace(/s$/, "")));
 
 /* ---------- medición (medicion.js) ---------- */
@@ -113,9 +115,10 @@ function filtered() {
   let list = DATA.filter(x => (!F.col || (vf ? vf(x) : x.c === F.col)) && (!F.sub || x.u === F.sub) &&
     (!F.room || x.a.includes(F.room)) && (!F.q || matches(x, F.q)));
   if (F.sort === "az") list.sort((a, b) => a.n.localeCompare(b.n, "es"));
-  else if (F.sort === "nuevo") list.sort((a, b) => (b.nw ? 1 : 0) - (a.nw ? 1 : 0) || rank(a) - rank(b));
+  else if (F.sort === "nuevo") list.sort((a, b) => (b.nw ? 1 : 0) - (a.nw ? 1 : 0) || fresco(b) - fresco(a) || rank(a) - rank(b));
   else if (F.sort === "precio") list.sort((a, b) => (precioBase(a) ?? 1e9) - (precioBase(b) ?? 1e9) || rank(a) - rank(b));
-  else list.sort((a, b) => rank(a) - rank(b));
+  else if (F.col === "nuevos") list.sort((a, b) => fresco(b) - fresco(a) || rank(a) - rank(b));
+  else list.sort((a, b) => rank(a) - rank(b) || fresco(b) - fresco(a));
   return list;
 }
 function renderFilters() {
