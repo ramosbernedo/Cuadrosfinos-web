@@ -579,6 +579,12 @@ async function vistaMarketing() {
 }
 
 /* ---------- productos y creación de cuadros ---------- */
+// Estilos de imagen con IA (el prompt real se arma en el servidor)
+const ESTILOS_IA = {
+  oscuro: { n: "Fotográfico oscuro", cuantas: 2, ayuda: "Foto en blanco y negro, fondo negro y luz dramática. Ideal para animales, retratos y paisajes.", ej: "Ej.: puma andino mirando de frente, entre la niebla" },
+  claro: { n: "Minimalista claro", cuantas: 2, ayuda: "Fondo blanco, líneas finas y mucho espacio libre. Ideal para símbolos y diseños sencillos.", ej: "Ej.: cruz minimalista delgada negra, centrada" },
+  tipografico: { n: "Tipográfico", cuantas: 2, ayuda: "Para cuadros con palabras. Usa un modelo que escribe mejor las letras y gasta más cuota diaria de IA. Revisa la ortografía antes de publicar.", ej: "Ej.: cruz delgada negra; en vez de la línea horizontal debe decir «JESUCRISTO»" },
+};
 const PRECIO_STD = x => x.o === "triptico" ? CAT.config.precio.triptico : x.o === "diptico" ? CAT.config.precio.diptico : CAT.config.precio.pieza;
 const colNom = id => (CAT.colecciones.find(c => c.id === id) || {}).nombre || id;
 const imgDe = (x, thumb) => x.m ? `/media/${x.s}/${thumb ? "t" : "obra"}${["triptico", "diptico"].includes(x.o) ? "-1" : ""}.webp?v=${encodeURIComponent(x.m)}`
@@ -673,11 +679,14 @@ function editorProducto(p, alGuardar) {
         <div class="sec"><h3>1 · Imagen</h3>
           <div class="seg" id="modo" style="margin-bottom:12px"><button data-m="ia" class="${esNuevo ? "on" : ""}">Crear con IA</button><button data-m="subir" class="${esNuevo ? "" : "on"}">Subir imagen</button></div>
           <div id="m-ia" ${esNuevo ? "" : "hidden"}>
-            <label class="f"><span>Describe el cuadro</span><textarea id="idea" rows="3" placeholder="Ej.: puma andino mirando de frente, entre la niebla, en blanco y negro dramático"></textarea></label>
+            <div class="f"><span>Estilo</span><div class="seg" id="estilo" role="group" aria-label="Estilo de la imagen">${Object.entries(ESTILOS_IA).map(([k, e], i) => `<button type="button" data-e="${k}" class="${i ? "" : "on"}">${e.n}</button>`).join("")}</div></div>
+            <p class="muted small" id="estilo-ayuda" style="margin:4px 0 10px">${ESTILOS_IA.oscuro.ayuda}</p>
+            <label class="f"><span>Describe el cuadro</span><textarea id="idea" rows="3" placeholder="${ESTILOS_IA.oscuro.ej}"></textarea></label>
             <label class="check" style="margin:8px 0"><input type="checkbox" id="color"> <span>Con algo de color (tonos tierra)</span></label>
-            <div style="display:flex;gap:8px;flex-wrap:wrap"><button class="btn btn--p" id="gen">✨ Generar 4 opciones</button><button class="btn" id="sugerir">Sugerir nombre y frase</button></div>
+            <div style="display:flex;gap:8px;flex-wrap:wrap"><button class="btn btn--p" id="gen">✨ Generar 2 opciones</button><button class="btn" id="sugerir">Sugerir nombre y frase</button></div>
+            <p class="muted small" id="entendio" hidden></p>
             <div class="opciones" id="opciones"></div>
-            <p class="muted small">Usa la IA de Cloudflare. Cada imagen tarda unos segundos.</p>
+            <p class="muted small">Usa la IA de Cloudflare. Cada imagen tarda unos segundos. ¿La hiciste en ChatGPT? Descárgala y usa «Subir imagen».</p>
           </div>
           <div id="m-subir" ${esNuevo ? "hidden" : ""}>
             <label class="subir"><input type="file" id="archivo" accept="image/*"><span>${ic("productos")}<b>Elegir imagen</b><small>JPG, PNG o WebP · vertical 2:3 recomendado · mínimo 1000 px de alto</small></span></label>
@@ -720,16 +729,33 @@ function editorProducto(p, alGuardar) {
   $("#o", d).addEventListener("change", prev);
   $$("#modo button", d).forEach(b => b.addEventListener("click", () => { $$("#modo button", d).forEach(z => z.classList.toggle("on", z === b)); $("#m-ia", d).hidden = b.dataset.m !== "ia"; $("#m-subir", d).hidden = b.dataset.m !== "subir"; }));
   $("#archivo", d).addEventListener("change", e => { const f = e.target.files[0]; if (!f) return; const r = new FileReader(); r.onload = () => { imagenNueva = r.result; prev(); toast("Imagen lista"); }; r.readAsDataURL(f); });
+  let estilo = "oscuro";
+  const cuantas = () => ESTILOS_IA[estilo].cuantas;
+  const textoGen = otras => `✨ Generar ${otras ? "otras " : ""}${cuantas()}${otras ? "" : " opciones"}`;
+  $$("#estilo button", d).forEach(b => b.addEventListener("click", () => {
+    estilo = b.dataset.e; $$("#estilo button", d).forEach(z => z.classList.toggle("on", z === b));
+    $("#estilo-ayuda", d).textContent = ESTILOS_IA[estilo].ayuda; $("#idea", d).placeholder = ESTILOS_IA[estilo].ej;
+    const g = $("#gen", d); if (!g.disabled) g.textContent = textoGen(!!$(".opcion", d));
+  }));
   $("#gen", d).addEventListener("click", async () => {
     const idea = $("#idea", d).value.trim(); if (!idea) return toast("Describe el cuadro primero");
-    const b = $("#gen", d); b.disabled = true; b.textContent = "Generando…";
-    const op = $("#opciones", d); op.innerHTML = '<div class="sk"></div>'.repeat(4);
-    const res = await Promise.allSettled([0, 1, 2, 3].map(() => api("ia/imagen", { method: "POST", body: { idea, color: $("#color", d).checked } })));
+    const b = $("#gen", d); b.disabled = true; b.textContent = "Entendiendo la idea…";
+    const op = $("#opciones", d), en = $("#entendio", d); const n = cuantas();
+    op.innerHTML = '<div class="sk"></div>'.repeat(n); en.hidden = true;
+    // 1) La IA entiende la idea una vez: la traduce al inglés y separa el texto a escribir y el fondo pedido
+    let q = { escena: idea, texto: "", fondo: "" };
+    try { q = await api("ia/prompt", { method: "POST", body: { idea } }); }
+    catch (e) { if (/cuota/i.test(e.message)) { op.innerHTML = `<p class="err">${esc(e.message)}</p>`; b.disabled = false; b.textContent = textoGen(false); return; } }
+    en.innerHTML = `La IA entendió: <i>${esc(q.escena)}</i>${q.texto ? ` · Texto: <b>«${esc(q.texto)}»</b>` : ""}${q.fondo ? ` · Fondo ${esc(q.fondo)}` : ""}`; en.hidden = false;
+    if (q.texto && estilo !== "tipografico") toast("Pediste texto: el estilo Tipográfico lo escribe mucho mejor");
+    // 2) Las imágenes, en paralelo
+    b.textContent = "Generando…";
+    const res = await Promise.allSettled(Array.from({ length: n }, () => api("ia/imagen", { method: "POST", body: { idea, escena: q.escena, texto: q.texto, fondo: q.fondo, estilo, color: $("#color", d).checked } })));
     const ok = res.filter(r => r.status === "fulfilled").map(r => r.value.imagen);
     op.innerHTML = ok.length ? ok.map((src, i) => `<button class="opcion" data-i="${i}"><img src="${src}" alt="Opción ${i + 1}"></button>`).join("") : `<p class="err">${esc((res.find(r => r.status === "rejected") || {}).reason?.message || "No se pudo generar")}</p>`;
     $$(".opcion", op).forEach(o => o.addEventListener("click", () => { $$(".opcion", op).forEach(z => z.classList.toggle("on", z === o)); imagenNueva = ok[+o.dataset.i]; prev(); }));
     if (ok.length && !$("#n", d).value.trim()) $("#sugerir", d).click();
-    b.disabled = false; b.textContent = "✨ Generar otras 4";
+    b.disabled = false; b.textContent = textoGen(ok.length > 0);
   });
   $("#sugerir", d).addEventListener("click", async () => {
     const idea = $("#idea", d).value.trim() || $("#n", d).value.trim(); if (!idea) return toast("Escribe la idea o el nombre");
