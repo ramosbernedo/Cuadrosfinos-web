@@ -170,6 +170,12 @@ function bindCatalog() {
   $("#clearFilters").addEventListener("click", () => setFilter({ col: "", sub: "", q: "", room: "" }));
   const changed = F.q || F.col !== F0.col || F.room !== F0.room;
   renderFilters();
+  // Con cuadros del panel, los contadores fijos del HTML se actualizan
+  if (CAT.panel) {
+    $$("#colFilters [data-col]").forEach(b => { const k = b.dataset.col, sm = $("small", b); if (!sm) return;
+      sm.textContent = DATA.filter(x => !k || (VFILTRO[k] ? VFILTRO[k](x) : x.c === k)).length; });
+    $$('a[href="#catalogo"]').forEach(a => { a.textContent = a.textContent.replace(/\d+ cuadros/, DATA.length + " cuadros"); });
+  }
   // Al volver con «Atrás» se recupera la posición exacta (el catálogo se vuelve a armar)
   const navEntry = performance.getEntriesByType ? performance.getEntriesByType("navigation")[0] : null;
   const key = "cf_scroll:" + location.pathname + location.search;

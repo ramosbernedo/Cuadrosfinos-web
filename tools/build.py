@@ -359,7 +359,7 @@ def overlays(with_product_dialog=False):
   </dialog>
   <dialog class="zoom" id="zoom" aria-label="Imagen ampliada"><button class="modal__close" data-close aria-label="Cerrar">×</button><div class="zoom__stage" id="zoomStage"><img id="zoomImg" alt=""></div><p class="zoom__hint">Toca la imagen para acercar</p></dialog>
   <div class="toast" id="toast" role="status" aria-live="polite"></div>
-  <script src="/data.js?v={ver('data.js')}" defer></script>
+  <script src="/data.js?v={ver('data.js')}-2" defer></script>
   <script src="/personaliza.js?v={ver('personaliza.js')}" defer></script>
   <script src="/medicion.js?v={ver('medicion.js')}" defer></script>
   <script src="/app.js?v={ver('app.js')}" defer></script>
