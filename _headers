@@ -31,3 +31,6 @@
   X-Frame-Options: DENY
 /data/*
   X-Robots-Tag: noindex
+/feeds/*
+  X-Robots-Tag: noindex
+  Cache-Control: public, max-age=3600

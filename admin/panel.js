@@ -239,6 +239,124 @@ async function vistaEntregas() {
   }));
 }
 
+/* ---------- kit de campaña ---------- */
+const SITIO = location.origin;
+const PRECIO = x => x.q ? null : (x.o === "triptico" ? CAT.config.precio.triptico : x.o === "diptico" ? CAT.config.precio.diptico : CAT.config.precio.pieza) + (x.p ? CAT.config.precio.personalizar : 0);
+function destinos() {
+  const o = [["/", "Inicio (toda la tienda)", null]];
+  (CAT.virtuales || []).forEach(v => o.push([`/${v.url}/`, `Colección · ${v.nombre}`, null, v.id]));
+  CAT.colecciones.forEach(c => o.push([`/${c.url}/`, `Colección · ${c.nombre}`, null, c.id]));
+  (CAT.ambientes || []).forEach(a => o.push([`/${a.url}/`, `Ambiente · ${a.nombre}`, null, "amb:" + a.id]));
+  CAT.productos.filter(x => x.i).sort((a, b) => a.n.localeCompare(b.n, "es")).forEach(x => o.push([`/cuadro/${x.s}/`, `Cuadro · ${x.n}`, x.s]));
+  return o;
+}
+const slugify = t => t.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
+function productosDe(dest) {
+  if (dest[2]) return [BY[dest[2]]];
+  const id = dest[3]; const P = CAT.productos.filter(x => x.i && !x.q);
+  const rank = x => (x.t ? 0 : 10) + (x.nw ? 0 : 3);
+  let l = !id ? P.filter(x => x.t) : id === "top" ? P.filter(x => x.t) : id === "nuevos" ? P.filter(x => x.nw) : id === "personalizados" ? P.filter(x => x.p)
+    : id.startsWith("amb:") ? P.filter(x => x.a.includes(id.slice(4))) : P.filter(x => x.c === id);
+  return l.sort((a, b) => rank(a) - rank(b)).slice(0, 3);
+}
+function textos(dest, link) {
+  const ps = productosDe(dest), x = ps[0];
+  const hash = x ? "#" + slugify((CAT.colecciones.find(c => c.id === x.c) || {}).nombre || "cuadros").replace(/-/g, "") : "";
+  if (dest[2]) {
+    const pr = PRECIO(x), amb = x.a[0] || "sala";
+    return [
+      ["Publicación de Instagram / Facebook", `${x.n} 🖤\n${x.f}\n\nCuadro de ${x.o === "triptico" ? "3 piezas de 30 × 37 cm (≈ 98 cm de ancho)" : "30 × 37 cm"} con marco negro, listo para colgar. Hecho a pedido en Lima, con envío a todo el Perú.\n${pr ? "💰 S/ " + pr + "\n" : ""}📲 Míralo en tu pared y pídelo por WhatsApp: ${link}\n\n#cuadrosdecorativos #decoracionperu #cuadrosconmarco #lima ${hash}`],
+      ["Anuncio (Meta) · texto principal", `${x.f} ${x.n} con marco negro${pr ? ", a S/ " + pr : ""}. Míralo en tu pared antes de pedirlo y recíbelo en 4 a 6 días. Hecho en Lima, envío a todo el Perú.`],
+      ["Anuncio · título", `${x.n}${pr ? " · S/ " + pr : ""}`],
+      ["Estado de WhatsApp", `Nuevo en Cuadros Finos: ${x.n} 🖤${pr ? " S/ " + pr : ""}. ¿Lo imaginas en tu ${amb}? Míralo aquí 👉 ${link}`],
+      ["Respuesta para comentarios / DM", `¡Hola! 🙌 El ${x.n} cuesta ${pr ? "S/ " + pr : "a cotizar"} con marco negro incluido. Aquí puedes verlo en tu pared y pedirlo: ${link}`],
+    ];
+  }
+  const nom = dest[1].replace(/^(Colección|Ambiente) · /, "");
+  return [
+    ["Publicación de Instagram / Facebook", `${nom === "Inicio (toda la tienda)" ? "Cuadros que dicen quién vive aquí 🖤" : "Cuadros · " + nom + " 🖤"}\n${ps.map(p => "· " + p.n).join("\n")}\n\nCon marco negro desde S/ ${CAT.config.precio.pieza}, tríptico S/ ${CAT.config.precio.triptico}. Hechos a pedido en Lima, envío a todo el Perú.\n📲 Elige el tuyo y míralo en tu pared: ${link}\n\n#cuadrosdecorativos #decoracionperu #cuadrosconmarco #lima`],
+    ["Anuncio (Meta) · texto principal", `${nom === "Inicio (toda la tienda)" ? "Más de 80 cuadros" : "Cuadros " + nom.toLowerCase()} con marco negro desde S/ ${CAT.config.precio.pieza}. Míralos en tu pared antes de pedir. Hechos en Lima, envío a todo el Perú.`],
+    ["Estado de WhatsApp", `¿Buscas un cuadro para tu casa u oficina? 🖤 Mira la colección ${nom.toLowerCase()} 👉 ${link}`],
+  ];
+}
+const cargarImg = src => new Promise((ok, ko) => { const i = new Image(); i.onload = () => ok(i); i.onerror = ko; i.src = src; });
+function envolver(g, t, maxW) { const w = t.split(" "), l = []; let c = ""; for (const p of w) { const z = c ? c + " " + p : p; if (g.measureText(z).width > maxW && c) { l.push(c); c = p; } else c = z; } l.push(c); return l; }
+async function imagenSocial(dest, formato) {
+  const W = 1080, H = formato === "historia" ? 1920 : 1350;
+  const c = document.createElement("canvas"); c.width = W; c.height = H; const g = c.getContext("2d");
+  await document.fonts.load("400 60px Archivo"); await document.fonts.load("500 30px Inter");
+  g.fillStyle = "#0b0b0b"; g.fillRect(0, 0, W, H);
+  const rg = g.createRadialGradient(W / 2, H * .38, 50, W / 2, H * .38, W * .9); rg.addColorStop(0, "#2b2823"); rg.addColorStop(1, "#0b0b0b"); g.fillStyle = rg; g.fillRect(0, 0, W, H);
+  const ps = productosDe(dest);
+  const piezas = dest[2] && (ps[0].o === "triptico" || ps[0].o === "diptico") ? Array.from({ length: ps[0].o === "triptico" ? 3 : 2 }, (_, i) => `/img/cuadros/${ps[0].s}-${i + 1}.webp`)
+    : ps.map(x => `/img/cuadros/${x.s}${x.o === "triptico" || x.o === "diptico" ? "-1" : ""}.webp`);
+  const imgs = await Promise.all(piezas.map(cargarImg));
+  const n = imgs.length, gap = 30, horiz = n === 1 && dest[2] && ["horizontal", "panoramico"].includes(ps[0].o);
+  const ratio = horiz ? 37.4 / 29.8 : 29.8 / 37.4;
+  let fh = n === 1 ? (horiz ? 560 : (formato === "historia" ? 960 : 720)) : (formato === "historia" ? 560 : 440);
+  const maxW = W - 150; if (n * fh * ratio + (n - 1) * gap > maxW) fh = (maxW - (n - 1) * gap) / (n * ratio);
+  const fw = Math.round(fh * ratio); fh = Math.round(fh);
+  const total = n * fw + (n - 1) * gap, x0 = (W - total) / 2, y0 = formato === "historia" ? (n === 1 ? 300 : 520) : (n === 1 ? 170 : 300);
+  imgs.forEach((im, i) => {
+    const x = x0 + i * (fw + gap);
+    g.save(); g.shadowColor = "rgba(0,0,0,.7)"; g.shadowBlur = 50; g.shadowOffsetY = 26; g.fillStyle = "#0e0e0e"; g.fillRect(x, y0, fw, fh); g.restore();
+    const mx = fw * (horiz ? .044 : .055), my = fh * (horiz ? .055 : .044), iw = fw - 2 * mx, ih = fh - 2 * my;
+    const cw = im.naturalWidth * .97, ch = im.naturalHeight;   // recorta el borde claro de algunos paneles
+    const s = Math.max(iw / cw, ih / ch), sw = iw / s, sh = ih / s;
+    g.drawImage(im, (im.naturalWidth - sw) / 2, (ch - sh) / 2, sw, sh, x + mx, y0 + my, iw, ih);
+  });
+  let y = y0 + fh + (formato === "historia" ? 130 : 100);
+  g.textAlign = "center"; g.fillStyle = "#f3f1ec";
+  const titulo = dest[2] ? ps[0].n : dest[1].replace(/^(Colección|Ambiente) · /, "").replace("Inicio (toda la tienda)", "Cuadros Finos");
+  g.font = "400 58px Archivo"; g.letterSpacing = "6px";
+  envolver(g, titulo.toUpperCase(), W - 140).slice(0, 2).forEach(l => { g.fillText(l, W / 2, y); y += 70; });
+  g.letterSpacing = "0px"; g.font = "400 32px Inter"; g.fillStyle = "#b9b5ad";
+  const sub = dest[2] ? ps[0].f : `Con marco desde S/ ${CAT.config.precio.pieza} · hechos en Lima`;
+  envolver(g, sub, W - 200).slice(0, 2).forEach(l => { g.fillText(l, W / 2, y + 10); y += 44; });
+  const pr = dest[2] ? PRECIO(ps[0]) : null;
+  if (pr) { g.font = "500 64px Inter"; g.fillStyle = "#f3f1ec"; g.fillText("S/ " + pr, W / 2, y + 90); y += 90; }
+  g.font = "500 26px Inter"; g.fillStyle = "#25d366"; g.fillText("Pídelo por WhatsApp · envío a todo el Perú", W / 2, H - (formato === "historia" ? 210 : 90));
+  g.font = "500 24px Inter"; g.fillStyle = "#85817a"; g.letterSpacing = "8px"; g.fillText("CUADROS FINOS", W / 2, formato === "historia" ? 200 : 100); g.letterSpacing = "0px";
+  return new Promise(ok => c.toBlob(ok, "image/jpeg", .92));
+}
+function kitHTML() {
+  const ds = destinos();
+  return `<div class="panel" id="kit"><h2>Kit de campaña</h2>
+    <p class="muted small" style="margin:-6px 0 14px">Elige qué promocionar y dónde. Te armo el enlace con seguimiento, el QR, los textos y las imágenes.</p>
+    <div class="grid2" style="grid-template-columns:2fr 1fr 1fr 1fr">
+      <label class="f"><span>¿Qué promocionas?</span><select id="kDest">${ds.map((d, i) => `<option value="${i}">${esc(d[1])}</option>`).join("")}</select></label>
+      <label class="f"><span>¿Dónde?</span><select id="kSrc">${["instagram", "facebook", "tiktok", "whatsapp", "google", "pinterest", "email", "otro"].map(o => `<option>${o}</option>`).join("")}</select></label>
+      <label class="f"><span>Formato</span><select id="kMed">${["post", "historia", "reel", "anuncio", "bio", "estado", "grupo", "volante"].map(o => `<option>${o}</option>`).join("")}</select></label>
+      <label class="f"><span>Nombre de campaña</span><input id="kCamp" value="${new Date().toLocaleDateString("es-PE", { month: "long" }).toLowerCase()}-${new Date().getFullYear()}"></label>
+    </div>
+    <div class="kit-out" id="kOut"></div></div>`;
+}
+function bindKit() {
+  const ds = destinos();
+  const upd = () => {
+    const d = ds[+$("#kDest").value];
+    const camp = slugify($("#kCamp").value) || "campana";
+    const link = `${SITIO}${d[0]}?utm_source=${$("#kSrc").value}&utm_medium=${$("#kMed").value}&utm_campaign=${camp}`;
+    let qrSvg = "";
+    try { const q = qrcode(0, "M"); q.addData(link); q.make(); qrSvg = q.createSvgTag({ cellSize: 4, margin: 2, scalable: true }); } catch {}
+    const tx = textos(d, link);
+    $("#kOut").innerHTML = `<div class="kit-link"><input readonly value="${esc(link)}" id="kLink"><button class="btn btn--sm btn--p" data-copy="${esc(link)}">Copiar enlace</button></div>
+      <div class="kit-grid"><div class="kit-qr">${qrSvg}<button class="btn btn--sm" id="kQr">Descargar QR</button></div>
+        <div class="kit-txt">${tx.map(([t, v]) => `<div><h3>${esc(t)}</h3><textarea readonly rows="${Math.min(9, v.split("\n").length + 1)}">${esc(v)}</textarea><button class="btn btn--sm" data-copy="${esc(v)}">Copiar</button></div>`).join("")}</div></div>
+      <div class="kit-img"><button class="btn btn--sm" data-img="post">Descargar imagen para post (4:5)</button><button class="btn btn--sm" data-img="historia">Descargar imagen para historia (9:16)</button></div>`;
+    $$("#kOut [data-copy]").forEach(b => b.addEventListener("click", async () => { try { await navigator.clipboard.writeText(b.dataset.copy); toast("Copiado"); } catch { toast("No se pudo copiar"); } }));
+    $("#kQr").addEventListener("click", () => { const blob = new Blob([$("#kOut .kit-qr svg").outerHTML], { type: "image/svg+xml" }); bajar(blob, `qr-${camp}.svg`); });
+    $$("#kOut [data-img]").forEach(b => b.addEventListener("click", async () => {
+      b.disabled = true; b.textContent = "Generando…";
+      try { const blob = await imagenSocial(d, b.dataset.img); bajar(blob, `cuadrosfinos-${slugify(d[1])}-${b.dataset.img}.jpg`); } catch (e) { toast("No se pudo generar la imagen"); }
+      b.disabled = false; b.textContent = b.dataset.img === "post" ? "Descargar imagen para post (4:5)" : "Descargar imagen para historia (9:16)";
+    }));
+  };
+  ["#kDest", "#kSrc", "#kMed"].forEach(s => $(s).addEventListener("change", upd)); $("#kCamp").addEventListener("input", upd);
+  upd();
+}
+function bajar(blob, nombre) { const a = document.createElement("a"); a.href = URL.createObjectURL(blob); a.download = nombre; document.body.append(a); a.click(); a.remove(); setTimeout(() => URL.revokeObjectURL(a.href), 4000); }
+
 /* ---------- marketing ---------- */
 async function vistaMarketing() {
   shell("marketing", `<p class="cargando">Cargando…</p>`);
@@ -256,6 +374,12 @@ async function vistaMarketing() {
   const prods = r.productos.slice().sort((a, b) => b.vieron - a.vieron);
   shell("marketing", `
     <div class="top"><h1>Marketing</h1>${rangoSeg()}</div>
+    ${kitHTML()}
+    <div class="panel"><h2>Catálogo para anuncios</h2><p class="small" style="margin-bottom:10px">Conéctalo una vez y se actualiza solo con tus cuadros y precios.</p>
+      <div class="kit-link" style="margin-bottom:8px"><input readonly value="${SITIO}/feeds/meta.csv"><button class="btn btn--sm" data-feed="${SITIO}/feeds/meta.csv">Copiar</button></div>
+      <p class="muted small" style="margin-bottom:12px">Meta (Instagram/Facebook): Administrador de ventas → Catálogo → Orígenes de datos → «Feed de datos» → «Programado» → pega este enlace (cada día).</p>
+      <div class="kit-link" style="margin-bottom:8px"><input readonly value="${SITIO}/feeds/google.xml"><button class="btn btn--sm" data-feed="${SITIO}/feeds/google.xml">Copiar</button></div>
+      <p class="muted small">Google Shopping: Merchant Center → Productos → Fuentes de datos → «Recuperación programada» → pega este enlace.</p></div>
     <div class="kpis">
       <div class="kpi"><b>${vis}</b><span>Visitas (personas por día)</span></div>
       <div class="kpi"><b>${ped}</b><span>Pedidos enviados desde la web</span></div>
@@ -288,6 +412,8 @@ async function vistaMarketing() {
     ${bloque("Páginas más visitadas", r.paginas.length ? `<table class="tabla"><tr><th>Página</th><th class="n">Vistas</th><th class="n">Personas</th></tr>
       ${r.paginas.map(x => `<tr><td><a href="${esc(x.pagina)}" target="_blank" rel="noopener">${esc(x.pagina)}</a></td><td class="n">${x.vistas}</td><td class="n">${x.personas}</td></tr>`).join("")}</table>` : vacio)}`);
   bindRango(vistaMarketing);
+  bindKit();
+  $$("[data-feed]").forEach(b => b.addEventListener("click", async () => { try { await navigator.clipboard.writeText(b.dataset.feed); toast("Enlace copiado"); } catch {} }));
 }
 
 /* ---------- próximamente ---------- */

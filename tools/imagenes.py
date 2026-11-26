@@ -185,6 +185,35 @@ def detalles():
     print("detalles del marco:", n)
 
 
+def feed():
+    """Imagen cuadrada 900×900 (cuadro con marco sobre pared clara) para Meta y Google Shopping."""
+    out_dir = os.path.join(ROOT, "img", "feed"); os.makedirs(out_dir, exist_ok=True)
+    n = 0
+    for x in CAT["productos"]:
+        if not x.get("i") or x.get("q"): continue
+        out = os.path.join(out_dir, x["s"] + ".jpg")
+        if not need(out): continue
+        k = 3 if x["o"] == "triptico" else 2 if x["o"] == "diptico" else 1
+        files = [f"{x['s']}.webp"] if k == 1 else [f"{x['s']}-{i + 1}.webp" for i in range(k)]
+        W = 900
+        wall = Image.new("RGB", (W, W), (226, 221, 212))
+        g = Image.new("L", (W, W), 0)
+        ImageDraw.Draw(g).ellipse((-200, -300, 1000, 700), fill=110)
+        wall.paste((243, 240, 233), (0, 0), g.filter(ImageFilter.GaussianBlur(170)))
+        horizontal = k == 1 and x["o"] in ("horizontal", "panoramico")
+        fh = 560 if k == 1 and not horizontal else 420 if horizontal else 300 if k == 3 else 380
+        frames = [framed(Image.open(os.path.join(SRC, f)).convert("RGB"), fh) for f in files]
+        gap = 26; total = sum(f.width for f in frames) + gap * (k - 1)
+        x0, y0 = (W - total) // 2, (W - fh) // 2 - 20
+        sh = Image.new("L", (W, W), 0); d = ImageDraw.Draw(sh); xx = x0
+        for f in frames: d.rectangle((xx + 14, y0 + 22, xx + f.width + 14, y0 + fh + 26), fill=150); xx += f.width + gap
+        wall.paste((40, 36, 30), (0, 0), sh.filter(ImageFilter.GaussianBlur(20)))
+        xx = x0
+        for f in frames: wall.paste(f, (xx, y0)); xx += f.width + gap
+        wall.save(out, "JPEG", quality=84, optimize=True, progressive=True); n += 1
+    print("imágenes de catálogo:", n)
+
+
 def ambiente():
     """Miniaturas de 520 px de las fotos de ambiente (img/ambiente/t/)."""
     d = os.path.join(ROOT, "img", "ambiente")
@@ -201,4 +230,4 @@ def ambiente():
 
 
 if __name__ == "__main__":
-    thumbs(); ogs(); icons(); detalles(); ambiente()
+    thumbs(); ogs(); icons(); detalles(); feed(); ambiente()

@@ -798,8 +798,53 @@ Sitemap: {h('/sitemap.xml')}
   X-Frame-Options: DENY
 /data/*
   X-Robots-Tag: noindex
+/feeds/*
+  X-Robots-Tag: noindex
+  Cache-Control: public, max-age=3600
 """)
     write("_redirects", "/todos/ /#catalogo 301\n/cuadros-de-leon/ /cuadros-motivacionales/ 301\n/cuadros-de-ciudades/ /cuadros-de-peru-y-ciudades/ 301\n/cuadros-para-oficina-y-profesionales/ /cuadros-para-profesionales/ 301\n")
+
+
+def build_feeds():
+    """Catálogos de productos para anuncios: Meta (CSV) y Google Merchant Center (XML)."""
+    import csv, io
+    prods = [x for x in sorted(PRODS, key=rank) if x.get("i") and not x.get("q")]
+    cat_google = "Home & Garden > Decor > Artwork > Posters, Prints, & Visual Artwork"
+    rows = []
+    for x in prods:
+        col = COL[x["c"]]
+        desc = descripcion(x)
+        rows.append({
+            "id": x["s"], "title": f"{x['n']} · Cuadro con marco"[:150], "description": desc[:5000],
+            "availability": "in stock", "condition": "new", "price": f"{precio_total(x):.2f} PEN",
+            "link": h(purl(x)), "image_link": h(f"/img/feed/{x['s']}.jpg"),
+            "additional_image_link": h(f"/img/og/{x['s']}.jpg"),
+            "brand": C["marca"], "google_product_category": cat_google, "fb_product_category": "home decor > wall art",
+            "product_type": f"Cuadros > {col['nombre']}" + (f" > {sub_nombre(x)}" if sub_nombre(x) else ""),
+            "custom_label_0": col["nombre"], "custom_label_1": "mas_pedido" if x.get("t") else "nuevo" if x.get("nw") else "catalogo",
+            "custom_label_2": "personalizado" if x.get("p") else "triptico" if x["o"] == "triptico" else "pieza",
+            "custom_label_3": ",".join(x["a"]),
+        })
+    buf = io.StringIO()
+    w = csv.DictWriter(buf, fieldnames=list(rows[0].keys())); w.writeheader(); w.writerows(rows)
+    write("feeds/meta.csv", buf.getvalue())
+    items = []
+    for r in rows:
+        x = BY[r["id"]]
+        link = r["link"] + "?utm_source=google&utm_medium=shopping&utm_campaign=catalogo"
+        items.append(f"""<item><g:id>{e(r['id'])}</g:id><title>{e(r['title'])}</title><description>{e(r['description'])}</description>
+<link>{e(link)}</link><g:image_link>{e(r['image_link'])}</g:image_link>{''.join(f'<g:additional_image_link>{e(u)}</g:additional_image_link>' for u in r['additional_image_link'].split(','))}
+<g:availability>in_stock</g:availability><g:condition>new</g:condition><g:price>{e(r['price'])}</g:price><g:brand>{e(r['brand'])}</g:brand>
+<g:identifier_exists>no</g:identifier_exists><g:google_product_category>{e(cat_google)}</g:google_product_category><g:product_type>{e(r['product_type'])}</g:product_type>
+<g:custom_label_0>{e(r['custom_label_0'])}</g:custom_label_0><g:custom_label_1>{e(r['custom_label_1'])}</g:custom_label_1><g:custom_label_2>{e(r['custom_label_2'])}</g:custom_label_2>
+<g:shipping><g:country>PE</g:country><g:service>Agencia o delivery</g:service><g:price>0.00 PEN</g:price></g:shipping></item>""")
+    write("feeds/google.xml", f"""<?xml version="1.0" encoding="UTF-8"?>
+<rss version="2.0" xmlns:g="http://base.google.com/ns/1.0"><channel><title>{e(C['marca'])}</title><link>{h('/')}</link>
+<description>Cuadros con marco hechos a pedido en Lima</description>
+{chr(10).join(items)}
+</channel></rss>
+""")
+    return len(rows)
 
 
 def main():
@@ -818,7 +863,8 @@ def main():
         paths.append((build_product(x), [h(img_main(x))] if x.get("i") else []))
     build_404()
     build_seo(paths)
-    print(f"OK: {len(paths)} páginas · sitio {SITE}")
+    nf = build_feeds()
+    print(f"OK: {len(paths)} páginas · {nf} productos en los catálogos de anuncios · sitio {SITE}")
 
 
 if __name__ == "__main__":

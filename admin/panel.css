@@ -144,3 +144,16 @@ label.f>span{display:block;font-size:.72rem;color:var(--muted);margin-bottom:4px
   .paso{grid-template-columns:100px 1fr 70px}
   .grid2{grid-template-columns:1fr}
 }
+
+/* Kit de campaña */
+.kit-out{margin-top:16px;display:grid;gap:14px}
+.kit-link{display:flex;gap:8px}
+.kit-link input{font-family:ui-monospace,monospace;font-size:.78rem}
+.kit-grid{display:grid;grid-template-columns:180px 1fr;gap:16px;align-items:start}
+.kit-qr{background:#fff;padding:10px;display:grid;gap:8px}
+.kit-qr svg{width:100%;height:auto;display:block}
+.kit-qr .btn{color:#111;border-color:#ccc}
+.kit-txt{display:grid;gap:12px}
+.kit-txt textarea{font-size:.82rem;min-height:0;margin:4px 0 6px}
+.kit-img{display:flex;gap:8px;flex-wrap:wrap}
+@media (max-width:900px){.kit-grid{grid-template-columns:1fr}.kit-qr{max-width:200px}#kit .grid2{grid-template-columns:1fr 1fr!important}}
