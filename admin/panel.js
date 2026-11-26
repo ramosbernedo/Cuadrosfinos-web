@@ -599,7 +599,7 @@ async function listaProductos() {
 async function vistaProductos() {
   shell("productos", `<div class="top"><div><h1>Productos</h1><p>Tus cuadros en la web. Crea nuevos, cambia precios y textos, u ocúltalos.</p></div>
     <button class="btn btn--p" id="crear">+ Nuevo cuadro</button></div>${pestanas("productos", "catalogo")}
-    <div class="filtros" id="fp">${[["todos", "Todos"], ["web", "En la web"], ["nuevo", "Creados en el panel"], ["modificado", "Modificados"], ["borrador", "Borradores"], ["oculto", "Ocultos"]].map(([k, n]) => `<button class="chip ${k === FILPROD ? "on" : ""}" data-f="${k}">${n}<small data-c="${k}"></small></button>`).join("")}</div>
+    <div class="filtros" id="fp">${[["todos", "Todos"], ["web", "Originales"], ["nuevo", "Creados por ti"], ["modificado", "Editados"], ["borrador", "Borradores"], ["oculto", "Ocultos"]].map(([k, n]) => `<button class="chip ${k === FILPROD ? "on" : ""}" data-f="${k}">${n}<small data-c="${k}"></small></button>`).join("")}</div>
     <input type="search" id="bp" placeholder="Buscar cuadro por nombre o colección" value="${esc(BUSPROD)}" style="margin-bottom:14px">
     <div class="prods" id="prods">${'<div class="sk" style="height:250px"></div>'.repeat(8)}</div>`);
   $("#crear").addEventListener("click", () => location.hash = "#/productos/nuevo");
@@ -612,7 +612,7 @@ async function vistaProductos() {
     $$("#fp [data-c]").forEach(sm => sm.textContent = cnt[sm.dataset.c] || "");
     const q = norm(BUSPROD);
     const l = todos.filter(p => (FILPROD === "todos" || p.estado === FILPROD) && (!q || norm(`${p.x.n} ${colNom(p.x.c)}`).includes(q)));
-    const etiqueta = { web: "", nuevo: '<span class="est est--entregado">Nuevo</span>', modificado: '<span class="est est--confirmado">Modificado</span>', borrador: '<span class="est est--nuevo">Borrador</span>', oculto: '<span class="est est--cancelado">Oculto</span>' };
+    const etiqueta = { web: "", nuevo: '<span class="est est--entregado">En la web · creado por ti</span>', modificado: '<span class="est est--entregado">En la web · editado</span>', borrador: '<span class="est est--nuevo">Borrador</span>', oculto: '<span class="est est--cancelado">Oculto</span>' };
     $("#prods").innerHTML = l.length ? l.map(({ x, estado }) => `<button class="prod" data-s="${esc(x.s)}">
       <span class="prod__img"><img src="${imgDe(x, true)}" alt="" loading="lazy"></span>
       <span class="prod__info"><b>${esc(x.n)}</b><small>${esc(colNom(x.c))} · ${x.q ? "Cotizar" : "S/ " + (x.pr || PRECIO_STD(x)) + (x.pr ? " (especial)" : "")}</small>${etiqueta[estado]}</span></button>`).join("") : vacio("No hay cuadros con ese filtro.", "productos");
