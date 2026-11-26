@@ -50,7 +50,7 @@ function vistaIngreso(setup) {
 }
 
 /* ---------- estructura ---------- */
-const SECCIONES = [["resumen", "Resumen"], ["pedidos", "Pedidos"], ["entregas", "Entregas"], ["marketing", "Marketing", "fase 2"], ["productos", "Productos", "fase 3"], ["generador", "Generador", "fase 4"], ["ajustes", "Ajustes"]];
+const SECCIONES = [["resumen", "Resumen"], ["pedidos", "Pedidos"], ["entregas", "Entregas"], ["marketing", "Marketing"], ["productos", "Productos", "fase 3"], ["generador", "Generador", "fase 4"], ["ajustes", "Ajustes"]];
 function shell(activa, contenido, badge = {}) {
   app.innerHTML = `<div class="shell"><nav class="side" aria-label="Secciones">
     <div class="marca"><span class="wm"><i></i></span>Cuadros Finos</div>
@@ -239,9 +239,59 @@ async function vistaEntregas() {
   }));
 }
 
+/* ---------- marketing ---------- */
+async function vistaMarketing() {
+  shell("marketing", `<p class="cargando">Cargando…</p>`);
+  const r = await api("marketing?dias=" + DIAS);
+  const nombre = s => (BY[s] && BY[s].n) || s;
+  const tasa = (a, b) => b ? pct(a / b) : "—";
+  const vis = r.dia.reduce((a, d) => a + d.sesiones, 0), ped = r.dia.reduce((a, d) => a + d.pedidos, 0);
+  const smax = Math.max(1, ...r.dia.map(d => d.sesiones));
+  const inter = Object.fromEntries(r.interaccion.map(x => [x.probo, x]));
+  const conP = inter[1] || { sesiones: 0, pedidos: 0 }, sinP = inter[0] || { sesiones: 0, pedidos: 0 };
+  const U = r.uso;
+  const bloque = (t, html, nota = "") => `<div class="panel"><h2>${t}</h2>${html}${nota ? `<p class="muted small" style="margin-top:8px">${nota}</p>` : ""}</div>`;
+  const vacio = `<p class="vacio">Aún no hay datos en este periodo.</p>`;
+  // productos: ordenar por vistas, marcar oportunidades
+  const prods = r.productos.slice().sort((a, b) => b.vieron - a.vieron);
+  shell("marketing", `
+    <div class="top"><h1>Marketing</h1>${rangoSeg()}</div>
+    <div class="kpis">
+      <div class="kpi"><b>${vis}</b><span>Visitas (personas por día)</span></div>
+      <div class="kpi"><b>${ped}</b><span>Pedidos enviados desde la web</span></div>
+      <div class="kpi"><b>${tasa(ped, vis)}</b><span>Conversión visita → pedido</span></div>
+      <div class="kpi"><b>${tasa(conP.pedidos, conP.sesiones)}</b><span>Conversión de quien probó pared / 3D / AR <small class="muted">(vs ${tasa(sinP.pedidos, sinP.sesiones)} sin probar)</small></span></div>
+    </div>
+    ${bloque("Visitas por día", r.dia.length ? `<div class="serie">${r.dia.map(d => `<div title="${esc(d.dia)}: ${d.sesiones} visitas, ${d.pedidos} pedidos" style="height:${(d.sesiones / smax) * 100}%"><i style="height:${d.sesiones ? (d.pedidos / d.sesiones) * 100 : 0}%;min-height:${d.pedidos ? 3 : 0}px"></i></div>`).join("")}</div>` : vacio,
+      "Gris: visitas · Verde: la parte de esas visitas que envió un pedido")}
+    <div class="panel"><h2>Embudo por fuente</h2>${r.embudoFuente.length ? `<table class="tabla"><tr><th>Fuente</th><th class="n">Visitas</th><th class="n">Vieron cuadro</th><th class="n">Agregaron</th><th class="n">Pidieron</th><th class="n">Conversión</th></tr>
+      ${r.embudoFuente.map(f => `<tr><td>${esc(f.fuente)}</td><td class="n">${f.visitas}</td><td class="n">${f.vieron}</td><td class="n">${f.agregaron}</td><td class="n">${f.pidieron}</td><td class="n">${tasa(f.pidieron, f.visitas)}</td></tr>`).join("")}</table>` : vacio}
+      <p class="muted small" style="margin-top:8px">Usa enlaces con <code>?utm_source=instagram&amp;utm_campaign=…</code> en tus publicaciones y anuncios para verlos separados aquí.</p></div>
+    <div class="panel"><h2>Cuadros: interés vs. ventas</h2>${prods.length ? `<div style="overflow-x:auto"><table class="tabla"><tr><th>Cuadro</th><th class="n">Lo vieron</th><th class="n">Probaron pared/3D</th><th class="n">Agregaron</th><th class="n">Pedidos</th><th class="n">Vendidos</th><th class="n">Vista → pedido</th><th></th></tr>
+      ${prods.map(x => { const conv = x.vieron ? x.pedidos / x.vieron : 0;
+        const flag = x.vieron >= 10 && conv < .02 ? '<span class="est est--pagado">Mucho interés, pocas ventas</span>' : x.pedidos >= 2 && conv >= .1 ? '<span class="est est--entregado">Estrella</span>' : "";
+        return `<tr><td>${esc(nombre(x.s))}</td><td class="n">${x.vieron}</td><td class="n">${x.probaron}</td><td class="n">${x.agregaron}</td><td class="n">${x.pedidos}</td><td class="n">${x.vendidos || 0}</td><td class="n">${x.vieron ? pct(conv) : "—"}</td><td>${flag}</td></tr>`; }).join("")}</table></div>` : vacio}
+      <p class="muted small" style="margin-top:8px">«Mucho interés, pocas ventas»: revisa precio, fotos o descripción. «Estrella»: úsalo en anuncios.</p></div>
+    <div class="cols">
+      ${bloque("Fuentes y campañas", r.fuentes.length ? `<table class="tabla"><tr><th>Fuente / medio / campaña</th><th class="n">Visitas</th><th class="n">Agregaron</th><th class="n">Pedidos</th></tr>
+        ${r.fuentes.map(f => `<tr><td>${esc(f.fuente)}${f.medio ? ` <span class="muted">/ ${esc(f.medio)}</span>` : ""}${f.campana ? `<br><span class="muted small">${esc(f.campana)}</span>` : ""}</td><td class="n">${f.sesiones}</td><td class="n">${f.agregaron}</td><td class="n">${f.pedidos}</td></tr>`).join("")}</table>` : vacio)}
+      ${bloque("Lo que buscan", r.busquedas.length ? `<table class="tabla"><tr><th>Búsqueda</th><th class="n">Veces</th><th></th></tr>
+        ${r.busquedas.map(b => `<tr><td>${esc(b.termino)}</td><td class="n">${b.veces}</td><td>${b.min_resultados === 0 ? '<span class="est est--pagado">Sin resultados</span>' : ""}</td></tr>`).join("")}</table>` : vacio,
+        "«Sin resultados» = lo buscan y no lo tienes: ideas para el generador de productos.")}
+      ${bloque("Dispositivos", r.disp.length ? `<table class="tabla"><tr><th>Dispositivo</th><th class="n">Visitas</th><th class="n">Pedidos</th><th class="n">Conversión</th></tr>
+        ${r.disp.map(d => `<tr><td>${esc(d.disp)}</td><td class="n">${d.sesiones}</td><td class="n">${d.pedidos}</td><td class="n">${tasa(d.pedidos, d.sesiones)}</td></tr>`).join("")}</table>` : vacio)}
+      ${bloque("Ciudades (aproximado)", r.regiones.length ? `<table class="tabla"><tr><th>Ciudad / región</th><th class="n">Visitas</th><th class="n">Pedidos</th></tr>
+        ${r.regiones.map(d => `<tr><td>${esc(d.region)}</td><td class="n">${d.sesiones}</td><td class="n">${d.pedidos}</td></tr>`).join("")}</table>` : vacio)}
+      ${bloque("Herramientas de la web", `<table class="tabla">${[["ver_pared", "Vieron «En tu pared»"], ["ver_3d", "Abrieron el 3D"], ["realidad_aumentada", "Usaron realidad aumentada"], ["personalizar", "Personalizaron"], ["zoom", "Usaron el zoom"], ["ver_foto", "Vieron fotos de ambiente"], ["ayuda_inicio", "Abrieron «Ayúdame a elegir»"], ["ayuda_resultado", "Terminaron la guía"], ["search", "Buscaron"], ["filtrar", "Filtraron el catálogo"], ["contacto_whatsapp", "Escribieron por WhatsApp (botón)"]].map(([k, t]) => `<tr><td>${t}</td><td class="n">${U[k] || 0}</td></tr>`).join("")}</table>`)}
+      ${bloque("Compartidos", r.compartir.length ? `<table class="tabla"><tr><th>Cómo</th><th class="n">Veces</th></tr>${r.compartir.map(c => `<tr><td>${esc(c.metodo)}</td><td class="n">${c.veces}</td></tr>`).join("")}</table>` : vacio)}
+    </div>
+    ${bloque("Páginas más visitadas", r.paginas.length ? `<table class="tabla"><tr><th>Página</th><th class="n">Vistas</th><th class="n">Personas</th></tr>
+      ${r.paginas.map(x => `<tr><td><a href="${esc(x.pagina)}" target="_blank" rel="noopener">${esc(x.pagina)}</a></td><td class="n">${x.vistas}</td><td class="n">${x.personas}</td></tr>`).join("")}</table>` : vacio)}`);
+  bindRango(vistaMarketing);
+}
+
 /* ---------- próximamente ---------- */
 const PRONTO = {
-  marketing: ["Marketing", "Campañas, fuentes, productos más vistos frente a más vendidos, búsquedas sin resultado y conversión por colección. El resumen ya muestra el embudo y las fuentes; aquí irá el detalle."],
   productos: ["Productos", "Crear, editar y ocultar cuadros, cambiar precios y subir imágenes, con un botón «Publicar» que actualiza la web."],
   generador: ["Generador de productos", "Escribe una idea y la IA crea la imagen y propone nombre, frase y colección. La revisas en el marco y en la pared antes de publicar."],
 };
@@ -281,6 +331,7 @@ async function render() {
     if (sec === "pedidos") return vistaPedidos();
     if (sec === "entregas") return vistaEntregas();
     if (sec === "ajustes") return vistaAjustes();
+    if (sec === "marketing") return vistaMarketing();
     if (PRONTO[sec]) return vistaPronto(sec);
     return vistaResumen();
   } catch (e) { if (YO) app.innerHTML = `<p class="cargando">${esc(e.message)}</p>`; }

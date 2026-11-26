@@ -85,6 +85,12 @@ const UA = "Mozilla/5.0 (Linux; Android 14; Pixel 7) AppleWebKit/537.36 (KHTML, 
   ok("Resumen: el embudo recibe las visitas de la web", (res.embudo.page_view || 0) >= 1 && (res.embudo.generate_lead || 0) >= 1, JSON.stringify(res.embudo));
   ok("Resumen: cuadros más pedidos y más vistos", res.top.some(t => t.s === "gorila-respeto") && res.vistos.some(v => v.s === "gorila-respeto"));
 
+  // 6b. Marketing
+  const mk = await (await api.get(BASE + "/api/admin/marketing?dias=30")).json();
+  ok("Marketing: fuentes, productos con interés vs ventas y embudo por fuente", mk.ok && mk.fuentes.some(f => f.fuente === "instagram") && mk.productos.some(x => x.s === "gorila-respeto" && x.vieron >= 1 && x.pedidos >= 1) && mk.embudoFuente.length >= 1);
+  await p.goto(BASE + "/admin/#/marketing", { waitUntil: "networkidle" }); await p.waitForTimeout(700);
+  ok("Marketing: la vista carga sin errores", (await p.textContent("h1")).includes("Marketing") && await p.isVisible(".kpis"));
+
   // 7. Pedido manual, usuarios y límite de intentos
   const man = await (await api.post(BASE + "/api/admin/pedidos", { data: { items: [{ s: "leon-fuerza", n: "León · Fuerza", qty: 2, precio: 84 }], cliente: "Tienda", fuente: "instagram" } })).json();
   ok("Pedido manual desde el panel", man.ok && /^CF-/.test(man.codigo));

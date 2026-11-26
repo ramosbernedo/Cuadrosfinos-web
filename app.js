@@ -694,7 +694,7 @@ function bindGeneral() {
   $$("dialog").forEach(d => d.addEventListener("click", e => { if (d !== dlg && (e.target === d || e.target.closest("[data-close]"))) d.close(); }));
   $("#openSearch").addEventListener("click", openSearch);
   $("#nfSearch")?.addEventListener("click", openSearch);
-  $("#sq").addEventListener("input", e => { renderSearch(e.target.value); const v = e.target.value.trim(); clearTimeout(window.__ts); if (v.length >= 3) window.__ts = setTimeout(() => T("search", { search_term: v, lugar: "buscador" }), 1200); });
+  $("#sq").addEventListener("input", e => { renderSearch(e.target.value); const v = e.target.value.trim(); clearTimeout(window.__ts); if (v.length >= 3) window.__ts = setTimeout(() => T("search", { search_term: v, lugar: "buscador", resultados: DATA.filter(x => matches(x, v)).length }), 1200); });
   $("#search form").addEventListener("submit", e => {
     e.preventDefault();
     const first = $("#sRes a.s-item"); if (first) return first.click();

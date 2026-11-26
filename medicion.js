@@ -102,7 +102,7 @@ document.addEventListener("visibilitychange", () => document.visibilityState ===
 function propio(name, p) {
   if (!PROPIOS.has(name) || DEBUG && qs.get("medir") === "debug-sin-panel") return;
   const o = origen();
-  cola.push({ n: name, s: p.item_id || (p.items && p.items[0] && p.items[0].item_id) || null, v: p.value ?? null, t: p.search_term || p.method || null,
+  cola.push({ n: name, s: p.item_id || (p.items && p.items[0] && p.items[0].item_id) || null, v: name === "search" ? (p.resultados ?? null) : (p.value ?? null), t: p.search_term || p.method || null,
     sid, p: location.pathname, fu: o.utm_source || null, me: o.utm_medium || null, ca: o.utm_campaign || null });
   if (cola.length >= 10 || /^(page_view|view_item|add_to_cart|view_cart|begin_checkout|generate_lead)$/.test(name)) { clearTimeout(colaT); colaT = setTimeout(enviarCola, 60); }
   else if (!colaT) colaT = setTimeout(enviarCola, 2500);
