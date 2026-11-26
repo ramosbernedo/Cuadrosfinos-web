@@ -70,6 +70,10 @@ export async function onRequest(ctx) {
   if (!yo) return error("Inicia sesión", 401);
   const quien = yo.nombre || yo.email;
 
+  if (ruta === "sistema") {
+    const r = await env.DB.prepare(`SELECT (SELECT COUNT(*) FROM pedidos) pedidos, (SELECT COUNT(*) FROM productos) productos, (SELECT COUNT(*) FROM eventos) eventos, (SELECT MAX(fecha) FROM eventos) ultimo`).first();
+    return json({ ok: true, db: true, ia: !!env.AI, sesion: !!env.SESSION_SECRET, pedidos: r.pedidos, productos: r.productos, eventos: r.eventos, ultimoEvento: r.ultimo || null });
+  }
   if (ruta === "pulso") {
     const r = await env.DB.prepare(`SELECT SUM(estado='nuevo') nuevos, SUM(estado IN ('pagado','produccion','listo') AND fecha_prometida < date('now')) atrasados,
       MAX(creado) ultimo FROM pedidos`).first();

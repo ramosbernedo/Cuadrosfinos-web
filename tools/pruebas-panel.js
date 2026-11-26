@@ -57,7 +57,7 @@ const UA = "Mozilla/5.0 (Linux; Android 14; Pixel 7) AppleWebKit/537.36 (KHTML, 
   ok("El cliente envía su pedido por WhatsApp con código", !!codigo, codigo);
 
   // 4. El pedido aparece en el panel
-  await p.goto(BASE + "/admin/#/pedidos", { waitUntil: "networkidle" }); await p.waitForTimeout(800);
+  await p.goto(BASE + "/admin/#/ventas", { waitUntil: "networkidle" }); await p.waitForTimeout(800);
   ok("El pedido aparece solo en el panel", await p.isVisible(`[data-cod="${codigo}"]`));
   let alerted = false; p.on("dialog", d => { alerted = true; d.dismiss(); });
   await p.click(`[data-cod="${codigo}"]`); await p.waitForSelector(".drawer");
@@ -74,7 +74,7 @@ const UA = "Mozilla/5.0 (Linux; Android 14; Pixel 7) AppleWebKit/537.36 (KHTML, 
   await p.click(".mas-estados summary"); await p.click('#pasos [data-e="pagado"]'); await p.waitForTimeout(900);
   ok("Marcar como pagado pone fecha prometida automática", (await p.inputValue("[name=fecha_prometida]")).length === 10 && (await p.textContent(".hist")).includes("Nuevo → Pagado"));
   await p.keyboard.press("Escape"); await p.waitForTimeout(300);
-  await p.goto(BASE + "/admin/#/entregas", { waitUntil: "networkidle" }); await p.waitForTimeout(600);
+  await p.goto(BASE + "/admin/#/logistica", { waitUntil: "networkidle" }); await p.waitForTimeout(600);
   ok("El pedido pagado aparece en Entregas › Por producir", (await p.textContent(".col-ent > div:nth-child(2)")).includes(codigo));
   await p.click(`[data-sig="${codigo}"]`); await p.waitForTimeout(700);
   ok("Avanzar a «En producción» desde Entregas", (await p.textContent(".col-ent > div:nth-child(2)")).includes("En producción"));
@@ -84,10 +84,10 @@ const UA = "Mozilla/5.0 (Linux; Android 14; Pixel 7) AppleWebKit/537.36 (KHTML, 
   await c2.goto(BASE + "/cuadro/leon-fuerza/", { waitUntil: "networkidle" });
   await c2.click("#pWa"); await c2.waitForTimeout(1200);
   const cod2 = (decodeURIComponent(await c2.getAttribute("#pWa", "href")).match(/CF-[2-9A-Z]{4}/) || [])[0];
-  await p.goto(BASE + "/admin/#/resumen", { waitUntil: "networkidle" }); await p.waitForSelector(".hoy");
+  await p.goto(BASE + "/admin/#/dashboard", { waitUntil: "networkidle" }); await p.waitForSelector(".hoy");
   ok("Inicio: «Responder ya» muestra el pedido nuevo con su tiempo de espera", (await p.textContent(".hoy .rojo")).includes(cod2) && !!(await p.$(".hoy .rojo .esp")));
   ok("Inicio: semáforo con las 6 cifras clave", (await p.$$(".salud .ind")).length === 6);
-  ok("Aviso de pedidos nuevos en el menú y en la pestaña", (await p.title()).startsWith("(") && !!(await p.$('.side a[href="#/pedidos"] .badge')));
+  ok("Aviso de pedidos nuevos en el menú y en la pestaña", (await p.title()).startsWith("(") && !!(await p.$('.side a[href="#/ventas"] .badge')));
   await p.goto(BASE + "/admin/#/pedidos", { waitUntil: "networkidle" }); await p.waitForTimeout(400);
   await p.click('.top .seg [data-v="tablero"]'); await p.waitForSelector(".kanban");
   await p.dragAndDrop(`.kcard[data-cod="${cod2}"]`, '.kcol[data-col="confirmado"]'); await p.waitForTimeout(900);
@@ -115,6 +115,25 @@ const UA = "Mozilla/5.0 (Linux; Android 14; Pixel 7) AppleWebKit/537.36 (KHTML, 
   ok("Marketing: fuentes, productos con interés vs ventas y embudo por fuente", mk.ok && mk.fuentes.some(f => f.fuente === "instagram") && mk.productos.some(x => x.s === "gorila-respeto" && x.vieron >= 1 && x.pedidos >= 1) && mk.embudoFuente.length >= 1);
   await p.goto(BASE + "/admin/#/marketing", { waitUntil: "networkidle" }); await p.waitForTimeout(700);
   ok("Marketing: la vista carga sin errores", (await p.textContent("h1")).includes("Marketing") && await p.isVisible(".kpis"));
+
+  // 6b2. Navegación en 6 áreas con pestañas
+  {
+    const areas = await p.$$eval(".side a .lbl", l => l.map(x => x.textContent));
+    ok("Menú: 6 áreas (Dashboard, Marketing, Ventas, Logística, Productos, Desarrollo)", areas.join() === "Dashboard,Marketing,Ventas,Logística,Productos,Desarrollo", areas.join());
+    await p.click('.tabs a[href="#/marketing/kit"]'); await p.waitForSelector("#kDest");
+    ok("Marketing → Kit de campaña", await p.isVisible("#kDest") && !(await p.$(".kpis")));
+    await p.click('.tabs a[href="#/marketing/anuncios"]'); await p.waitForSelector("[data-feed]");
+    ok("Marketing → Anuncios (catálogos Meta y Google)", (await p.$$("[data-feed]")).length === 2);
+    await p.goto(BASE + "/admin/#/desarrollo/integraciones", { waitUntil: "networkidle" }); await p.waitForSelector(".integ");
+    ok("Desarrollo → Integraciones muestra el estado del sistema", (await p.textContent(".integ")).includes("Base de datos") && !!(await p.$(".integ .luz.v")));
+    await p.goto(BASE + "/admin/#/ajustes", { waitUntil: "networkidle" }); await p.waitForFunction(() => location.hash === "#/desarrollo" && document.querySelector(".tabs a.on")?.textContent === "Equipo", null, { timeout: 5000 }).catch(() => {});
+    ok("Enlaces antiguos siguen funcionando (#/ajustes → Desarrollo)", p.url().endsWith("#/desarrollo") && (await p.textContent("h1")) === "Desarrollo");
+    const pm = await p.context().newPage(); await pm.setViewportSize({ width: 390, height: 844 });
+    await pm.goto(BASE + "/admin/#/dashboard", { waitUntil: "networkidle" }); await pm.waitForSelector(".hoy");
+    const vis = await pm.$$eval(".side a", l => l.filter(a => a.getBoundingClientRect().right <= innerWidth + 1 && a.offsetParent).length);
+    ok("Celular: las 6 áreas caben abajo sin desplazar", vis === 6 && await pm.evaluate(() => document.documentElement.scrollWidth <= innerWidth), String(vis));
+    await pm.close();
+  }
 
   // 6c. Productos: crear, subir imagen, publicar, cambiar precio, ocultar y restaurar (sin gastar IA)
   {
@@ -147,6 +166,15 @@ const UA = "Mozilla/5.0 (Linux; Android 14; Pixel 7) AppleWebKit/537.36 (KHTML, 
     ok("Productos: deshacer devuelve el cuadro original", (await api.get(BASE + "/cuadro/leon-fuerza/")).status() === 200 && !(await (await api.get(BASE + "/data.js?y=" + Date.now())).text()).includes('"pr":95'));
     await p.goto(BASE + "/admin/#/productos", { waitUntil: "networkidle" }); await p.waitForSelector(".prod");
     ok("Productos: la sección lista los cuadros", (await p.$$(".prod")).length >= 80);
+    await p.click('.prod[data-s="gorila-respeto"]'); await p.waitForSelector("#publicar");
+    const pie = await p.$$eval(".guardar > .btn", l => l.map(x => x.id));
+    ok("Editor: solo 2 botones principales y el resto en «⋯»", pie.join() === "publicar,borrador" && !!(await p.$(".menu-mas #ocultar")) && !(await p.isVisible("#ocultar")));
+    await p.click(".menu-mas summary"); ok("Editor: el menú «⋯» se abre", await p.isVisible("#ocultar"));
+    await p.keyboard.press("Escape"); await p.click(".drawer .cerrar").catch(() => {});
+    await p.goto(BASE + "/admin/#/productos/nuevo", { waitUntil: "networkidle" }); await p.waitForSelector("#idea");
+    ok("Productos → Nuevo cuadro abre el creador", await p.isVisible("#idea") && !!(await p.$('.tabs a.on[href="#/productos/nuevo"]')));
+    await p.click(".drawer .cerrar"); await p.waitForTimeout(300);
+    ok("Cerrar el creador vuelve al catálogo", p.url().endsWith("#/productos") && !(await p.$(".drawer")));
   }
 
   // 7. Pedido manual, usuarios y límite de intentos

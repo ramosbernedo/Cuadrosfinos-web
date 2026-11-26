@@ -60,6 +60,11 @@ const ICO = {
   productos: '<rect x="4" y="3" width="16" height="18" rx="1"/><rect x="8" y="7" width="8" height="10"/>',
   generador: '<path d="m12 3 1.9 5.8L20 10l-5 3.8L16.6 20 12 16.5 7.4 20 9 13.8 4 10l6.1-1.2z"/>',
   ajustes: '<circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/>',
+  dashboard: '<rect x="3" y="3" width="7" height="9" rx="1"/><rect x="14" y="3" width="7" height="5" rx="1"/><rect x="14" y="12" width="7" height="9" rx="1"/><rect x="3" y="16" width="7" height="5" rx="1"/>',
+  ventas: '<path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/><path d="M3 6h18M16 10a4 4 0 0 1-8 0"/>',
+  logistica: '<path d="M1 3h15v13H1zM16 8h4l3 3v5h-7z"/><circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/>',
+  desarrollo: '<path d="m16 18 6-6-6-6M8 6l-6 6 6 6"/>',
+  mas: '<circle cx="5" cy="12" r="1.6"/><circle cx="12" cy="12" r="1.6"/><circle cx="19" cy="12" r="1.6"/>',
   buscar: '<circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/>',
   sol: '<circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/>',
   luna: '<path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/>',
@@ -73,7 +78,15 @@ const ICO = {
   copiar: '<rect x="9" y="9" width="11" height="11" rx="2"/><path d="M5 15V5a2 2 0 0 1 2-2h8"/>',
 };
 const ic = (k, extra = "") => `<svg class="i" viewBox="0 0 24 24" aria-hidden="true" ${extra}>${ICO[k] || ""}</svg>`;
-const SECCIONES = [["resumen", "Inicio"], ["pedidos", "Pedidos"], ["entregas", "Entregas"], ["marketing", "Marketing"], ["productos", "Productos"], ["generador", "Crear con IA"], ["ajustes", "Ajustes"]];
+const SECCIONES = [["dashboard", "Dashboard"], ["marketing", "Marketing"], ["ventas", "Ventas"], ["logistica", "Logística"], ["productos", "Productos"], ["desarrollo", "Desarrollo"]];
+const BADGE = { ventas: ["nuevos", "Pedidos nuevos sin responder"], logistica: ["atrasados", "Entregas atrasadas"] };
+// pestañas internas de cada área
+const PESTANAS = {
+  marketing: [["analisis", "Análisis"], ["kit", "Kit de campaña"], ["anuncios", "Anuncios"]],
+  productos: [["catalogo", "Catálogo"], ["nuevo", "Nuevo cuadro"]],
+  desarrollo: [["equipo", "Equipo"], ["cuenta", "Mi cuenta"], ["integraciones", "Integraciones"]],
+};
+const pestanas = (area, activa) => `<nav class="tabs" aria-label="Secciones de ${area}">${PESTANAS[area].map(([k, n], i) => `<a href="#/${area}${i ? "/" + k : ""}" class="${k === activa ? "on" : ""}" ${k === activa ? 'aria-current="page"' : ""}>${n}</a>`).join("")}</nav>`;
 let PULSO = { nuevos: 0, atrasados: 0 };
 const tema = () => document.documentElement.dataset.theme;
 function aplicarTema(t) { document.documentElement.dataset.theme = t; try { localStorage.setItem("cf_panel_tema", t); } catch {} }
@@ -82,8 +95,8 @@ function shell(activa, contenido) {
   const ini = (YO.nombre || YO.email || "?").trim()[0].toUpperCase();
   app.innerHTML = `<div class="shell"><nav class="side" aria-label="Secciones">
     <div class="marca"><span class="wm"><i></i></span>Cuadros Finos</div>
-    ${SECCIONES.map(([k, n, f]) => { const b = k === "pedidos" ? PULSO.nuevos : k === "entregas" ? PULSO.atrasados : 0;
-      return `<a href="#/${k}" class="${k === activa ? "on" : ""} ${f ? "pronto" : ""}" ${k === activa ? 'aria-current="page"' : ""}>${ic(k)}<span class="lbl">${n}</span>${b ? `<span class="badge" title="${k === "pedidos" ? "Pedidos nuevos sin responder" : "Entregas atrasadas"}">${b}</span>` : f ? `<small>${f}</small>` : ""}</a>`; }).join("")}
+    ${SECCIONES.map(([k, n]) => { const b = BADGE[k] ? PULSO[BADGE[k][0]] : 0;
+      return `<a href="#/${k}" class="${k === activa ? "on" : ""}" ${k === activa ? 'aria-current="page"' : ""}>${ic(k)}<span class="lbl">${n}</span>${b ? `<span class="badge" title="${BADGE[k][1]}">${b}</span>` : ""}</a>`; }).join("")}
     <div class="yo"><span class="avatar">${esc(ini)}</span><div>${esc(YO.nombre || "")}<br><span class="muted small">${esc(YO.rol === "admin" ? "Administrador" : "Equipo")}</span></div></div>
   </nav><main class="main" id="main">
     <div class="bar"><button class="buscar" id="abrirBusca" type="button">${ic("buscar")}<span style="flex:1;text-align:left;padding:8px 0">Buscar pedido, cliente o teléfono…</span><kbd>Ctrl K</kbd></button>
@@ -137,17 +150,17 @@ async function pulso(primera = false) {
     const nuevo = !primera && r.ultimo && PULSO.ultimo && r.ultimo > PULSO.ultimo;
     PULSO = r; titulo();
     $$(".side a").forEach(a => {
-      const k = a.getAttribute("href").slice(2), n = k === "pedidos" ? r.nuevos : k === "entregas" ? r.atrasados : 0;
+      const k = a.getAttribute("href").slice(2), n = BADGE[k] ? r[BADGE[k][0]] : 0;
       let b = $(".badge", a); if (n) { if (!b) { b = document.createElement("span"); b.className = "badge"; a.querySelector("small")?.remove(); a.append(b); } b.textContent = n; } else b?.remove();
     });
-    if (nuevo) { toast("🛍️ ¡Llegó un pedido nuevo!"); if (location.hash === "" || location.hash === "#/resumen" || location.hash === "#/pedidos") render(); }
+    if (nuevo) { toast("🛍️ ¡Llegó un pedido nuevo!"); if (["", "#/dashboard", "#/ventas"].includes(location.hash)) render(); }
   } catch {}
 }
 setInterval(() => document.visibilityState === "visible" && pulso(), 60000);
 
 /* ---------- inicio ---------- */
 async function vistaResumen() {
-  shell("resumen", esqueleto(5));
+  shell("dashboard", esqueleto(5));
   const r = await api("resumen?dias=" + DIAS);
   const k = r.kpi, e = r.entregas, f = r.embudo, pv = r.previo, fp = pv.embudo || {};
   const nombre = s => (BY[s] && BY[s].n) || s;
@@ -170,7 +183,7 @@ async function vistaResumen() {
     ["Ticket promedio", k.pagados ? k.ticket : null, luz(k.pagados ? k.ticket : null, 110, 85), k.pagados ? soles(k.ticket) : "—", "Meta: S/ 110 o más", "Para subirlo: ofrece el tríptico o un segundo cuadro."],
   ];
   const tarea = (p, extra) => `<button class="tarea" data-cod="${esc(p.codigo)}"><b>${esc(p.codigo)}</b><span class="t">${esc(p.cliente || p.items.join(", "))}${p.lugar ? " · " + esc(p.lugar) : ""}</span>${extra}</button>`;
-  shell("resumen", `
+  shell("dashboard", `
     <div class="top"><div><h1>Hola${YO.nombre ? ", " + esc(YO.nombre.split(" ")[0]) : ""} 👋</h1><p>${new Date().toLocaleDateString("es-PE", { weekday: "long", day: "numeric", month: "long" })}</p></div>${rangoSeg()}</div>
     <div class="hoy">
       <div class="rojo"><h2>${ic("reloj")} Responder ya<span class="n">${r.pendientes.length}</span></h2>${r.pendientes.length ? r.pendientes.map(p => tarea(p, espera(p.creado))).join("") : `<p class="listo-ok">${ic("ok")} No hay pedidos esperando respuesta.</p>`}</div>
@@ -208,7 +221,7 @@ async function vistaResumen() {
 const FILTROS = [["activos", "Activos"], ...ESTADOS, ["todos", "Todos"]];
 let VISTA = (() => { try { return localStorage.getItem("cf_panel_vista") || "lista"; } catch { return "lista"; } })();
 async function vistaPedidos() {
-  shell("pedidos", `<div class="top"><div><h1>Pedidos</h1><p>Toca un pedido para ver el detalle. ${VISTA === "tablero" ? "Arrastra las tarjetas para cambiar el estado." : ""}</p></div>
+  shell("ventas", `<div class="top"><div><h1>Ventas</h1><p>Toca un pedido para ver el detalle. ${VISTA === "tablero" ? "Arrastra las tarjetas para cambiar el estado." : ""}</p></div>
       <div style="display:flex;gap:8px;align-items:center"><div class="seg" role="group" aria-label="Vista"><button data-v="lista" class="${VISTA === "lista" ? "on" : ""}" title="Lista">${ic("lista")}</button><button data-v="tablero" class="${VISTA === "tablero" ? "on" : ""}" title="Tablero">${ic("tablero")}</button></div>
       <button class="btn btn--p btn--sm" id="nuevo">+ Pedido manual</button></div></div>
     ${VISTA === "lista" ? `<div class="filtros" id="filtros">${FILTROS.map(([k, n]) => `<button class="chip ${k === FILTRO ? "on" : ""}" data-f="${k}">${n}<small data-c="${k}"></small></button>`).join("")}</div>
@@ -366,13 +379,13 @@ function pedidoManual() {
 
 /* ---------- entregas ---------- */
 async function vistaEntregas() {
-  shell("entregas", `<p class="cargando">Cargando…</p>`);
+  shell("logistica", `<p class="cargando">Cargando…</p>`);
   const { pedidos } = await api("pedidos?estado=entregas&limite=200");
   const atr = p => p.fecha_prometida && p.fecha_prometida < hoy() && p.estado !== "enviado";
   const grupos = [["Atrasados", pedidos.filter(atr)], ["Por producir", pedidos.filter(p => ["pagado", "produccion"].includes(p.estado) && !atr(p))],
     ["Listos para enviar", pedidos.filter(p => p.estado === "listo" && !atr(p))], ["En camino", pedidos.filter(p => p.estado === "enviado")]];
   const sig = { pagado: "produccion", produccion: "listo", listo: "enviado", enviado: "entregado" };
-  shell("entregas", `<div class="top"><h1>Entregas</h1><p class="muted small">Ordenado por fecha prometida</p></div>
+  shell("logistica", `<div class="top"><h1>Logística</h1><p class="muted small">Ordenado por fecha prometida</p></div>
     <div class="col-ent">${grupos.map(([t, l]) => `<div><h3>${t}<span>${l.length}</span></h3>${l.map(p => `
       <div class="ent"><button data-cod="${esc(p.codigo)}" style="text-align:left;width:100%"><b>${esc(p.codigo)}</b> ${est(p.estado)}<br>
         ${esc(p.cliente || "Sin nombre")} · ${esc(p.lugar || "—")}<br>
@@ -504,8 +517,19 @@ function bindKit() {
 function bajar(blob, nombre) { const a = document.createElement("a"); a.href = URL.createObjectURL(blob); a.download = nombre; document.body.append(a); a.click(); a.remove(); setTimeout(() => URL.revokeObjectURL(a.href), 4000); }
 
 /* ---------- marketing ---------- */
+function vistaKit() {
+  shell("marketing", `<div class="top"><div><h1>Marketing</h1><p>Arma el enlace y la imagen de cada publicación o anuncio.</p></div></div>${pestanas("marketing", "kit")}${kitHTML()}`);
+  bindKit();
+}
+function vistaAnuncios() {
+  const feed = (url, t, paso) => `<div class="panel"><h2>${t}</h2><div class="kit-link" style="margin-bottom:8px"><input readonly value="${url}"><button class="btn btn--sm" data-feed="${url}">${ic("copiar")} Copiar</button></div><p class="muted small">${paso}</p></div>`;
+  shell("marketing", `<div class="top"><div><h1>Marketing</h1><p>Catálogos para anuncios: conéctalos una vez y se actualizan solos con tus cuadros y precios.</p></div></div>${pestanas("marketing", "anuncios")}
+    <div class="cols">${feed(`${SITIO}/feeds/meta.csv`, "Meta · Instagram y Facebook", "Administrador de ventas → Catálogo → Orígenes de datos → «Feed de datos» → «Programado» → pega este enlace (cada día).")}
+    ${feed(`${SITIO}/feeds/google.xml`, "Google Shopping", "Merchant Center → Productos → Fuentes de datos → «Recuperación programada» → pega este enlace.")}</div>`);
+  $$("[data-feed]").forEach(b => b.addEventListener("click", async () => { try { await navigator.clipboard.writeText(b.dataset.feed); toast("Enlace copiado"); } catch {} }));
+}
 async function vistaMarketing() {
-  shell("marketing", `<p class="cargando">Cargando…</p>`);
+  shell("marketing", `<div class="top"><h1>Marketing</h1></div>${pestanas("marketing", "analisis")}<p class="cargando">Cargando…</p>`);
   const r = await api("marketing?dias=" + DIAS);
   const nombre = s => (BY[s] && BY[s].n) || s;
   const tasa = (a, b) => b ? pct(a / b) : "—";
@@ -519,13 +543,7 @@ async function vistaMarketing() {
   // productos: ordenar por vistas, marcar oportunidades
   const prods = r.productos.slice().sort((a, b) => b.vieron - a.vieron);
   shell("marketing", `
-    <div class="top"><h1>Marketing</h1>${rangoSeg()}</div>
-    ${kitHTML()}
-    <div class="panel"><h2>Catálogo para anuncios</h2><p class="small" style="margin-bottom:10px">Conéctalo una vez y se actualiza solo con tus cuadros y precios.</p>
-      <div class="kit-link" style="margin-bottom:8px"><input readonly value="${SITIO}/feeds/meta.csv"><button class="btn btn--sm" data-feed="${SITIO}/feeds/meta.csv">Copiar</button></div>
-      <p class="muted small" style="margin-bottom:12px">Meta (Instagram/Facebook): Administrador de ventas → Catálogo → Orígenes de datos → «Feed de datos» → «Programado» → pega este enlace (cada día).</p>
-      <div class="kit-link" style="margin-bottom:8px"><input readonly value="${SITIO}/feeds/google.xml"><button class="btn btn--sm" data-feed="${SITIO}/feeds/google.xml">Copiar</button></div>
-      <p class="muted small">Google Shopping: Merchant Center → Productos → Fuentes de datos → «Recuperación programada» → pega este enlace.</p></div>
+    <div class="top"><h1>Marketing</h1>${rangoSeg()}</div>${pestanas("marketing", "analisis")}
     <div class="kpis">
       <div class="kpi"><b>${vis}</b><span>Visitas (personas por día)</span></div>
       <div class="kpi"><b>${ped}</b><span>Pedidos enviados desde la web</span></div>
@@ -558,8 +576,6 @@ async function vistaMarketing() {
     ${bloque("Páginas más visitadas", r.paginas.length ? `<table class="tabla"><tr><th>Página</th><th class="n">Vistas</th><th class="n">Personas</th></tr>
       ${r.paginas.map(x => `<tr><td><a href="${esc(x.pagina)}" target="_blank" rel="noopener">${esc(x.pagina)}</a></td><td class="n">${x.vistas}</td><td class="n">${x.personas}</td></tr>`).join("")}</table>` : vacio)}`);
   bindRango(vistaMarketing);
-  bindKit();
-  $$("[data-feed]").forEach(b => b.addEventListener("click", async () => { try { await navigator.clipboard.writeText(b.dataset.feed); toast("Enlace copiado"); } catch {} }));
 }
 
 /* ---------- productos y creación de cuadros ---------- */
@@ -582,11 +598,11 @@ async function listaProductos() {
 }
 async function vistaProductos() {
   shell("productos", `<div class="top"><div><h1>Productos</h1><p>Tus cuadros en la web. Crea nuevos, cambia precios y textos, u ocúltalos.</p></div>
-    <button class="btn btn--p" id="crear">+ Nuevo cuadro</button></div>
+    <button class="btn btn--p" id="crear">+ Nuevo cuadro</button></div>${pestanas("productos", "catalogo")}
     <div class="filtros" id="fp">${[["todos", "Todos"], ["web", "En la web"], ["nuevo", "Creados en el panel"], ["modificado", "Modificados"], ["borrador", "Borradores"], ["oculto", "Ocultos"]].map(([k, n]) => `<button class="chip ${k === FILPROD ? "on" : ""}" data-f="${k}">${n}<small data-c="${k}"></small></button>`).join("")}</div>
     <input type="search" id="bp" placeholder="Buscar cuadro por nombre o colección" value="${esc(BUSPROD)}" style="margin-bottom:14px">
     <div class="prods" id="prods">${'<div class="sk" style="height:250px"></div>'.repeat(8)}</div>`);
-  $("#crear").addEventListener("click", () => editorProducto(null));
+  $("#crear").addEventListener("click", () => location.hash = "#/productos/nuevo");
   $$("#fp .chip").forEach(b => b.addEventListener("click", () => { FILPROD = b.dataset.f; vistaProductos(); }));
   let tt; $("#bp").addEventListener("input", e => { clearTimeout(tt); tt = setTimeout(() => { BUSPROD = e.target.value; pintar(); }, 150); });
   let todos = await listaProductos();
@@ -686,14 +702,16 @@ function editorProducto(p, alGuardar) {
       <div class="guardar">
         <button class="btn btn--p" id="publicar">${p && p.estado !== "borrador" ? "Guardar y publicar" : "Publicar en la web"}</button>
         <button class="btn" id="borrador">Guardar borrador</button>
-        ${p && p.estado !== "oculto" && !esNuevo ? `<button class="btn btn--ghost" id="ocultar">Ocultar de la web</button>` : ""}
-        ${p && p.estado === "oculto" ? `<button class="btn btn--ghost" id="mostrar">Volver a mostrar</button>` : ""}
-        ${p && p.f && p.estado !== "web" ? `<button class="btn btn--ghost" id="restaurar" title="${p.f.base ? "Deshace los cambios del panel" : "Borra este cuadro"}">${p.f.base ? "Deshacer cambios" : "Eliminar"}</button>` : ""}
-        ${p && p.estado !== "borrador" ? `<a class="btn btn--ghost" href="/cuadro/${esc(x0.s)}/" target="_blank" rel="noopener">${ic("web")} Ver en la web</a>` : ""}
+        ${(() => { const extra = [
+          p && p.estado !== "borrador" ? `<a href="/cuadro/${esc(x0.s)}/" target="_blank" rel="noopener">${ic("web")} Ver en la web</a>` : "",
+          p && p.estado !== "oculto" && !esNuevo ? `<button type="button" id="ocultar">Ocultar de la web</button>` : "",
+          p && p.estado === "oculto" ? `<button type="button" id="mostrar">Volver a mostrar</button>` : "",
+          p && p.f && p.estado !== "web" ? `<button type="button" id="restaurar" class="peligro">${p.f.base ? "Deshacer cambios" : "Eliminar cuadro"}</button>` : ""].filter(Boolean);
+          return extra.length ? `<details class="menu-mas"><summary class="btn btn--ghost" title="Más acciones" aria-label="Más acciones">${ic("mas")}</summary><div class="menu-lista">${extra.join("")}</div></details>` : ""; })()}
       </div>
     </div></section>`;
   document.body.append(d);
-  const cerrar = () => d.remove();
+  const cerrar = () => { d.remove(); if (location.hash === "#/productos/nuevo") history.replaceState(null, "", "#/productos"), render(); };
   d.addEventListener("click", e => { if (e.target === d || e.target.closest(".cerrar")) cerrar(); });
   const pintarSubs = () => { const ss = subsDe($("#c", d).value); $("#u", d).innerHTML = ss.length ? ss.map(([k, n]) => `<option value="${k}" ${k === x0.u ? "selected" : ""}>${esc(n)}</option>`).join("") : `<option value="">—</option>`; };
   pintarSubs(); $("#c", d).addEventListener("change", pintarSubs);
@@ -732,7 +750,7 @@ function editorProducto(p, alGuardar) {
     const dt = datos();
     if (!dt.n) return toast("Ponle un nombre al cuadro");
     if (esNuevo && !imagenNueva) return toast("Falta la imagen: créala con IA o súbela");
-    const btns = $$(".guardar .btn", d); btns.forEach(b => b.disabled = true);
+    const btns = $$(".guardar .btn, .guardar .menu-lista button", d); btns.forEach(b => b.disabled = true);
     try {
       let slug = x0.s;
       if (esNuevo) { const r = await api("productos", { method: "POST", body: { nuevo: true, datos: { ...dt, i: 0 }, estado: "borrador" } }); slug = r.slug; }
@@ -756,36 +774,59 @@ function editorProducto(p, alGuardar) {
     await api("productos/" + x0.s, { method: "DELETE" }); toast("Listo"); cerrar(); alGuardar && alGuardar(); });
 }
 
-/* ---------- próximamente ---------- */
-const PRONTO = {
-  productos: ["Productos", "Crear, editar y ocultar cuadros, cambiar precios y subir imágenes, con un botón «Publicar» que actualiza la web."],
-  generador: ["Generador de productos", "Escribe una idea y la IA crea la imagen y propone nombre, frase y colección. La revisas en el marco y en la pared antes de publicar."],
-};
-function vistaPronto(k) { const [t, d] = PRONTO[k]; shell(k, `<div class="top"><h1>${t}</h1></div><div class="pronto"><h2>Próximamente</h2><p>${d}</p></div>`); }
-
-/* ---------- ajustes ---------- */
-async function vistaAjustes() {
+/* ---------- desarrollo: equipo, cuenta e integraciones ---------- */
+const topDes = (t, sub) => `<div class="top"><div><h1>Desarrollo</h1><p>${sub}</p></div><button class="btn btn--sm" id="salir">Cerrar sesión</button></div>${pestanas("desarrollo", t)}`;
+const bindSalir = () => $("#salir").addEventListener("click", async () => { await api("logout", { method: "POST" }); YO = null; location.hash = ""; render(); });
+async function vistaEquipo() {
   const { usuarios } = await api("usuarios");
-  shell("ajustes", `<div class="top"><h1>Ajustes</h1><button class="btn btn--sm" id="salir">Cerrar sesión</button></div>
+  shell("desarrollo", `${topDes("equipo", "Quién entra al panel.")}
     <div class="cols"><div class="panel"><h2>Equipo con acceso</h2>
-      <table class="tabla">${usuarios.map(u => `<tr><td>${esc(u.nombre || "")}<br><span class="muted small">${esc(u.email)} · ${esc(u.rol)}</span></td>
-        <td class="n">${u.email !== YO.email && YO.rol === "admin" ? `<button class="btn btn--sm" data-del="${esc(u.email)}">Quitar</button>` : ""}</td></tr>`).join("")}</table>
-      ${YO.rol === "admin" ? `<form id="fu" style="display:grid;gap:8px;margin-top:14px"><div class="grid2"><input name="nombre" placeholder="Nombre" required><input name="email" type="email" placeholder="correo@ejemplo.com" required></div>
-        <select name="rol"><option value="equipo">Equipo (pedidos y entregas)</option><option value="admin">Administrador</option></select>
-        <button class="btn btn--p">Dar acceso</button><p class="muted small" id="tmp"></p></form>` : ""}</div>
-      <div class="panel"><h2>Cambiar mi contraseña</h2><form id="fc" style="display:grid;gap:8px">
-        <input name="actual" type="password" placeholder="Contraseña actual" required autocomplete="current-password">
-        <input name="nueva" type="password" placeholder="Nueva (mínimo 10 caracteres)" minlength="10" required autocomplete="new-password">
-        <button class="btn btn--p">Cambiar</button></form></div></div>`);
-  $("#salir").addEventListener("click", async () => { await api("logout", { method: "POST" }); YO = null; render(); });
-  $$("[data-del]").forEach(b => b.addEventListener("click", async () => { if (confirm("¿Quitar el acceso de " + b.dataset.del + "?")) { await api("usuarios/" + encodeURIComponent(b.dataset.del), { method: "DELETE" }); vistaAjustes(); } }));
+      <table class="tabla">${usuarios.map(u => `<tr><td>${esc(u.nombre || "")}<br><span class="muted small">${esc(u.email)} · ${esc(u.rol === "admin" ? "Administrador" : "Equipo")}</span></td>
+        <td class="n">${u.email !== YO.email && YO.rol === "admin" ? `<button class="btn btn--sm" data-del="${esc(u.email)}">Quitar</button>` : ""}</td></tr>`).join("")}</table></div>
+      ${YO.rol === "admin" ? `<div class="panel"><h2>Dar acceso</h2><form id="fu" style="display:grid;gap:8px"><input name="nombre" placeholder="Nombre" required><input name="email" type="email" placeholder="correo@ejemplo.com" required>
+        <select name="rol"><option value="equipo">Equipo (ventas y logística)</option><option value="admin">Administrador</option></select>
+        <button class="btn btn--p">Dar acceso</button><p class="muted small" id="tmp"></p></form></div>` : ""}</div>`);
+  bindSalir();
+  $$("[data-del]").forEach(b => b.addEventListener("click", async () => { if (confirm("¿Quitar el acceso de " + b.dataset.del + "?")) { await api("usuarios/" + encodeURIComponent(b.dataset.del), { method: "DELETE" }); vistaEquipo(); } }));
   $("#fu")?.addEventListener("submit", async e => {
     e.preventDefault();
     try { const r = await api("usuarios", { method: "POST", body: Object.fromEntries(new FormData(e.target)) });
-      $("#tmp").textContent = `Listo. Contraseña temporal: ${r.temporal} — pásasela y que la cambie en Ajustes.`; }
+      $("#tmp").textContent = `Listo. Contraseña temporal: ${r.temporal} — pásasela y que la cambie en Desarrollo → Mi cuenta.`; }
     catch (er) { toast(er.message); }
   });
+}
+function vistaCuenta() {
+  shell("desarrollo", `${topDes("cuenta", `${esc(YO.nombre || "")} · ${esc(YO.email)}`)}
+    <div class="panel" style="max-width:480px"><h2>Cambiar mi contraseña</h2><form id="fc" style="display:grid;gap:8px">
+      <input name="actual" type="password" placeholder="Contraseña actual" required autocomplete="current-password">
+      <input name="nueva" type="password" placeholder="Nueva (mínimo 10 caracteres)" minlength="10" required autocomplete="new-password">
+      <button class="btn btn--p">Cambiar</button></form></div>`);
+  bindSalir();
   $("#fc").addEventListener("submit", async e => { e.preventDefault(); try { await api("clave", { method: "POST", body: Object.fromEntries(new FormData(e.target)) }); toast("Contraseña cambiada"); e.target.reset(); } catch (er) { toast(er.message); } });
+}
+async function vistaIntegraciones() {
+  shell("desarrollo", `${topDes("integraciones", "Estado del sistema y conexiones.")}<p class="cargando">Revisando…</p>`);
+  let r = {}; try { r = await api("sistema"); } catch {}
+  const M = (CAT.config && CAT.config.medicion) || {};
+  const fila = (ok, t, d) => `<tr><td><span class="luz ${ok === true ? "v" : ok === false ? "r" : "g"}" style="display:inline-block"></span></td><td><b>${t}</b><br><span class="muted small">${d}</span></td></tr>`;
+  shell("desarrollo", `${topDes("integraciones", "Estado del sistema y conexiones.")}
+    <div class="cols">
+      <div class="panel"><h2>Sistema</h2><table class="tabla integ">
+        ${fila(!!r.db, "Base de datos", r.db ? `${r.pedidos} pedidos · ${r.productos} cuadros del panel · ${r.eventos} eventos medidos` : "Sin conexión")}
+        ${fila(!!r.ia, "IA de Cloudflare", r.ia ? "Imágenes (FLUX) y textos (Llama) disponibles" : "No conectada")}
+        ${fila(!!r.sesion, "Sesiones seguras", r.sesion ? "Clave de sesión configurada" : "Falta SESSION_SECRET")}
+        ${fila(r.ultimoEvento ? true : null, "Medición propia", r.ultimoEvento ? `Último evento: ${esc(r.ultimoEvento.replace("T", " ").slice(0, 16))}` : "Aún no llegan visitas")}
+      </table></div>
+      <div class="panel"><h2>Medición externa</h2><table class="tabla integ">
+        ${fila(M.ga4 ? true : null, "Google Analytics 4", M.ga4 ? esc(M.ga4) : "Sin ID · se activa al poner el ID")}
+        ${fila(M.metaPixel ? true : null, "Meta Pixel", M.metaPixel ? esc(M.metaPixel) : "Sin ID · necesario para anuncios con conversión")}
+        ${fila(M.clarity ? true : null, "Microsoft Clarity", M.clarity ? esc(M.clarity) : "Sin ID · grabaciones y mapas de calor")}
+      </table><p class="muted small" style="margin-top:8px">Pásame los IDs y los activo; solo cargan con el permiso del visitante.</p></div>
+      <div class="panel"><h2>Archivos públicos</h2><table class="tabla integ">
+        ${[["/sitemap.xml", "Mapa del sitio (Google)"], ["/feeds/meta.csv", "Catálogo Meta"], ["/feeds/google.xml", "Catálogo Google"], ["/llms.txt", "Guía para buscadores con IA"], ["/robots.txt", "Robots"]].map(([u, t]) => `<tr><td colspan="2"><a href="${u}" target="_blank" rel="noopener">${t}</a><br><span class="muted small">${SITIO}${u}</span></td></tr>`).join("")}
+      </table></div>
+    </div>`);
+  bindSalir();
 }
 
 /* ---------- rutas ---------- */
@@ -794,14 +835,15 @@ async function render() {
   await pulso(true);
   const [, sec, arg] = location.hash.split("/");
   try {
+    // enlaces antiguos
+    const ANT = { resumen: "#/dashboard", pedidos: "#/ventas", entregas: "#/logistica", ajustes: "#/desarrollo", generador: "#/productos/nuevo" };
+    if (ANT[sec]) { history.replaceState(null, "", ANT[sec]); return render(); }
     if (sec === "pedido" && arg) return vistaPedido(arg);
-    if (sec === "pedidos") return vistaPedidos();
-    if (sec === "entregas") return vistaEntregas();
-    if (sec === "ajustes") return vistaAjustes();
-    if (sec === "marketing") return vistaMarketing();
-    if (sec === "productos") return vistaProductos();
-    if (sec === "generador") { await vistaProductos(); editorProducto(null); return; }
-    if (PRONTO[sec]) return vistaPronto(sec);
+    if (sec === "ventas") return vistaPedidos();
+    if (sec === "logistica") return vistaEntregas();
+    if (sec === "marketing") return arg === "kit" ? vistaKit() : arg === "anuncios" ? vistaAnuncios() : vistaMarketing();
+    if (sec === "productos") { if (arg === "nuevo") { if (!$(".prods")) await vistaProductos(); $$(".tabs a").forEach(a => a.classList.toggle("on", a.getAttribute("href") === "#/productos/nuevo")); if (!$(".drawer")) editorProducto(null); return; } return vistaProductos(); }
+    if (sec === "desarrollo") return arg === "cuenta" ? vistaCuenta() : arg === "integraciones" ? vistaIntegraciones() : vistaEquipo();
     return vistaResumen();
   } catch (e) { if (YO) app.innerHTML = `<p class="cargando">${esc(e.message)}</p>`; }
 }
