@@ -3,8 +3,32 @@ import { json, error, txt, num, hashPassword, safeEqual, crearSesion, cerrarSesi
   ESTADOS, ESTADO_NOMBRE, CODIGO_RE, sinDB } from "../../_lib/comun.js";
 import { SLUG_RE, catalogoBase, limpiarDatos } from "../../_lib/productos.js";
 
-// Estilo de la casa para las imágenes generadas con IA
-const ESTILO_IA = "black and white fine art photograph, dramatic chiaroscuro lighting, deep blacks, pitch black background, museum quality, extremely detailed, sharp focus, minimalist composition, vertical poster artwork, no text, no watermark, no frame";
+// Estilos para las imágenes generadas con IA. Cada uno: tipo de imagen, fondo, luz y acabado.
+// El fondo y el «no text» van aparte para que nunca contradigan lo que pide la idea.
+const ESTILOS_IA = {
+  oscuro: { tipo: "black and white fine art photograph", tipoColor: "fine art photograph with muted earthy colors",
+    luz: "dramatic chiaroscuro lighting, deep blacks", fondo: "negro", acabado: "museum quality, extremely detailed, sharp focus, minimalist composition" },
+  claro: { tipo: "minimalist black and white fine art print, thin fine black lines", tipoColor: "minimalist fine art print, thin fine lines with subtle muted earthy color accents",
+    luz: "soft even light, high contrast, generous negative space", fondo: "blanco", acabado: "clean simple elegant composition, sharp crisp details" },
+  tipografico: { tipo: "minimalist typographic poster, thin black elements, elegant modern sans-serif lettering", tipoColor: "minimalist typographic poster, thin elements in muted earthy tones, elegant modern sans-serif lettering",
+    luz: "flat clean design, generous negative space", fondo: "blanco", acabado: "graphic design print, crisp vector-like edges, perfectly spelled text" },
+};
+const FONDOS_IA = { negro: "pitch black background", blanco: "pure white background" };
+// Arma el prompt final en inglés. escena: idea traducida; texto: letras exactas a escribir; fondo: el que pidió la idea (si pidió alguno).
+function promptIA({ escena, texto, fondo, estilo, color }) {
+  const e = ESTILOS_IA[estilo] || ESTILOS_IA.oscuro;
+  const f = FONDOS_IA[fondo] ? fondo : e.fondo;
+  // Fondo blanco en el estilo oscuro: el claroscuro y los negros profundos ya no tienen sentido
+  const luz = estilo === "oscuro" && f === "blanco" ? "soft even studio light, high contrast" : e.luz;
+  const letras = texto ? `with the text "${texto}" written clearly in elegant capital letters, spelled exactly "${texto}"` : "";
+  return [`${escena}${letras ? ", " + letras : ""}.`, color ? e.tipoColor : e.tipo, luz, FONDOS_IA[f], e.acabado,
+    "vertical poster artwork", texto ? "" : "no text", "no watermark, no frame"].filter(Boolean).join(", ").replace(".,", ".");
+}
+// Mensaje claro cuando se acaba la cuota gratis de Workers AI (se reinicia a las 00:00 UTC = 7 p. m. en Lima)
+const errorIA = (e, que) => /daily free allocation|neurons/i.test(String(e && e.message || e))
+  ? error("Se acabó la cuota gratis de IA de hoy. Se renueva a las 7 p. m. (hora de Lima).", 429)
+  : error(`La IA no pudo ${que}: ` + String(e && e.message || e).slice(0, 120), 502);
+const aBase64 = buf => { const b = new Uint8Array(buf); let s = ""; for (let i = 0; i < b.length; i += 0x8000) s += String.fromCharCode.apply(null, b.subarray(i, i + 0x8000)); return btoa(s); };
 const SLUGIFY = t => String(t || "").toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "").slice(0, 60);
 
 const AVANZADOS = ["pagado", "produccion", "listo", "enviado", "entregado"];
@@ -298,17 +322,43 @@ export async function onRequest(ctx) {
       .bind(mme[1], tipo, buf).run();
     return json({ ok: true, url: "/media/" + mme[1] });
   }
-  // IA: imagen a partir de una idea
-  if (ruta === "ia/imagen" && m === "POST") {
+  // IA: entender la idea una sola vez (antes de las 4 imágenes): traducirla al inglés y separar el texto a escribir y el fondo pedido
+  if (ruta === "ia/prompt" && m === "POST") {
     if (!env.AI) return error("La IA no está conectada", 503);
     const d = await body();
     const idea = txt(d.idea, 400); if (!idea) return error("Escribe la idea del cuadro");
-    const color = !!d.color;
-    const prompt = `${idea}. ${color ? ESTILO_IA.replace("black and white fine art photograph", "fine art photograph with muted earthy colors") : ESTILO_IA}`;
+    const sys = `You turn a Spanish description of a wall art print into instructions for an image model. Reply ONLY with valid JSON: {"escena": "...", "texto": "...", "fondo": "..."}.
+- escena: faithful English translation of the visual description, concrete and literal (e.g. "cruz" = "a simple Latin cross", NOT a crucifix with Jesus unless asked). Keep every detail (thin, minimalist, colors, layout). Do not mention the background color here and do not add a style.
+- texto: the exact words that must appear written in the image, in their original language and capitalization (e.g. "JESUCRISTO"), or "" if no text is requested.
+- fondo: "blanco" if a white or light background is requested, "negro" if a black or dark one is requested, otherwise "".`;
     try {
+      const r = await env.AI.run("@cf/meta/llama-3.3-70b-instruct-fp8-fast", { messages: [{ role: "system", content: sys }, { role: "user", content: idea }], max_tokens: 300, temperature: 0.2 });
+      const j = typeof r.response === "object" && r.response ? r.response : (t => JSON.parse(t.slice(t.indexOf("{"), t.lastIndexOf("}") + 1)))(String(r.response || ""));
+      return json({ ok: true, escena: txt(j.escena, 600) || idea, texto: txt(j.texto, 60), fondo: FONDOS_IA[j.fondo] ? j.fondo : "" });
+    } catch (e) {
+      // Sin traducción también se puede generar: se usa la idea tal cual y el texto entre comillas, si lo hay
+      const q = idea.match(/[«"“]([^»"”]{1,60})[»"”]/);
+      return json({ ok: true, escena: idea, texto: q ? q[1] : "", fondo: /fondo (blanco|claro)/i.test(idea) ? "blanco" : /fondo (negro|oscuro)/i.test(idea) ? "negro" : "", aviso: "Sin traducir" });
+    }
+  }
+  // IA: imagen a partir de la idea ya entendida (o de la idea cruda, si no pasó por ia/prompt)
+  if (ruta === "ia/imagen" && m === "POST") {
+    if (!env.AI) return error("La IA no está conectada", 503);
+    const d = await body();
+    const idea = txt(d.idea, 400); const escena = txt(d.escena, 600) || idea;
+    if (!escena) return error("Escribe la idea del cuadro");
+    const estilo = ESTILOS_IA[d.estilo] ? d.estilo : "oscuro";
+    const prompt = promptIA({ escena, texto: txt(d.texto, 60), fondo: d.fondo, estilo, color: !!d.color });
+    try {
+      if (estilo === "tipografico") {
+        // Phoenix 1.0 (Leonardo) escribe letras mucho mejor que FLUX schnell, pero cuesta más cuota
+        const r = await env.AI.run("@cf/leonardo/phoenix-1.0", { prompt, width: 768, height: 1152, num_steps: 20, guidance: 4,
+          seed: Math.floor(Math.random() * 2 ** 31), negative_prompt: "misspelled text, extra letters, gibberish, blurry, watermark, frame, photo" });
+        return json({ ok: true, imagen: "data:image/jpeg;base64," + aBase64(await new Response(r).arrayBuffer()), prompt });
+      }
       const r = await env.AI.run("@cf/black-forest-labs/flux-1-schnell", { prompt, steps: 8 });
       return json({ ok: true, imagen: "data:image/jpeg;base64," + r.image, prompt });
-    } catch (e) { return error("La IA no pudo generar la imagen: " + String(e.message || e).slice(0, 120), 502); }
+    } catch (e) { return errorIA(e, "generar la imagen"); }
   }
   // IA: nombre, frase, colección y ambientes
   if (ruta === "ia/textos" && m === "POST") {
@@ -326,7 +376,8 @@ export async function onRequest(ctx) {
       const col = cat.colecciones.some(c => c.id === j.coleccion) ? j.coleccion : cat.colecciones[0].id;
       return json({ ok: true, nombre: txt(j.nombre, 80), frase: txt(j.frase, 160), coleccion: col,
         ambientes: (Array.isArray(j.ambientes) ? j.ambientes : []).filter(a => ["sala", "dormitorio", "oficina", "comedor"].includes(a)), descripcion: txt(j.descripcion, 600) });
-    } catch (e) { return error("La IA no pudo proponer textos. Escríbelos tú. (" + String(e.message || e).slice(0, 140) + ")", 502); }
+    } catch (e) { if (/daily free allocation|neurons/i.test(String(e.message || e))) return errorIA(e, "proponer textos");
+      return error("La IA no pudo proponer textos. Escríbelos tú. (" + String(e.message || e).slice(0, 140) + ")", 502); }
   }
 
   // Usuarios del panel
