@@ -70,13 +70,38 @@ const UA = "Mozilla/5.0 (Linux; Android 14; Pixel 7) AppleWebKit/537.36 (KHTML, 
   await p.click(".guardar .btn--p"); await p.waitForTimeout(800);
   ok("Guardar datos del cliente", (await p.inputValue("[name=cliente]")) === "María Pérez");
   ok("Con celular aparecen los mensajes rápidos de WhatsApp", (await p.$$(".wa-plantillas a")).length === 5 && (await p.getAttribute(".wa-plantillas a", "href")).startsWith("https://wa.me/51987654321"));
-  await p.click('#pasos [data-e="pagado"]'); await p.waitForTimeout(900);
+  ok("Siguiente paso en un toque: «Confirmar pedido»", (await p.textContent(".acciones .btn--p")).includes("Confirmar"));
+  await p.click(".mas-estados summary"); await p.click('#pasos [data-e="pagado"]'); await p.waitForTimeout(900);
   ok("Marcar como pagado pone fecha prometida automática", (await p.inputValue("[name=fecha_prometida]")).length === 10 && (await p.textContent(".hist")).includes("Nuevo → Pagado"));
   await p.keyboard.press("Escape"); await p.waitForTimeout(300);
   await p.goto(BASE + "/admin/#/entregas", { waitUntil: "networkidle" }); await p.waitForTimeout(600);
   ok("El pedido pagado aparece en Entregas › Por producir", (await p.textContent(".col-ent > div:nth-child(2)")).includes(codigo));
   await p.click(`[data-sig="${codigo}"]`); await p.waitForTimeout(700);
   ok("Avanzar a «En producción» desde Entregas", (await p.textContent(".col-ent > div:nth-child(2)")).includes("En producción"));
+
+  // 5b. Inicio: «Para hoy», semáforo, tablero, buscador y tema
+  const c2 = await ctx.newPage();
+  await c2.goto(BASE + "/cuadro/leon-fuerza/", { waitUntil: "networkidle" });
+  await c2.click("#pWa"); await c2.waitForTimeout(1200);
+  const cod2 = (decodeURIComponent(await c2.getAttribute("#pWa", "href")).match(/CF-[2-9A-Z]{4}/) || [])[0];
+  await p.goto(BASE + "/admin/#/resumen", { waitUntil: "networkidle" }); await p.waitForSelector(".hoy");
+  ok("Inicio: «Responder ya» muestra el pedido nuevo con su tiempo de espera", (await p.textContent(".hoy .rojo")).includes(cod2) && !!(await p.$(".hoy .rojo .esp")));
+  ok("Inicio: semáforo con las 6 cifras clave", (await p.$$(".salud .ind")).length === 6);
+  ok("Aviso de pedidos nuevos en el menú y en la pestaña", (await p.title()).startsWith("(") && !!(await p.$('.side a[href="#/pedidos"] .badge')));
+  await p.goto(BASE + "/admin/#/pedidos", { waitUntil: "networkidle" }); await p.waitForTimeout(400);
+  await p.click('.top .seg [data-v="tablero"]'); await p.waitForSelector(".kanban");
+  await p.dragAndDrop(`.kcard[data-cod="${cod2}"]`, '.kcol[data-col="confirmado"]'); await p.waitForTimeout(900);
+  ok("Tablero: arrastrar un pedido cambia su estado", (await p.textContent('.kcol[data-col="confirmado"]')).includes(cod2));
+  await p.click('.top .seg [data-v="lista"]'); await p.waitForTimeout(300);
+  await p.keyboard.press("Control+k"); await p.waitForSelector(".paleta input");
+  await p.fill(".paleta input", cod2); await p.waitForTimeout(700); await p.keyboard.press("Enter"); await p.waitForSelector(".drawer");
+  ok("Buscador global (Ctrl+K) abre el pedido", (await p.textContent(".drawer h1")).includes(cod2));
+  await p.keyboard.press("Escape"); await p.waitForTimeout(300);
+  const t0 = await p.evaluate(() => document.documentElement.dataset.theme);
+  await p.click("#tema"); await p.waitForTimeout(300);
+  ok("Cambiar entre modo claro y oscuro", (await p.evaluate(() => document.documentElement.dataset.theme)) !== t0);
+  await p.click("#tema");
+  await c2.close();
 
   // 6. Resumen
   await p.goto(BASE + "/admin/#/resumen", { waitUntil: "networkidle" }); await p.waitForTimeout(800);

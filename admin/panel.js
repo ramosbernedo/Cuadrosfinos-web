@@ -50,73 +50,182 @@ function vistaIngreso(setup) {
 }
 
 /* ---------- estructura ---------- */
-const SECCIONES = [["resumen", "Resumen"], ["pedidos", "Pedidos"], ["entregas", "Entregas"], ["marketing", "Marketing"], ["productos", "Productos", "fase 3"], ["generador", "Generador", "fase 4"], ["ajustes", "Ajustes"]];
-function shell(activa, contenido, badge = {}) {
+const ICO = {
+  resumen: '<path d="M3 13h8V3H3zM13 21h8V11h-8zM3 21h8v-6H3zM13 3v6h8V3z"/>',
+  pedidos: '<path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/><path d="M3 6h18M16 10a4 4 0 0 1-8 0"/>',
+  entregas: '<path d="M1 3h15v13H1zM16 8h4l3 3v5h-7"/><circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/>',
+  marketing: '<path d="M3 3v18h18"/><path d="m7 15 4-4 3 3 6-6"/>',
+  productos: '<rect x="4" y="3" width="16" height="18" rx="1"/><rect x="8" y="7" width="8" height="10"/>',
+  generador: '<path d="m12 3 1.9 5.8L20 10l-5 3.8L16.6 20 12 16.5 7.4 20 9 13.8 4 10l6.1-1.2z"/>',
+  ajustes: '<circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/>',
+  buscar: '<circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/>',
+  sol: '<circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/>',
+  luna: '<path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/>',
+  web: '<path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6M15 3h6v6M10 14 21 3"/>',
+  ok: '<path d="M20 6 9 17l-5-5"/>',
+  reloj: '<circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/>',
+  alerta: '<path d="M10.3 3.9 1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0zM12 9v4M12 17h.01"/>',
+  caja: '<path d="M21 8 12 3 3 8v8l9 5 9-5z"/><path d="m3 8 9 5 9-5M12 13v8"/>',
+  lista: '<path d="M8 6h13M8 12h13M8 18h13M3 6h.01M3 12h.01M3 18h.01"/>',
+  tablero: '<rect x="3" y="3" width="5" height="18" rx="1"/><rect x="10" y="3" width="5" height="12" rx="1"/><rect x="17" y="3" width="4" height="8" rx="1"/>',
+  copiar: '<rect x="9" y="9" width="11" height="11" rx="2"/><path d="M5 15V5a2 2 0 0 1 2-2h8"/>',
+};
+const ic = (k, extra = "") => `<svg class="i" viewBox="0 0 24 24" aria-hidden="true" ${extra}>${ICO[k] || ""}</svg>`;
+const SECCIONES = [["resumen", "Inicio"], ["pedidos", "Pedidos"], ["entregas", "Entregas"], ["marketing", "Marketing"], ["productos", "Productos", "pronto"], ["generador", "Generador", "pronto"], ["ajustes", "Ajustes"]];
+let PULSO = { nuevos: 0, atrasados: 0 };
+const tema = () => document.documentElement.dataset.theme;
+function aplicarTema(t) { document.documentElement.dataset.theme = t; try { localStorage.setItem("cf_panel_tema", t); } catch {} }
+(() => { let t = null; try { t = localStorage.getItem("cf_panel_tema"); } catch {} aplicarTema(t || (matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light")); })();
+function shell(activa, contenido) {
+  const ini = (YO.nombre || YO.email || "?").trim()[0].toUpperCase();
   app.innerHTML = `<div class="shell"><nav class="side" aria-label="Secciones">
     <div class="marca"><span class="wm"><i></i></span>Cuadros Finos</div>
-    ${SECCIONES.map(([k, n, f]) => `<a href="#/${k}" class="${k === activa ? "on" : ""}">${n}${badge[k] ? `<span class="badge">${badge[k]}</span>` : f ? `<small>${f}</small>` : ""}</a>`).join("")}
-    <div class="yo">${esc(YO.nombre || YO.email)}<br><a href="#/ajustes" style="padding:0;display:inline">Ajustes</a></div>
-  </nav><main class="main" id="main">${contenido}</main></div>`;
+    ${SECCIONES.map(([k, n, f]) => { const b = k === "pedidos" ? PULSO.nuevos : k === "entregas" ? PULSO.atrasados : 0;
+      return `<a href="#/${k}" class="${k === activa ? "on" : ""} ${f ? "pronto" : ""}" ${k === activa ? 'aria-current="page"' : ""}>${ic(k)}<span class="lbl">${n}</span>${b ? `<span class="badge" title="${k === "pedidos" ? "Pedidos nuevos sin responder" : "Entregas atrasadas"}">${b}</span>` : f ? `<small>${f}</small>` : ""}</a>`; }).join("")}
+    <div class="yo"><span class="avatar">${esc(ini)}</span><div>${esc(YO.nombre || "")}<br><span class="muted small">${esc(YO.rol === "admin" ? "Administrador" : "Equipo")}</span></div></div>
+  </nav><main class="main" id="main">
+    <div class="bar"><button class="buscar" id="abrirBusca" type="button">${ic("buscar")}<span style="flex:1;text-align:left;padding:8px 0">Buscar pedido, cliente o teléfono…</span><kbd>Ctrl K</kbd></button>
+      <span class="sp"></span>
+      <a class="icon-btn" href="/" target="_blank" rel="noopener" title="Ver la tienda">${ic("web")}</a>
+      <button class="icon-btn" id="tema" title="Modo ${tema() === "dark" ? "claro" : "oscuro"}">${ic(tema() === "dark" ? "sol" : "luna")}</button></div>
+    <div class="cont">${contenido}</div></main></div>`;
+  $("#tema").addEventListener("click", () => { aplicarTema(tema() === "dark" ? "light" : "dark"); render(); });
+  $("#abrirBusca").addEventListener("click", paleta);
+  titulo();
 }
-const rangoSeg = () => `<div class="seg" id="rango">${[7, 30, 90, 365].map(d => `<button data-d="${d}" class="${d === DIAS ? "on" : ""}">${d === 365 ? "1 año" : d + " días"}</button>`).join("")}</div>`;
+function titulo() { document.title = `${PULSO.nuevos ? `(${PULSO.nuevos}) ` : ""}Panel · Cuadros Finos`; }
+const RANGOS = [[1, "Hoy"], [7, "7 días"], [30, "30 días"], [90, "90 días"], [365, "1 año"]];
+const rangoSeg = () => `<div class="seg" id="rango" role="group" aria-label="Periodo">${RANGOS.map(([d, n]) => `<button data-d="${d}" class="${d === DIAS ? "on" : ""}">${n}</button>`).join("")}</div>`;
 const bindRango = fn => $$("#rango button").forEach(b => b.addEventListener("click", () => { DIAS = +b.dataset.d; fn(); }));
+const esqueleto = (n = 4) => `<div class="kpis">${'<div class="sk" style="height:96px"></div>'.repeat(4)}</div>${'<div class="sk" style="height:180px;margin-bottom:18px"></div>'.repeat(n - 2)}`;
+const vacio = (t, i = "caja") => `<div class="vacio">${ic(i)}${t}</div>`;
+const espera = f => { const m = (Date.now() - new Date(f.replace(" ", "T") + "Z")) / 60000; const cls = m > 120 ? "mal" : m > 30 ? "reg" : "bien";
+  return `<span class="esp ${cls}">${m < 60 ? Math.max(1, Math.round(m)) + " min" : m < 1440 ? Math.round(m / 60) + " h" : Math.round(m / 1440) + " d"}</span>`; };
+const delta = (a, b, inv = false) => { if (!b && !a) return ""; if (!b) return `<span class="delta up">nuevo</span>`;
+  const d = (a - b) / b; const cls = Math.abs(d) < .02 ? "eq" : (d > 0) !== inv ? "up" : "down";
+  return `<span class="delta ${cls}" title="vs periodo anterior">${d > 0 ? "▲" : d < 0 ? "▼" : "="} ${Math.abs(Math.round(d * 100))}%</span>`; };
 
-/* ---------- resumen ---------- */
+/* Búsqueda global (Ctrl+K) */
+async function paleta() {
+  if ($(".paleta")) return;
+  const d = document.createElement("div"); d.className = "paleta";
+  d.innerHTML = `<div role="dialog" aria-label="Buscar"><input placeholder="Código CF-…, nombre, celular, distrito o cuadro" autofocus><div class="res"><p class="muted small" style="padding:10px">Escribe para buscar en todos los pedidos.</p></div></div>`;
+  document.body.append(d);
+  const inp = $("input", d), res = $(".res", d); inp.focus();
+  let t, sel = 0, items = [];
+  const cerrar = () => d.remove();
+  d.addEventListener("click", e => { if (e.target === d) cerrar(); });
+  const pintar = () => { res.innerHTML = items.length ? items.map((p, i) => `<button class="${i === sel ? "sel" : ""}" data-cod="${esc(p.codigo)}"><b>${esc(p.codigo)}</b> ${est(p.estado)}<span class="muted" style="flex:1;overflow:hidden;white-space:nowrap;text-overflow:ellipsis">${esc(p.cliente || "")} ${esc(p.items.map(i => i.n).join(", "))}</span><span>${soles(p.total_final ?? p.total)}</span></button>`).join("") : `<p class="muted small" style="padding:10px">Sin resultados.</p>`;
+    $$("[data-cod]", res).forEach(b => b.addEventListener("click", () => { cerrar(); location.hash = "#/pedido/" + b.dataset.cod; })); };
+  inp.addEventListener("input", () => { clearTimeout(t); t = setTimeout(async () => { if (!inp.value.trim()) return; const r = await api("pedidos?" + new URLSearchParams({ q: inp.value.trim(), limite: 12 })); items = r.pedidos; sel = 0; pintar(); }, 200); });
+  inp.addEventListener("keydown", e => {
+    if (e.key === "Escape") cerrar();
+    if (e.key === "ArrowDown") { sel = Math.min(items.length - 1, sel + 1); pintar(); e.preventDefault(); }
+    if (e.key === "ArrowUp") { sel = Math.max(0, sel - 1); pintar(); e.preventDefault(); }
+    if (e.key === "Enter" && items[sel]) { cerrar(); location.hash = "#/pedido/" + items[sel].codigo; }
+  });
+}
+document.addEventListener("keydown", e => { if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "k" && YO) { e.preventDefault(); paleta(); } });
+
+/* Pulso: aviso de pedidos nuevos cada minuto */
+async function pulso(primera = false) {
+  if (!YO) return;
+  try {
+    const r = await api("pulso");
+    const nuevo = !primera && r.ultimo && PULSO.ultimo && r.ultimo > PULSO.ultimo;
+    PULSO = r; titulo();
+    $$(".side a").forEach(a => {
+      const k = a.getAttribute("href").slice(2), n = k === "pedidos" ? r.nuevos : k === "entregas" ? r.atrasados : 0;
+      let b = $(".badge", a); if (n) { if (!b) { b = document.createElement("span"); b.className = "badge"; a.querySelector("small")?.remove(); a.append(b); } b.textContent = n; } else b?.remove();
+    });
+    if (nuevo) { toast("🛍️ ¡Llegó un pedido nuevo!"); if (location.hash === "" || location.hash === "#/resumen" || location.hash === "#/pedidos") render(); }
+  } catch {}
+}
+setInterval(() => document.visibilityState === "visible" && pulso(), 60000);
+
+/* ---------- inicio ---------- */
 async function vistaResumen() {
-  shell("resumen", `<p class="cargando">Cargando…</p>`);
+  shell("resumen", esqueleto(5));
   const r = await api("resumen?dias=" + DIAS);
-  const k = r.kpi, e = r.entregas, f = r.embudo;
+  const k = r.kpi, e = r.entregas, f = r.embudo, pv = r.previo, fp = pv.embudo || {};
   const nombre = s => (BY[s] && BY[s].n) || s;
-  const pasos = [["page_view", "Visitas"], ["view_item", "Vieron un cuadro"], ["add_to_cart", "Agregaron"], ["view_cart", "Abrieron selección"], ["generate_lead", "Enviaron pedido"]];
+  const pasos = [["page_view", "Visitas"], ["view_item", "Vieron un cuadro"], ["add_to_cart", "Agregaron a su selección"], ["view_cart", "Abrieron la selección"], ["generate_lead", "Enviaron el pedido"]];
   const max = Math.max(1, ...pasos.map(([n]) => f[n] || 0));
+  let peor = -1, peorTasa = 2;
+  pasos.forEach(([n], i) => { if (!i) return; const prev = f[pasos[i - 1][0]] || 0, v = f[n] || 0; if (prev >= 5 && v / prev < peorTasa) { peorTasa = v / prev; peor = i; } });
   const smax = Math.max(1, ...r.serie.map(d => d.pedidos));
+  // Semáforo de las 6 cifras clave
+  const vis = f.page_view || 0, add = f.add_to_cart || 0, lead = f.generate_lead || 0;
+  const tAdd = vis ? add / vis : null, tLead = vis ? lead / vis : null, cierre = k.pedidos ? k.pagados / k.pedidos : null;
+  const resp = r.respuesta.minutos;
+  const luz = (v, verde, amar, inv = false) => v == null ? "g" : (inv ? v <= verde : v >= verde) ? "v" : (inv ? v <= amar : v >= amar) ? "a" : "r";
+  const IND = [
+    ["Visitas", vis, luz(vis, fp.page_view ? fp.page_view : 1, fp.page_view ? fp.page_view * .8 : 1), vis + "", fp.page_view ? `Antes: ${fp.page_view}` : "Comparación con el periodo anterior", "Si bajan: publica más (kit de campaña) o activa anuncios."],
+    ["Agregan un cuadro", tAdd, luz(tAdd, .05, .03), tAdd == null ? "—" : pct(tAdd), "Meta: 5–10 % de las visitas", "Si está bajo: revisa los cuadros con «mucho interés, pocas ventas» en Marketing."],
+    ["Envían el pedido", tLead, luz(tLead, .02, .01), tLead == null ? "—" : pct(tLead), "Meta: 2–4 % de las visitas", "Si agregan pero no envían: mira en Clarity dónde se traban."],
+    ["Cierre en WhatsApp", cierre, luz(cierre, .4, .25), cierre == null ? "—" : pct(cierre), "Meta: 40–60 % de los pedidos", "Si está bajo: responde más rápido y usa los mensajes rápidos."],
+    ["Tiempo de respuesta", resp, luz(resp, 15, 60, true), resp == null ? "—" : resp < 60 ? Math.round(resp) + " min" : (resp / 60).toFixed(1) + " h", "Meta: menos de 15 min", "Responde primero los pedidos «Nuevos» con más espera."],
+    ["Ticket promedio", k.pagados ? k.ticket : null, luz(k.pagados ? k.ticket : null, 110, 85), k.pagados ? soles(k.ticket) : "—", "Meta: S/ 110 o más", "Para subirlo: ofrece el tríptico o un segundo cuadro."],
+  ];
+  const tarea = (p, extra) => `<button class="tarea" data-cod="${esc(p.codigo)}"><b>${esc(p.codigo)}</b><span class="t">${esc(p.cliente || p.items.join(", "))}${p.lugar ? " · " + esc(p.lugar) : ""}</span>${extra}</button>`;
   shell("resumen", `
-    <div class="top"><h1>Resumen</h1>${rangoSeg()}</div>
-    <div class="kpis">
-      <div class="kpi"><b>${k.pedidos || 0}</b><span>Pedidos enviados por WhatsApp</span></div>
-      <div class="kpi"><b>${k.pagados || 0}</b><span>Pagados · cierre ${pct(k.cierre || 0)}</span></div>
-      <div class="kpi"><b>${soles(k.ventas)}</b><span>Ventas cobradas</span></div>
-      <div class="kpi"><b>${soles(k.ticket)}</b><span>Ticket promedio</span></div>
-      <div class="kpi"><b>${(r.porEstado.nuevo || 0)}</b><span>Nuevos sin responder</span></div>
-      <div class="kpi"><b>${e.en_curso || 0}</b><span>Entregas en curso</span></div>
-      <div class="kpi ${e.atrasados ? "alerta" : ""}"><b>${e.atrasados || 0}</b><span>Atrasados</span></div>
-      <div class="kpi"><b>${soles(k.cotizado)}</b><span>Monto pedido (incluye no cerrados)</span></div>
+    <div class="top"><div><h1>Hola${YO.nombre ? ", " + esc(YO.nombre.split(" ")[0]) : ""} 👋</h1><p>${new Date().toLocaleDateString("es-PE", { weekday: "long", day: "numeric", month: "long" })}</p></div>${rangoSeg()}</div>
+    <div class="hoy">
+      <div class="rojo"><h2>${ic("reloj")} Responder ya<span class="n">${r.pendientes.length}</span></h2>${r.pendientes.length ? r.pendientes.map(p => tarea(p, espera(p.creado))).join("") : `<p class="listo-ok">${ic("ok")} No hay pedidos esperando respuesta.</p>`}</div>
+      <div class="amb"><h2>${ic("alerta")} Atrasados<span class="n">${r.atrasadosLista.length}</span></h2>${r.atrasadosLista.length ? r.atrasadosLista.map(p => tarea(p, `<span class="esp mal">${fecha(p.fecha_prometida)}</span>`)).join("") : `<p class="listo-ok">${ic("ok")} Todo a tiempo.</p>`}</div>
+      <div class="azul"><h2>${ic("entregas")} Listos para enviar<span class="n">${r.listos.length}</span></h2>${r.listos.length ? r.listos.map(p => tarea(p, `<span class="muted small">${esc(p.envio_tipo || "")}</span>`)).join("") : `<p class="listo-ok">${ic("ok")} Nada pendiente de envío.</p>`}</div>
     </div>
-    <div class="panel"><h2>Embudo de la web</h2>
+    <div class="kpis">
+      <div class="kpi"><span>Ventas cobradas</span><b>${soles(k.ventas)}</b>${delta(k.ventas, pv.ventas)}</div>
+      <div class="kpi"><span>Pedidos recibidos</span><b>${k.pedidos || 0}</b>${delta(k.pedidos, pv.pedidos)}</div>
+      <div class="kpi"><span>Pedidos pagados</span><b>${k.pagados || 0}</b>${delta(k.pagados, pv.pagados)}</div>
+      <div class="kpi ${e.atrasados ? "alerta" : ""}"><span>Entregas en curso</span><b>${e.en_curso || 0}</b><span class="small">${e.atrasados ? e.atrasados + " atrasados" : "sin atrasos"}</span></div>
+    </div>
+    <div class="panel"><h2>Salud del negocio <span class="muted">· verde = bien, amarillo = ojo, rojo = actuar</span></h2>
+      <div class="salud">${IND.map(([t, v, l, txt, meta, accion]) => `<div class="ind"><i class="luz ${l}"></i><span>${t}</span><b>${txt}</b><p>${meta}${l === "r" || l === "a" ? `<br><strong style="color:var(--fg2)">${accion}</strong>` : ""}</p></div>`).join("")}</div></div>
+    <div class="panel"><h2>¿Dónde se cae la venta?</h2>
       ${f.page_view ? `<div class="embudo">${pasos.map(([n, t], i) => { const v = f[n] || 0, prev = i ? f[pasos[i - 1][0]] || 0 : 0;
-        return `<div class="paso"><span>${t}</span><div class="barra"><i style="width:${(v / max) * 100}%"></i></div><em>${v}${i && prev ? ` · ${pct(v / prev)}` : ""}</em></div>`; }).join("")}</div>
-      <p class="muted small" style="margin-top:10px">Personas (sesiones) en cada paso. El porcentaje es cuántas pasan del paso anterior: donde baja más, ahí se cae la venta.</p>`
-      : `<p class="vacio">Aún no hay visitas registradas en este periodo.</p>`}
+        return `<div class="paso ${i === peor ? "peor" : ""}"><span>${t}</span><div class="barra"><i style="width:${Math.max(2, (v / max) * 100)}%"></i></div><em>${v}${i && prev ? `<small>${pct(Math.min(1, v / prev))} pasan</small>` : ""}</em></div>`; }).join("")}</div>
+      ${peor > 0 ? `<p class="small" style="margin-top:12px">🔴 La mayor caída está en <b>${pasos[peor][1].toLowerCase()}</b>: solo pasa el ${pct(peorTasa)} del paso anterior.</p>` : ""}`
+      : vacio("Aún no hay visitas registradas en este periodo.", "marketing")}
     </div>
     <div class="cols">
       <div class="panel"><h2>Cuadros más pedidos</h2>${r.top.length ? `<table class="tabla"><tr><th>Cuadro</th><th class="n">Pedidos</th><th class="n">Vendidos</th></tr>
-        ${r.top.map(t => `<tr><td>${esc(nombre(t.s) || t.n)}</td><td class="n">${t.pedidos}</td><td class="n">${t.vendidos || 0}</td></tr>`).join("")}</table>` : `<p class="vacio">Sin pedidos todavía.</p>`}</div>
+        ${r.top.map(t => `<tr><td>${esc(nombre(t.s) || t.n)}</td><td class="n">${t.pedidos}</td><td class="n">${t.vendidos || 0}</td></tr>`).join("")}</table>` : vacio("Sin pedidos todavía.")}</div>
       <div class="panel"><h2>Cuadros más vistos</h2>${r.vistos.length ? `<table class="tabla"><tr><th>Cuadro</th><th class="n">Vistas</th><th class="n">Personas</th></tr>
-        ${r.vistos.map(t => `<tr><td>${esc(nombre(t.s))}</td><td class="n">${t.vistas}</td><td class="n">${t.personas}</td></tr>`).join("")}</table>` : `<p class="vacio">Sin visitas todavía.</p>`}</div>
+        ${r.vistos.map(t => `<tr><td>${esc(nombre(t.s))}</td><td class="n">${t.vistas}</td><td class="n">${t.personas}</td></tr>`).join("")}</table>` : vacio("Sin visitas todavía.", "marketing")}</div>
       <div class="panel"><h2>De dónde vienen los pedidos</h2>${r.fuentes.length ? `<table class="tabla"><tr><th>Fuente</th><th class="n">Pedidos</th><th class="n">Pagados</th><th class="n">Ventas</th></tr>
-        ${r.fuentes.map(t => `<tr><td>${esc(t.fuente)}</td><td class="n">${t.pedidos}</td><td class="n">${t.pagados}</td><td class="n">${soles(t.ventas)}</td></tr>`).join("")}</table>` : `<p class="vacio">Sin pedidos todavía.</p>`}</div>
-      <div class="panel"><h2>Pedidos por día</h2>${r.serie.length ? `<div class="serie">${r.serie.map(d => `<div title="${esc(d.dia)}: ${d.pedidos} pedidos, ${d.pagados} pagados" style="height:${(d.pedidos / smax) * 100}%"><i style="height:${d.pedidos ? (d.pagados / d.pedidos) * 100 : 0}%"></i></div>`).join("")}</div>
-        <p class="muted small" style="margin-top:8px">Gris: pedidos enviados · Verde: pagados</p>` : `<p class="vacio">Sin pedidos todavía.</p>`}</div>
-    </div>`, { pedidos: r.porEstado.nuevo || 0 });
+        ${r.fuentes.map(t => `<tr><td>${esc(t.fuente)}</td><td class="n">${t.pedidos}</td><td class="n">${t.pagados}</td><td class="n">${soles(t.ventas)}</td></tr>`).join("")}</table>` : vacio("Sin pedidos todavía.")}</div>
+      <div class="panel"><h2>Pedidos por día <span class="muted">· verde = pagados</span></h2>${r.serie.length ? `<div class="serie">${r.serie.map(d => `<div title="${esc(d.dia)}: ${d.pedidos} pedidos, ${d.pagados} pagados" style="height:${(d.pedidos / smax) * 100}%"><i style="height:${d.pedidos ? (d.pagados / d.pedidos) * 100 : 0}%"></i></div>`).join("")}</div>` : vacio("Sin pedidos todavía.")}</div>
+    </div>`);
   bindRango(vistaResumen);
+  $$(".hoy [data-cod]").forEach(b => b.addEventListener("click", () => location.hash = "#/pedido/" + b.dataset.cod));
 }
 
 /* ---------- pedidos ---------- */
 const FILTROS = [["activos", "Activos"], ...ESTADOS, ["todos", "Todos"]];
+let VISTA = (() => { try { return localStorage.getItem("cf_panel_vista") || "lista"; } catch { return "lista"; } })();
 async function vistaPedidos() {
-  shell("pedidos", `<div class="top"><h1>Pedidos</h1><button class="btn btn--p btn--sm" id="nuevo">+ Pedido manual</button></div>
-    <div class="filtros" id="filtros">${FILTROS.map(([k, n]) => `<button class="chip ${k === FILTRO ? "on" : ""}" data-f="${k}">${n}</button>`).join("")}</div>
-    <input type="search" id="busca" placeholder="Buscar por código, cliente, teléfono, distrito o cuadro" value="${esc(BUSCA)}" style="margin-bottom:12px">
-    <div class="lista" id="lista"><p class="cargando">Cargando…</p></div>`);
+  shell("pedidos", `<div class="top"><div><h1>Pedidos</h1><p>Toca un pedido para ver el detalle. ${VISTA === "tablero" ? "Arrastra las tarjetas para cambiar el estado." : ""}</p></div>
+      <div style="display:flex;gap:8px;align-items:center"><div class="seg" role="group" aria-label="Vista"><button data-v="lista" class="${VISTA === "lista" ? "on" : ""}" title="Lista">${ic("lista")}</button><button data-v="tablero" class="${VISTA === "tablero" ? "on" : ""}" title="Tablero">${ic("tablero")}</button></div>
+      <button class="btn btn--p btn--sm" id="nuevo">+ Pedido manual</button></div></div>
+    ${VISTA === "lista" ? `<div class="filtros" id="filtros">${FILTROS.map(([k, n]) => `<button class="chip ${k === FILTRO ? "on" : ""}" data-f="${k}">${n}<small data-c="${k}"></small></button>`).join("")}</div>
+    <input type="search" id="busca" placeholder="Filtrar por código, cliente, teléfono, distrito o cuadro" value="${esc(BUSCA)}" style="margin-bottom:12px">` : ""}
+    <div id="lista" class="${VISTA === "lista" ? "lista" : ""}">${'<div class="sk" style="height:70px;margin-bottom:8px"></div>'.repeat(5)}</div>`);
+  $$(".top .seg button").forEach(b => b.addEventListener("click", () => { VISTA = b.dataset.v; try { localStorage.setItem("cf_panel_vista", VISTA); } catch {} vistaPedidos(); }));
   $$("#filtros .chip").forEach(b => b.addEventListener("click", () => { FILTRO = b.dataset.f; vistaPedidos(); }));
-  let t; $("#busca").addEventListener("input", e => { clearTimeout(t); t = setTimeout(() => { BUSCA = e.target.value; cargarLista(); }, 250); });
+  let t; $("#busca")?.addEventListener("input", e => { clearTimeout(t); t = setTimeout(() => { BUSCA = e.target.value; cargarLista(); }, 250); });
   $("#nuevo").addEventListener("click", pedidoManual);
   cargarLista();
 }
 async function cargarLista() {
+  if (VISTA === "tablero") return cargarTablero();
   const q = new URLSearchParams({ estado: FILTRO === "todos" ? "" : FILTRO, q: BUSCA });
-  const { pedidos } = await api("pedidos?" + q);
-  $("#lista").innerHTML = pedidos.length ? pedidos.map(filaPedido).join("") : `<p class="vacio">No hay pedidos ${FILTRO !== "todos" ? "en este estado" : ""}.</p>`;
+  const { pedidos, conteo } = await api("pedidos?" + q);
+  if (!$("#lista")) return;
+  const act = Object.entries(conteo).filter(([k]) => !["entregado", "cancelado"].includes(k)).reduce((a, [, n]) => a + n, 0);
+  $$("#filtros [data-c]").forEach(sm => { const k = sm.dataset.c; const n = k === "activos" ? act : k === "todos" ? Object.values(conteo).reduce((a, b) => a + b, 0) : conteo[k] || 0; sm.textContent = n || ""; });
+  $("#lista").innerHTML = pedidos.length ? pedidos.map(filaPedido).join("") : vacio(`No hay pedidos ${FILTRO !== "todos" ? "en este estado" : "todavía"}.`);
   $$("#lista [data-cod]").forEach(b => b.addEventListener("click", () => location.hash = "#/pedido/" + b.dataset.cod));
 }
 function filaPedido(p) {
@@ -124,10 +233,36 @@ function filaPedido(p) {
   const atrasado = ["pagado", "produccion", "listo"].includes(p.estado) && p.fecha_prometida && p.fecha_prometida < hoy();
   return `<button class="ped" data-cod="${esc(p.codigo)}">
     <span class="thumbs">${p.items.slice(0, 3).map(i => `<img src="${thumb(i.s)}" alt="" loading="lazy">`).join("")}</span>
-    <span class="det"><span class="cod">${esc(p.codigo)}</span> ${est(p.estado)} ${atrasado ? '<span class="atraso">ATRASADO</span>' : ""}
+    <span class="det"><span class="cod">${esc(p.codigo)}</span> ${est(p.estado)} ${atrasado ? '<span class="atraso">ATRASADO</span>' : ""} ${p.estado === "nuevo" ? espera(p.creado) : ""}
       <p>${esc(p.cliente ? p.cliente + " · " : "")}${esc(nombres)}</p>
       <small>${hace(p.creado)} · ${esc(p.lugar || "sin distrito")} · ${esc(p.fuente || "directo")}${p.pago ? " · " + esc(p.pago) : ""}</small></span>
-    <span class="tot">${soles(p.total_final ?? p.total)}</span><span class="muted small">›</span></button>`;
+    <span class="tot">${soles(p.total_final ?? p.total)}</span><span class="muted">›</span></button>`;
+}
+const COLS_TABLERO = ["nuevo", "confirmado", "pagado", "produccion", "listo", "enviado", "entregado"];
+async function cargarTablero() {
+  const { pedidos } = await api("pedidos?" + new URLSearchParams({ estado: "", limite: 200 }));
+  if (!$("#lista")) return;
+  const recientes = p => p.estado !== "entregado" || (Date.now() - new Date(p.actualizado.replace(" ", "T") + "Z")) < 14 * 864e5;
+  $("#lista").innerHTML = `<div class="kanban">${COLS_TABLERO.map(c => { const l = pedidos.filter(p => p.estado === c && recientes(p));
+    return `<div class="kcol" data-col="${c}"><h3>${EN[c]}<span>${l.length}</span></h3>${l.map(p => `<div class="kcard" draggable="true" data-cod="${esc(p.codigo)}" tabindex="0">
+      <b>${esc(p.codigo)}</b> ${p.estado === "nuevo" ? espera(p.creado) : ""}<span class="t">${esc(p.cliente || p.items.map(i => i.n).join(", "))}</span>
+      <span class="m"><span>${esc(p.lugar || "—")}</span><span>${soles(p.total_final ?? p.total)}</span></span></div>`).join("")}</div>`; }).join("")}</div>`;
+  let arr = null;
+  $$(".kcard").forEach(c => {
+    c.addEventListener("click", () => location.hash = "#/pedido/" + c.dataset.cod);
+    c.addEventListener("keydown", e => { if (e.key === "Enter") location.hash = "#/pedido/" + c.dataset.cod; });
+    c.addEventListener("dragstart", e => { arr = c.dataset.cod; c.classList.add("arrastrando"); e.dataTransfer.effectAllowed = "move"; });
+    c.addEventListener("dragend", () => c.classList.remove("arrastrando"));
+  });
+  $$(".kcol").forEach(col => {
+    col.addEventListener("dragover", e => { e.preventDefault(); col.classList.add("sobre"); });
+    col.addEventListener("dragleave", () => col.classList.remove("sobre"));
+    col.addEventListener("drop", async e => {
+      e.preventDefault(); col.classList.remove("sobre");
+      if (!arr) return; const cod = arr; arr = null;
+      try { await api("pedidos/" + cod, { method: "PATCH", body: { estado: col.dataset.col } }); toast(`${cod} → ${EN[col.dataset.col]}`); cargarTablero(); pulso(); } catch (er) { toast(er.message); }
+    });
+  });
 }
 
 /* ---------- detalle de un pedido ---------- */
@@ -142,12 +277,20 @@ async function vistaPedido(codigo) {
   if (!$("#main")) await vistaPedidos();
   const { pedido: p, historial } = await api("pedidos/" + codigo);
   const tel = (p.telefono || "").replace(/\D/g, ""), telWa = tel.length === 9 ? "51" + tel : tel;
+  const SIG = { nuevo: "confirmado", confirmado: "pagado", pagado: "produccion", produccion: "listo", listo: "enviado", enviado: "entregado" };
+  const VERBO = { confirmado: "Confirmar pedido", pagado: "Marcar como pagado", produccion: "Pasar a producción", listo: "Marcar como listo", enviado: "Marcar como enviado", entregado: "Marcar como entregado" };
+  const orden = COLS_TABLERO.indexOf(p.estado);
+  const resumenTxt = `Pedido ${p.codigo}\n${p.items.map(i => `• ${i.qty} × ${i.n} — ${soles(i.precio * i.qty)}${(i.f || []).map(([a, b]) => `\n   ${a}: ${b}`).join("")}`).join("\n")}\nTotal: ${soles(p.total_final ?? p.total)}${p.cliente ? "\nCliente: " + p.cliente : ""}${p.telefono ? " · " + p.telefono : ""}${p.direccion ? "\nDirección: " + p.direccion : ""}${p.lugar ? "\n" + p.lugar : ""}`;
   const d = document.createElement("div"); d.className = "drawer";
   d.innerHTML = `<section role="dialog" aria-modal="true" aria-label="Pedido ${esc(p.codigo)}">
-    <header><div><h1>${esc(p.codigo)}</h1><p class="muted small">${hace(p.creado)} · vía ${esc(p.via || "web")} · ${esc(p.fuente || "directo")}${p.campana ? " / " + esc(p.campana) : ""}${p.region ? " · visita desde " + esc(p.region) : ""}</p></div>
-      <button class="cerrar" aria-label="Cerrar">×</button></header>
-    <h3>Estado</h3>
-    <div class="pasos" id="pasos">${ESTADOS.map(([k, n]) => `<button data-e="${k}" class="${k === p.estado ? "on" : ""}">${n}</button>`).join("")}</div>
+    <div class="dhead"><div class="fila"><div><h1>${esc(p.codigo)} ${est(p.estado)}</h1><p class="muted small">${hace(p.creado)} · vía ${esc(p.via || "web")} · ${esc(p.fuente || "directo")}${p.campana ? " / " + esc(p.campana) : ""}${p.region ? " · " + esc(p.region) : ""}</p></div>
+      <button class="cerrar" aria-label="Cerrar">×</button></div>
+      <div class="progreso ${p.estado === "cancelado" ? "cancel" : ""}" aria-hidden="true">${COLS_TABLERO.map((c, i) => `<i class="${i <= orden ? "on" : ""}" title="${EN[c]}"></i>`).join("")}</div>
+      <div class="acciones">${SIG[p.estado] ? `<button class="btn btn--p" data-e="${SIG[p.estado]}">${ic("ok")} ${VERBO[SIG[p.estado]]}</button>` : ""}
+        ${tel ? `<a class="btn btn--wa" target="_blank" rel="noopener" href="https://wa.me/${telWa}">WhatsApp</a>` : ""}
+        <button class="btn" id="copiarRes" title="Copiar resumen del pedido">${ic("copiar")} Copiar</button>
+        <details class="mas-estados"><summary class="btn">Cambiar estado ▾</summary><div class="menu" id="pasos">${ESTADOS.map(([k, n]) => `<button data-e="${k}" class="${k === p.estado ? "on" : ""}">${k === p.estado ? "✓ " : ""}${n}</button>`).join("")}</div></details></div>
+    </div><div class="dbody">
     <div class="sec"><h3>Cuadros · ${soles(p.total)}</h3>
       ${p.items.map(i => `<div class="item"><img src="${thumb(i.s)}" alt=""><div>${esc(i.n || i.s)}${i.qty > 1 ? ` <b>× ${i.qty}</b>` : ""}
         ${(i.f || []).map(([a, b]) => `<small>${esc(a)}: <b>${esc(b)}</b></small>`).join("")}
@@ -171,19 +314,20 @@ async function vistaPedido(codigo) {
         <label class="f"><span>Fecha de entrega</span><input name="fecha_entrega" type="date" value="${esc(p.fecha_entrega)}"></label>
       </div></div>
       <div class="sec"><h3>Notas internas</h3><textarea name="notas" placeholder="Ej.: quiere el colgador horizontal, pagó la mitad…">${esc(p.notas)}</textarea></div>
-      <div class="guardar"><button class="btn btn--p">Guardar cambios</button>${tel ? `<a class="btn btn--wa" target="_blank" rel="noopener" href="https://wa.me/${telWa}">WhatsApp del cliente</a>` : ""}</div>
+      <div class="guardar"><button class="btn btn--p">Guardar cambios</button><span class="muted small" style="align-self:center">Los cambios quedan en el historial.</span></div>
     </form>
     ${tel ? `<div class="sec"><h3>Mensajes rápidos por WhatsApp</h3><div class="wa-plantillas">${PLANTILLAS.map(([n, f], i) => `<a class="btn btn--sm" target="_blank" rel="noopener" href="https://wa.me/${telWa}?text=${encodeURIComponent(f(p))}">${n}</a>`).join("")}</div></div>`
       : `<p class="muted small sec">Escribe el celular del cliente para enviarle mensajes rápidos (confirmación, pago, en camino…).</p>`}
     <div class="sec"><h3>Historial</h3><div class="hist">${historial.map(h => `<div><time>${esc(h.fecha)} UTC · ${esc(h.usuario || "")}</time>${esc(h.accion)}</div>`).join("")}</div></div>
-  </section>`;
+  </div></section>`;
   document.body.append(d);
   const cerrar = () => { d.remove(); if (location.hash.startsWith("#/pedido/")) history.back(); };
   d.addEventListener("click", e => { if (e.target === d || e.target.closest(".cerrar")) cerrar(); });
   document.addEventListener("keydown", function k(e) { if (e.key === "Escape") { document.removeEventListener("keydown", k); cerrar(); } });
-  $$("#pasos button", d).forEach(b => b.addEventListener("click", async () => {
+  $("#copiarRes", d).addEventListener("click", async () => { try { await navigator.clipboard.writeText(resumenTxt); toast("Resumen copiado"); } catch { toast("No se pudo copiar"); } });
+  $$(".acciones [data-e]", d).forEach(b => b.addEventListener("click", async () => {
     await api("pedidos/" + p.codigo, { method: "PATCH", body: { estado: b.dataset.e } });
-    toast(`${p.codigo}: ${EN[b.dataset.e]}`); d.remove(); vistaPedido(p.codigo); if ($("#lista")) cargarLista();
+    toast(`${p.codigo}: ${EN[b.dataset.e]}`); d.remove(); vistaPedido(p.codigo); if ($("#lista")) cargarLista(); pulso();
   }));
   $("#fp", d).addEventListener("submit", async e => {
     e.preventDefault();
@@ -451,6 +595,7 @@ async function vistaAjustes() {
 /* ---------- rutas ---------- */
 async function render() {
   if (!YO) return arrancar();
+  await pulso(true);
   const [, sec, arg] = location.hash.split("/");
   try {
     if (sec === "pedido" && arg) return vistaPedido(arg);
@@ -468,7 +613,7 @@ async function arrancar() {
     if (!r.ok) { app.innerHTML = `<p class="cargando">El panel aún no está conectado a la base de datos (${esc(r.error || "")}).</p>`; return; }
     if (r.necesitaSetup) return vistaIngreso(true);
     if (!r.usuario) return vistaIngreso(false);
-    YO = r.usuario; render();
+    YO = r.usuario; await pulso(true); render();
   } catch { app.innerHTML = `<p class="cargando">No se pudo conectar con el servidor.</p>`; }
 }
 addEventListener("hashchange", () => { if (!location.hash.startsWith("#/pedido/")) $$(".drawer").forEach(d => d.remove()); render(); });

@@ -65,6 +65,12 @@ export async function onRequest(ctx) {
   if (!yo) return error("Inicia sesión", 401);
   const quien = yo.nombre || yo.email;
 
+  if (ruta === "pulso") {
+    const r = await env.DB.prepare(`SELECT SUM(estado='nuevo') nuevos, SUM(estado IN ('pagado','produccion','listo') AND fecha_prometida < date('now')) atrasados,
+      MAX(creado) ultimo FROM pedidos`).first();
+    return json({ ok: true, nuevos: r.nuevos || 0, atrasados: r.atrasados || 0, ultimo: r.ultimo });
+  }
+
   // Resumen de ventas, entregas y embudo
   if (ruta === "resumen") {
     const dias = rango(request.url), desde = `-${dias} days`;
@@ -94,7 +100,29 @@ export async function onRequest(ctx) {
           GROUP BY slug ORDER BY vistas DESC LIMIT 10`).bind(desde),
     ]);
     const r = k.results[0] || {};
-    return json({ ok: true, dias, kpi: { ...r, ticket: r.pagados ? r.ventas / r.pagados : 0, cierre: r.pedidos ? r.pagados / r.pedidos : 0 },
+    const hasta2 = desde, desde2 = `-${dias * 2} days`;
+    const [kp, embp, nuevos, atrasados, listos, resp] = await env.DB.batch([
+      env.DB.prepare(`SELECT COUNT(*) pedidos, SUM(estado IN (${av})) pagados,
+          COALESCE(SUM(CASE WHEN estado IN (${av}) THEN COALESCE(total_final, total) END),0) ventas
+        FROM pedidos WHERE creado >= datetime('now', ?1) AND creado < datetime('now', ?2)`).bind(desde2, hasta2),
+      env.DB.prepare(`SELECT nombre, COUNT(DISTINCT sesion) sesiones FROM eventos WHERE fecha >= datetime('now', ?1) AND fecha < datetime('now', ?2)
+          AND nombre IN ('page_view','add_to_cart','generate_lead') GROUP BY nombre`).bind(desde2, hasta2),
+      env.DB.prepare(`SELECT codigo, creado, total, cliente, lugar, items, fuente FROM pedidos WHERE estado = 'nuevo' ORDER BY creado ASC LIMIT 8`),
+      env.DB.prepare(`SELECT codigo, creado, total, cliente, lugar, items, estado, fecha_prometida FROM pedidos
+          WHERE estado IN ('pagado','produccion','listo') AND fecha_prometida < date('now') ORDER BY fecha_prometida ASC LIMIT 8`),
+      env.DB.prepare(`SELECT codigo, creado, total, cliente, lugar, items, estado, fecha_prometida, envio_tipo FROM pedidos WHERE estado = 'listo' ORDER BY fecha_prometida ASC LIMIT 8`),
+      env.DB.prepare(`SELECT AVG((julianday(h.fecha) - julianday(p.creado)) * 1440) minutos, COUNT(*) n FROM pedidos p
+          JOIN (SELECT codigo, MIN(fecha) fecha FROM pedido_historial WHERE accion LIKE 'Estado: Nuevo →%' GROUP BY codigo) h ON h.codigo = p.codigo
+          WHERE p.creado >= datetime('now', ?1)`).bind(desde),
+    ]);
+    const prev = kp.results[0] || {};
+    const corto = rs => rs.results.map(x => ({ ...x, items: JSON.parse(x.items || "[]").map(i => i.n) }));
+    return json({ ok: true, dias,
+      previo: { ...prev, ticket: prev.pagados ? prev.ventas / prev.pagados : 0, cierre: prev.pedidos ? prev.pagados / prev.pedidos : 0,
+        embudo: Object.fromEntries(embp.results.map(x => [x.nombre, x.sesiones])) },
+      pendientes: corto(nuevos), atrasadosLista: corto(atrasados), listos: corto(listos),
+      respuesta: { minutos: resp.results[0] && resp.results[0].minutos, n: resp.results[0] ? resp.results[0].n : 0 },
+      kpi: { ...r, ticket: r.pagados ? r.ventas / r.pagados : 0, cierre: r.pedidos ? r.pagados / r.pedidos : 0 },
       porEstado: Object.fromEntries(porEstado.results.map(x => [x.estado, x.n])), top: top.results, fuentes: fuentes.results,
       serie: serie.results, entregas: entregas.results[0] || {}, embudo: Object.fromEntries(embudo.results.map(x => [x.nombre, x.sesiones])),
       vistos: vistos.results });
@@ -154,7 +182,8 @@ export async function onRequest(ctx) {
     const orden = estado === "entregas" ? "COALESCE(fecha_prometida,'9999') ASC, creado ASC" : "creado DESC";
     const lim = Math.min(200, Number(u.get("limite")) || 100);
     const rs = await env.DB.prepare(`SELECT * FROM pedidos ${where.length ? "WHERE " + where.join(" AND ") : ""} ORDER BY ${orden} LIMIT ${lim}`).bind(...bind).all();
-    return json({ ok: true, pedidos: rs.results.map(parsePedido) });
+    const cnt = await env.DB.prepare("SELECT estado, COUNT(*) n FROM pedidos GROUP BY estado").all();
+    return json({ ok: true, pedidos: rs.results.map(parsePedido), conteo: Object.fromEntries(cnt.results.map(x => [x.estado, x.n])) });
   }
 
   // Crear un pedido a mano (ventas por Instagram, tienda, etc.)
