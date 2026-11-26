@@ -1,6 +1,11 @@
 // API privada del panel: /api/admin/...
 import { json, error, txt, num, hashPassword, safeEqual, crearSesion, cerrarSesion, leerSesion, sha256, randomId,
   ESTADOS, ESTADO_NOMBRE, CODIGO_RE, sinDB } from "../../_lib/comun.js";
+import { SLUG_RE, catalogoBase, limpiarDatos } from "../../_lib/productos.js";
+
+// Estilo de la casa para las imágenes generadas con IA
+const ESTILO_IA = "black and white fine art photograph, dramatic chiaroscuro lighting, deep blacks, pitch black background, museum quality, extremely detailed, sharp focus, minimalist composition, vertical poster artwork, no text, no watermark, no frame";
+const SLUGIFY = t => String(t || "").toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "").slice(0, 60);
 
 const AVANZADOS = ["pagado", "produccion", "listo", "enviado", "entregado"];
 const EN_CURSO = ["pagado", "produccion", "listo", "enviado"];
@@ -235,6 +240,89 @@ export async function onRequest(ctx) {
       const n = await env.DB.prepare("SELECT * FROM pedidos WHERE codigo = ?1").bind(codigo).first();
       return json({ ok: true, pedido: parsePedido(n) });
     }
+  }
+
+  // ---------- Productos (cuadros creados o cambiados desde el panel) ----------
+  if (ruta === "productos" && m === "GET") {
+    const rs = await env.DB.prepare("SELECT slug, datos, estado, base, creado, actualizado, autor FROM productos ORDER BY actualizado DESC").all();
+    return json({ ok: true, productos: rs.results.map(r => ({ ...r, datos: JSON.parse(r.datos) })) });
+  }
+  if (ruta === "productos" && m === "POST") {
+    const d = await body();
+    const cat = await catalogoBase(env, request);
+    let datos; try { datos = limpiarDatos(d.datos || {}, cat.colecciones); } catch (e) { return error(e.message); }
+    const existeWeb = cat.productos.some(x => x.s === d.slug);
+    let slug = d.slug && SLUG_RE.test(d.slug) ? d.slug : SLUGIFY(datos.n);
+    if (!slug) return error("No se pudo crear la dirección del cuadro");
+    const previo = await env.DB.prepare("SELECT slug, base FROM productos WHERE slug = ?1").bind(slug).first();
+    if (d.nuevo && (existeWeb || previo)) {
+      let i = 2; while (cat.productos.some(x => x.s === `${slug}-${i}`) || await env.DB.prepare("SELECT 1 FROM productos WHERE slug = ?1").bind(`${slug}-${i}`).first()) i++;
+      slug = `${slug}-${i}`;
+    }
+    const estado = ["borrador", "publicado", "oculto"].includes(d.estado) ? d.estado : "borrador";
+    const base = !d.nuevo && existeWeb ? 1 : 0;
+    await env.DB.prepare(`INSERT INTO productos (slug, datos, estado, base, autor) VALUES (?1, ?2, ?3, ?4, ?5)
+      ON CONFLICT(slug) DO UPDATE SET datos = ?2, estado = ?3, actualizado = datetime('now'), autor = ?5`).bind(slug, JSON.stringify(datos), estado, base, quien).run();
+    return json({ ok: true, slug, estado });
+  }
+  const mpr = ruta.match(/^productos\/([a-z0-9-]+)$/);
+  if (mpr && m === "PATCH") {
+    const d = await body();
+    if (!["borrador", "publicado", "oculto"].includes(d.estado)) return error("Estado inválido");
+    const r = await env.DB.prepare("UPDATE productos SET estado = ?1, actualizado = datetime('now'), autor = ?2 WHERE slug = ?3").bind(d.estado, quien, mpr[1]).run();
+    if (!r.meta.changes) {   // ocultar un cuadro de la web que aún no tiene fila
+      const cat = await catalogoBase(env, request);
+      const x = cat.productos.find(y => y.s === mpr[1]); if (!x) return error("No existe ese cuadro", 404);
+      const { s: _s, ...datos } = x;
+      await env.DB.prepare("INSERT INTO productos (slug, datos, estado, base, autor) VALUES (?1, ?2, ?3, 1, ?4)").bind(mpr[1], JSON.stringify(datos), d.estado, quien).run();
+    }
+    return json({ ok: true });
+  }
+  if (mpr && m === "DELETE") {
+    await env.DB.prepare("DELETE FROM productos WHERE slug = ?1").bind(mpr[1]).run();   // vuelve a como está en la web (o borra el borrador)
+    await env.DB.prepare("DELETE FROM media WHERE clave LIKE ?1").bind(mpr[1] + "/%").run();
+    return json({ ok: true });
+  }
+  // Subir una imagen (cuerpo binario): PUT /api/admin/media/<slug>/<archivo>
+  const mme = ruta.match(/^media\/([a-z0-9-]+\/[a-z0-9.-]+)$/);
+  if (mme && m === "PUT") {
+    const tipo = request.headers.get("content-type") || "";
+    if (!/^image\/(webp|jpeg|png)$/.test(tipo)) return error("Formato de imagen no permitido");
+    const buf = await request.arrayBuffer();
+    if (buf.byteLength > 1.8 * 1024 * 1024) return error("Imagen muy pesada (máx. 1,8 MB)");
+    await env.DB.prepare("INSERT INTO media (clave, tipo, datos) VALUES (?1, ?2, ?3) ON CONFLICT(clave) DO UPDATE SET tipo = ?2, datos = ?3, creado = datetime('now')")
+      .bind(mme[1], tipo, buf).run();
+    return json({ ok: true, url: "/media/" + mme[1] });
+  }
+  // IA: imagen a partir de una idea
+  if (ruta === "ia/imagen" && m === "POST") {
+    if (!env.AI) return error("La IA no está conectada", 503);
+    const d = await body();
+    const idea = txt(d.idea, 400); if (!idea) return error("Escribe la idea del cuadro");
+    const color = !!d.color;
+    const prompt = `${idea}. ${color ? ESTILO_IA.replace("black and white fine art photograph", "fine art photograph with muted earthy colors") : ESTILO_IA}`;
+    try {
+      const r = await env.AI.run("@cf/black-forest-labs/flux-1-schnell", { prompt, steps: 8 });
+      return json({ ok: true, imagen: "data:image/jpeg;base64," + r.image, prompt });
+    } catch (e) { return error("La IA no pudo generar la imagen: " + String(e.message || e).slice(0, 120), 502); }
+  }
+  // IA: nombre, frase, colección y ambientes
+  if (ruta === "ia/textos" && m === "POST") {
+    if (!env.AI) return error("La IA no está conectada", 503);
+    const d = await body();
+    const idea = txt(d.idea, 400); if (!idea) return error("Escribe la idea del cuadro");
+    const cat = await catalogoBase(env, request);
+    const cols = cat.colecciones.map(c => `${c.id} (${c.nombre}: ${c.bajada})`).join("; ");
+    const ejemplos = cat.productos.filter(x => x.i).slice(0, 12).map(x => `«${x.n}» — ${x.f}`).join(" | ");
+    const sys = `Eres el redactor de Cuadros Finos, tienda peruana de cuadros en blanco y negro con marco. Estilo: nombres cortos con «·» (ej. «León · Fuerza»), frases breves, poéticas y con fuerza, en español de Perú, sin emojis. Responde SOLO un JSON válido.`;
+    const user = `Idea del cuadro: ${idea}\nEjemplos de la tienda: ${ejemplos}\nColecciones posibles: ${cols}\nAmbientes posibles: sala, dormitorio, oficina, comedor.\nDevuelve: {"nombre": "...", "frase": "... (máx. 9 palabras)", "coleccion": "id", "ambientes": ["..."], "descripcion": "2 oraciones para la ficha (sin precio)"}`;
+    try {
+      const r = await env.AI.run("@cf/meta/llama-3.3-70b-instruct-fp8-fast", { messages: [{ role: "system", content: sys }, { role: "user", content: user }], max_tokens: 350, temperature: 0.7 });
+      const j = typeof r.response === "object" && r.response ? r.response : (t => JSON.parse(t.slice(t.indexOf("{"), t.lastIndexOf("}") + 1)))(String(r.response || ""));
+      const col = cat.colecciones.some(c => c.id === j.coleccion) ? j.coleccion : cat.colecciones[0].id;
+      return json({ ok: true, nombre: txt(j.nombre, 80), frase: txt(j.frase, 160), coleccion: col,
+        ambientes: (Array.isArray(j.ambientes) ? j.ambientes : []).filter(a => ["sala", "dormitorio", "oficina", "comedor"].includes(a)), descripcion: txt(j.descripcion, 600) });
+    } catch (e) { return error("La IA no pudo proponer textos. Escríbelos tú. (" + String(e.message || e).slice(0, 140) + ")", 502); }
   }
 
   // Usuarios del panel

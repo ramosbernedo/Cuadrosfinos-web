@@ -428,7 +428,7 @@ def crumbs_ld(items):
 
 
 def crumbs_html(items):
-    lis = "".join((f'<li><a href="{u}">{e(n)}</a></li>' if i < len(items) - 1 else f'<li aria-current="page">{e(n)}</li>') for i, (n, u) in enumerate(items))
+    lis = "".join((f'<li data-i="{i}"><a href="{u}">{e(n)}</a></li>' if i < len(items) - 1 else f'<li data-i="{i}" aria-current="page">{e(n)}</li>') for i, (n, u) in enumerate(items))
     return f'<nav class="crumbs wrap" aria-label="Ruta"><ol>{lis}</ol></nav>'
 
 
@@ -638,7 +638,7 @@ def landing(kind, obj, items):
     return path
 
 
-def build_product(x):
+def build_product(x, robots="index,follow"):
     path = purl(x)
     col = COL[x["c"]]
     crumbs = [("Inicio", "/"), (col["nombre"], f"/{col['url']}/"), (x["n"], path)]
@@ -680,7 +680,7 @@ def build_product(x):
 {faq_html(faqs)}
   </main>'''
     title = f"{x['n']} · Cuadro con marco" + (" · Visita del Papa León XIV" if x["c"] == "papa" else "")
-    page = head(title, meta_desc(x), path, og_img=img_og(x), og_type="product",
+    page = head(title, meta_desc(x), path, og_img=img_og(x), og_type="product", robots=robots,
                 ld=[prod, crumbs_ld(crumbs), faq_ld(faqs)],
                 preload=f'<link rel="preload" as="image" href="{img_main(x)}" fetchpriority="high">' if x.get("i") else "")
     write(path + "index.html", page + header({"tipo": "product", "data": {"slug": x["s"]}}) + body + footer() + overlays(with_product_dialog=False))
@@ -719,6 +719,7 @@ User-agent: *
 Allow: /
 Disallow: /tools/
 Disallow: /admin/
+Disallow: /cuadro/_plantilla/
 Disallow: /api/
 
 # Asistentes de IA bienvenidos (GEO)
@@ -783,7 +784,7 @@ Sitemap: {h('/sitemap.xml')}
 /medicion.js
   Cache-Control: public, max-age=31536000, immutable
 /data.js
-  Cache-Control: public, max-age=31536000, immutable
+  Cache-Control: public, max-age=30, stale-while-revalidate=600
 /vendor/*
   Cache-Control: public, max-age=31536000, immutable
 /3d/*
@@ -862,6 +863,9 @@ def main():
     for x in PRODS:
         paths.append((build_product(x), [h(img_main(x))] if x.get("i") else []))
     build_404()
+    # Plantilla que usa el servidor para los cuadros creados en el panel (no se indexa)
+    build_product({"s": "_plantilla", "c": COLS[0]["id"], "u": COLS[0]["subs"][0][0] if COLS[0]["subs"] else "", "n": "Cuadro", "f": "",
+                   "a": ["sala"], "o": "vertical", "i": 1, "idx": len(PRODS)}, robots="noindex,nofollow")
     build_seo(paths)
     nf = build_feeds()
     print(f"OK: {len(paths)} páginas · {nf} productos en los catálogos de anuncios · sitio {SITE}")

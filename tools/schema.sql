@@ -60,3 +60,21 @@ CREATE TABLE IF NOT EXISTS intentos (
   fecha TEXT NOT NULL DEFAULT (datetime('now'))
 );
 CREATE INDEX IF NOT EXISTS intentos_clave ON intentos(clave, fecha);
+
+-- Cuadros creados o modificados desde el panel (se suman al catálogo de la web)
+CREATE TABLE IF NOT EXISTS productos (
+  slug        TEXT PRIMARY KEY,
+  datos       TEXT NOT NULL,                 -- JSON con el mismo formato del catálogo (s, c, u, n, f, a, o, t, nw, p, k…)
+  estado      TEXT NOT NULL DEFAULT 'borrador', -- borrador | publicado | oculto
+  base        INTEGER NOT NULL DEFAULT 0,    -- 1 = cambio sobre un cuadro que ya existe en la web
+  creado      TEXT NOT NULL DEFAULT (datetime('now')),
+  actualizado TEXT NOT NULL DEFAULT (datetime('now')),
+  autor       TEXT
+);
+-- Imágenes subidas o generadas en el panel (servidas en /media/...)
+CREATE TABLE IF NOT EXISTS media (
+  clave   TEXT PRIMARY KEY,                  -- p. ej. puma-andino/obra.webp
+  tipo    TEXT NOT NULL,                     -- image/webp | image/jpeg
+  datos   BLOB NOT NULL,
+  creado  TEXT NOT NULL DEFAULT (datetime('now'))
+);

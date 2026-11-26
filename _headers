@@ -16,7 +16,7 @@
 /medicion.js
   Cache-Control: public, max-age=31536000, immutable
 /data.js
-  Cache-Control: public, max-age=31536000, immutable
+  Cache-Control: public, max-age=30, stale-while-revalidate=600
 /vendor/*
   Cache-Control: public, max-age=31536000, immutable
 /3d/*

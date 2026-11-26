@@ -3,6 +3,7 @@ User-agent: *
 Allow: /
 Disallow: /tools/
 Disallow: /admin/
+Disallow: /cuadro/_plantilla/
 Disallow: /api/
 
 # Asistentes de IA bienvenidos (GEO)

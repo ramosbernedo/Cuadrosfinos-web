@@ -116,6 +116,39 @@ const UA = "Mozilla/5.0 (Linux; Android 14; Pixel 7) AppleWebKit/537.36 (KHTML, 
   await p.goto(BASE + "/admin/#/marketing", { waitUntil: "networkidle" }); await p.waitForTimeout(700);
   ok("Marketing: la vista carga sin errores", (await p.textContent("h1")).includes("Marketing") && await p.isVisible(".kpis"));
 
+  // 6c. Productos: crear, subir imagen, publicar, cambiar precio, ocultar y restaurar (sin gastar IA)
+  {
+    const png = Buffer.from("iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAIAAACQd1PeAAAADElEQVR42mNgYGAAAAAEAAHI6uv5AAAAAElFTkSuQmCC", "base64");
+    const cr = await (await api.post(BASE + "/api/admin/productos", { data: { nuevo: true, estado: "borrador", datos: { n: "Prueba · Panel", f: "Creado en las pruebas.", c: "poder", a: ["sala"], o: "vertical" } } })).json();
+    ok("Productos: crear un cuadro nuevo (borrador)", cr.ok && /^prueba-panel/.test(cr.slug), cr.slug);
+    const up = await api.put(BASE + `/api/admin/media/${cr.slug}/obra.webp`, { headers: { "content-type": "image/png" }, data: png });
+    await api.put(BASE + `/api/admin/media/${cr.slug}/t.webp`, { headers: { "content-type": "image/png" }, data: png });
+    ok("Productos: subir su imagen", up.status() === 200 && (await api.get(BASE + `/media/${cr.slug}/obra.webp`)).status() === 200);
+    let r2 = await api.get(BASE + `/cuadro/${cr.slug}/`, { failOnStatusCode: false });
+    ok("Productos: un borrador no aparece en la web", r2.status() === 404);
+    await api.post(BASE + "/api/admin/productos", { data: { slug: cr.slug, estado: "publicado", datos: { n: "Prueba · Panel", f: "Creado en las pruebas.", c: "poder", a: ["sala"], o: "vertical", i: 1, m: "t1" } } });
+    r2 = await api.get(BASE + `/cuadro/${cr.slug}/`);
+    const htm = await r2.text();
+    ok("Productos: al publicar tiene su página con título, Google (JSON-LD) y su imagen", r2.status() === 200 && htm.includes("<title>Prueba · Panel · Cuadro con marco") && htm.includes('"@type":"Product"') && htm.includes(`/media/${cr.slug}/og.jpg`));
+    const dj = await (await api.get(BASE + "/data.js?x=" + Date.now())).text();
+    ok("Productos: entra al catálogo de la web y al mapa del sitio", dj.includes(`"s":"${cr.slug}"`) && (await (await api.get(BASE + "/sitemap.xml")).text()).includes(`/cuadro/${cr.slug}/`));
+    const nv = await b.newContext(); const pv = await nv.newPage();
+    await pv.goto(BASE + `/cuadro/${cr.slug}/`, { waitUntil: "networkidle" });
+    ok("Productos: la página del cuadro nuevo funciona (imagen, precio y botones)", (await pv.$eval("#pStage img", i => i.src)).includes(`/media/${cr.slug}/obra.webp`) && (await pv.textContent("#pPrice")) === "S/ 84" && await pv.isVisible("#pAdd"));
+    await nv.close();
+    await api.post(BASE + "/api/admin/productos", { data: { slug: "leon-fuerza", estado: "publicado", datos: { ...{ n: "León · Fuerza", f: "El que no necesita rugir.", c: "poder", u: "animales", a: ["oficina", "sala"], o: "vertical", i: 1, t: 1 }, pr: 95 } } });
+    const nv2 = await b.newContext(); const pv2 = await nv2.newPage();
+    await pv2.goto(BASE + "/cuadro/leon-fuerza/", { waitUntil: "networkidle" });
+    ok("Productos: precio especial en un cuadro de la web", (await pv2.textContent("#pPrice")) === "S/ 95");
+    await nv2.close();
+    await api.patch(BASE + `/api/admin/productos/${cr.slug}`, { data: { estado: "oculto" } });
+    ok("Productos: ocultar lo saca de la web", (await api.get(BASE + `/cuadro/${cr.slug}/`, { failOnStatusCode: false })).status() === 404);
+    await api.delete(BASE + `/api/admin/productos/${cr.slug}`); await api.delete(BASE + "/api/admin/productos/leon-fuerza");
+    ok("Productos: deshacer devuelve el cuadro original", (await api.get(BASE + "/cuadro/leon-fuerza/")).status() === 200 && !(await (await api.get(BASE + "/data.js?y=" + Date.now())).text()).includes('"pr":95'));
+    await p.goto(BASE + "/admin/#/productos", { waitUntil: "networkidle" }); await p.waitForSelector(".prod");
+    ok("Productos: la sección lista los cuadros", (await p.$$(".prod")).length >= 80);
+  }
+
   // 7. Pedido manual, usuarios y límite de intentos
   const man = await (await api.post(BASE + "/api/admin/pedidos", { data: { items: [{ s: "leon-fuerza", n: "León · Fuerza", qty: 2, precio: 84 }], cliente: "Tienda", fuente: "instagram" } })).json();
   ok("Pedido manual desde el panel", man.ok && /^CF-/.test(man.codigo));

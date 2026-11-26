@@ -6,7 +6,9 @@ const soles = n => "S/ " + Math.round(Number(n) || 0).toLocaleString("es-PE");
 const pct = n => (n * 100).toFixed(n && n < .1 ? 1 : 0) + "%";
 const CAT = window.CATALOGO || { productos: [], config: {} };
 const BY = Object.fromEntries(CAT.productos.map(x => [x.s, x]));
-const thumb = s => BY[s] && BY[s].i ? `/img/cuadros/t/${s}${BY[s].o === "triptico" || BY[s].o === "diptico" ? "-1" : ""}.webp` : "/img/favicon.svg";
+const thumb = s => { const x = BY[s]; if (!x || !x.i) return "/img/favicon.svg";
+  const pz = x.o === "triptico" || x.o === "diptico" ? "-1" : "";
+  return x.m ? `/media/${s}/t${pz}.webp?v=${encodeURIComponent(x.m)}` : `/img/cuadros/t/${s}${pz}.webp`; };
 const ESTADOS = [["nuevo", "Nuevo"], ["confirmado", "Confirmado"], ["pagado", "Pagado"], ["produccion", "En producción"], ["listo", "Listo"], ["enviado", "Enviado"], ["entregado", "Entregado"], ["cancelado", "Cancelado"]];
 const EN = Object.fromEntries(ESTADOS);
 const est = e => `<span class="est est--${esc(e)}">${esc(EN[e] || e)}</span>`;
@@ -71,7 +73,7 @@ const ICO = {
   copiar: '<rect x="9" y="9" width="11" height="11" rx="2"/><path d="M5 15V5a2 2 0 0 1 2-2h8"/>',
 };
 const ic = (k, extra = "") => `<svg class="i" viewBox="0 0 24 24" aria-hidden="true" ${extra}>${ICO[k] || ""}</svg>`;
-const SECCIONES = [["resumen", "Inicio"], ["pedidos", "Pedidos"], ["entregas", "Entregas"], ["marketing", "Marketing"], ["productos", "Productos", "pronto"], ["generador", "Generador", "pronto"], ["ajustes", "Ajustes"]];
+const SECCIONES = [["resumen", "Inicio"], ["pedidos", "Pedidos"], ["entregas", "Entregas"], ["marketing", "Marketing"], ["productos", "Productos"], ["generador", "Crear con IA"], ["ajustes", "Ajustes"]];
 let PULSO = { nuevos: 0, atrasados: 0 };
 const tema = () => document.documentElement.dataset.theme;
 function aplicarTema(t) { document.documentElement.dataset.theme = t; try { localStorage.setItem("cf_panel_tema", t); } catch {} }
@@ -560,6 +562,200 @@ async function vistaMarketing() {
   $$("[data-feed]").forEach(b => b.addEventListener("click", async () => { try { await navigator.clipboard.writeText(b.dataset.feed); toast("Enlace copiado"); } catch {} }));
 }
 
+/* ---------- productos y creación de cuadros ---------- */
+const PRECIO_STD = x => x.o === "triptico" ? CAT.config.precio.triptico : x.o === "diptico" ? CAT.config.precio.diptico : CAT.config.precio.pieza;
+const colNom = id => (CAT.colecciones.find(c => c.id === id) || {}).nombre || id;
+const imgDe = (x, thumb) => x.m ? `/media/${x.s}/${thumb ? "t" : "obra"}${["triptico", "diptico"].includes(x.o) ? "-1" : ""}.webp?v=${encodeURIComponent(x.m)}`
+  : x.i ? `/img/cuadros/${thumb ? "t/" : ""}${x.s}${["triptico", "diptico"].includes(x.o) ? "-1" : ""}.webp` : "/img/favicon.svg";
+let FILPROD = "todos", BUSPROD = "";
+async function recargarCatalogo() {
+  try { const t = await (await fetch("/data.js?f=" + Date.now(), { cache: "no-store" })).text();
+    const c = JSON.parse(t.slice(t.indexOf("window.CATALOGO=") + 16, t.lastIndexOf(";")));
+    CAT.productos = c.productos; Object.keys(BY).forEach(k => delete BY[k]); c.productos.forEach(x => (BY[x.s] = x)); } catch {}
+}
+async function listaProductos() {
+  const { productos: filas } = await api("productos");
+  const fila = Object.fromEntries(filas.map(f => [f.slug, f]));
+  const todos = CAT.productos.map(x => ({ x, f: fila[x.s] }));
+  filas.filter(f => !BY[f.slug]).forEach(f => todos.push({ x: { ...f.datos, s: f.slug }, f }));
+  return todos.map(({ x, f }) => ({ x, f, estado: !f ? "web" : f.estado === "publicado" ? (f.base ? "modificado" : "nuevo") : f.estado }));
+}
+async function vistaProductos() {
+  shell("productos", `<div class="top"><div><h1>Productos</h1><p>Tus cuadros en la web. Crea nuevos, cambia precios y textos, u ocúltalos.</p></div>
+    <button class="btn btn--p" id="crear">+ Nuevo cuadro</button></div>
+    <div class="filtros" id="fp">${[["todos", "Todos"], ["web", "En la web"], ["nuevo", "Creados en el panel"], ["modificado", "Modificados"], ["borrador", "Borradores"], ["oculto", "Ocultos"]].map(([k, n]) => `<button class="chip ${k === FILPROD ? "on" : ""}" data-f="${k}">${n}<small data-c="${k}"></small></button>`).join("")}</div>
+    <input type="search" id="bp" placeholder="Buscar cuadro por nombre o colección" value="${esc(BUSPROD)}" style="margin-bottom:14px">
+    <div class="prods" id="prods">${'<div class="sk" style="height:250px"></div>'.repeat(8)}</div>`);
+  $("#crear").addEventListener("click", () => editorProducto(null));
+  $$("#fp .chip").forEach(b => b.addEventListener("click", () => { FILPROD = b.dataset.f; vistaProductos(); }));
+  let tt; $("#bp").addEventListener("input", e => { clearTimeout(tt); tt = setTimeout(() => { BUSPROD = e.target.value; pintar(); }, 150); });
+  let todos = await listaProductos();
+  const norm = t => t.toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "");
+  const pintar = () => {
+    const cnt = {}; todos.forEach(p => { cnt[p.estado] = (cnt[p.estado] || 0) + 1; }); cnt.todos = todos.length;
+    $$("#fp [data-c]").forEach(sm => sm.textContent = cnt[sm.dataset.c] || "");
+    const q = norm(BUSPROD);
+    const l = todos.filter(p => (FILPROD === "todos" || p.estado === FILPROD) && (!q || norm(`${p.x.n} ${colNom(p.x.c)}`).includes(q)));
+    const etiqueta = { web: "", nuevo: '<span class="est est--entregado">Nuevo</span>', modificado: '<span class="est est--confirmado">Modificado</span>', borrador: '<span class="est est--nuevo">Borrador</span>', oculto: '<span class="est est--cancelado">Oculto</span>' };
+    $("#prods").innerHTML = l.length ? l.map(({ x, estado }) => `<button class="prod" data-s="${esc(x.s)}">
+      <span class="prod__img"><img src="${imgDe(x, true)}" alt="" loading="lazy"></span>
+      <span class="prod__info"><b>${esc(x.n)}</b><small>${esc(colNom(x.c))} · ${x.q ? "Cotizar" : "S/ " + (x.pr || PRECIO_STD(x)) + (x.pr ? " (especial)" : "")}</small>${etiqueta[estado]}</span></button>`).join("") : vacio("No hay cuadros con ese filtro.", "productos");
+    $$("#prods .prod").forEach(b => b.addEventListener("click", () => { const p = todos.find(t => t.x.s === b.dataset.s); editorProducto(p, async () => { await recargarCatalogo(); todos = await listaProductos(); pintar(); }); }));
+  };
+  pintar();
+}
+
+// Convierte una imagen (URL o dataURL) en las variantes que usa la web
+async function variantes(src, horizontal) {
+  const im = await cargarImg(src);
+  const toBlob = (c, tipo, q) => new Promise(ok => c.toBlob(ok, tipo, q));
+  const lienzo = (w, h) => { const c = document.createElement("canvas"); c.width = w; c.height = h; return [c, c.getContext("2d")]; };
+  const escala = (max) => { const s = Math.min(1, max / Math.max(im.naturalWidth, im.naturalHeight)); return [Math.round(im.naturalWidth * s), Math.round(im.naturalHeight * s)]; };
+  const [w1, h1] = escala(1400); const [c1, g1] = lienzo(w1, h1); g1.drawImage(im, 0, 0, w1, h1);
+  const obra = await toBlob(c1, "image/webp", .86);
+  const tw = horizontal ? 560 : 400, th = Math.round(tw * im.naturalHeight / im.naturalWidth); const [c2, g2] = lienzo(tw, th); g2.drawImage(im, 0, 0, tw, th);
+  const t = await toBlob(c2, "image/webp", .8);
+  return { obra, t, im };
+}
+async function imagenOG(im, x, horizontal) {
+  const W = 1200, H = 630; const c = document.createElement("canvas"); c.width = W; c.height = H; const g = c.getContext("2d");
+  await document.fonts.load("600 46px Inter");
+  g.fillStyle = "#0b0b0b"; g.fillRect(0, 0, W, H);
+  const rg = g.createRadialGradient(380, 300, 40, 380, 300, 520); rg.addColorStop(0, "#302c26"); rg.addColorStop(1, "#0b0b0b"); g.fillStyle = rg; g.fillRect(0, 0, W, H);
+  const fh = horizontal ? 380 : 470, fw = Math.round(fh * (horizontal ? 37.4 / 29.8 : 29.8 / 37.4)), x0 = 380 - fw / 2, y0 = (H - fh) / 2;
+  g.save(); g.shadowColor = "rgba(0,0,0,.75)"; g.shadowBlur = 40; g.shadowOffsetY = 20; g.fillStyle = "#0e0e0e"; g.fillRect(x0, y0, fw, fh); g.restore();
+  const mx = fw * .055, my = fh * .044, iw = fw - 2 * mx, ih = fh - 2 * my, s = Math.max(iw / im.naturalWidth, ih / im.naturalHeight), sw = iw / s, sh = ih / s;
+  g.drawImage(im, (im.naturalWidth - sw) / 2, (im.naturalHeight - sh) / 2, sw, sh, x0 + mx, y0 + my, iw, ih);
+  const tx = 720; g.fillStyle = "#96928a"; g.font = "500 20px Inter"; g.fillText("CUADROS FINOS", tx, 150);
+  g.fillStyle = "#f3f1ec"; g.font = "600 44px Inter"; let y = 205;
+  envolver(g, (x.n || "").toUpperCase(), 440).slice(0, 3).forEach(l => { g.fillText(l, tx, y); y += 54; });
+  g.fillStyle = "#96928a"; g.font = "400 24px Inter"; y += 6; envolver(g, x.f || "", 440).slice(0, 3).forEach(l => { g.fillText(l, tx, y); y += 32; });
+  const pr = x.q ? null : x.pr || PRECIO_STD(x); if (pr) { g.fillStyle = "#f3f1ec"; g.font = "600 40px Inter"; g.fillText("S/ " + pr, tx, Math.min(y + 50, 520)); }
+  g.fillStyle = "#96928a"; g.font = "400 20px Inter"; g.fillText("Hecho en Lima · Envío a todo el Perú", tx, 560);
+  return new Promise(ok => c.toBlob(ok, "image/jpeg", .86));
+}
+async function subir(clave, blob) {
+  const r = await fetch("/api/admin/media/" + clave, { method: "PUT", body: blob, headers: { "content-type": blob.type }, credentials: "same-origin" });
+  const d = await r.json(); if (!d.ok) throw new Error(d.error || "No se pudo subir la imagen");
+}
+function vistaPrevia(src, horizontal) {
+  const w = (CAT.paredes || {}).sala;
+  const marco = `<span class="mp-marco ${horizontal ? "h" : ""}">${src ? `<img src="${esc(src)}" alt="">` : `<span class="mp-vacio">Sin imagen</span>`}</span>`;
+  return `<div class="mp"><div class="mp-obra">${marco}</div>${w ? `<div class="mp-pared"><img src="/img/ambiente/${w.img}.webp" alt="">
+    <div class="mp-cuadro ${horizontal ? "h" : ""}" style="left:${w.cx}%;top:${w.cy}%;width:${w.cm * (horizontal ? 37.4 : 29.8)}%">${src ? `<img src="${esc(src)}" alt="">` : ""}</div><span>Vista a escala real · 30 × 37 cm</span></div>` : ""}</div>`;
+}
+function editorProducto(p, alGuardar) {
+  const esNuevo = !p, x0 = p ? { ...p.x } : { n: "", f: "", c: CAT.colecciones[0].id, a: ["sala"], o: "vertical", nw: 1 };
+  let imagen = p ? imgDe(x0, false) : null, imagenNueva = null;
+  const d = document.createElement("div"); d.className = "drawer";
+  const colOpts = CAT.colecciones.map(c => `<option value="${c.id}" ${c.id === x0.c ? "selected" : ""}>${esc(c.nombre)}</option>`).join("");
+  const subsDe = c => ((CAT.colecciones.find(k => k.id === c) || {}).subs || []);
+  d.innerHTML = `<section role="dialog" aria-modal="true" aria-label="${esNuevo ? "Nuevo cuadro" : esc(x0.n)}" class="ancho">
+    <div class="dhead"><div class="fila"><div><h1>${esNuevo ? "Nuevo cuadro" : esc(x0.n)}</h1><p class="muted small">${esNuevo ? "Sube tu imagen o créala con IA, completa los datos y publícalo." : p.estado === "web" ? "Cuadro de la web. Los cambios se publican al instante." : "Estado: " + esc(p.estado)}</p></div><button class="cerrar" aria-label="Cerrar">×</button></div></div>
+    <div class="dbody editor">
+      <div class="ed-col">
+        <div class="sec"><h3>1 · Imagen</h3>
+          <div class="seg" id="modo" style="margin-bottom:12px"><button data-m="ia" class="${esNuevo ? "on" : ""}">Crear con IA</button><button data-m="subir" class="${esNuevo ? "" : "on"}">Subir imagen</button></div>
+          <div id="m-ia" ${esNuevo ? "" : "hidden"}>
+            <label class="f"><span>Describe el cuadro</span><textarea id="idea" rows="3" placeholder="Ej.: puma andino mirando de frente, entre la niebla, en blanco y negro dramático"></textarea></label>
+            <label class="check" style="margin:8px 0"><input type="checkbox" id="color"> <span>Con algo de color (tonos tierra)</span></label>
+            <div style="display:flex;gap:8px;flex-wrap:wrap"><button class="btn btn--p" id="gen">✨ Generar 4 opciones</button><button class="btn" id="sugerir">Sugerir nombre y frase</button></div>
+            <div class="opciones" id="opciones"></div>
+            <p class="muted small">Usa la IA de Cloudflare. Cada imagen tarda unos segundos.</p>
+          </div>
+          <div id="m-subir" ${esNuevo ? "hidden" : ""}>
+            <label class="subir"><input type="file" id="archivo" accept="image/*"><span>${ic("productos")}<b>Elegir imagen</b><small>JPG, PNG o WebP · vertical 2:3 recomendado · mínimo 1000 px de alto</small></span></label>
+          </div>
+        </div>
+        <div class="sec"><h3>2 · Datos</h3>
+          <div class="grid2">
+            <label class="f" style="grid-column:1/-1"><span>Nombre</span><input id="n" value="${esc(x0.n)}" placeholder="Puma · Andes" maxlength="80"></label>
+            <label class="f" style="grid-column:1/-1"><span>Frase corta</span><input id="f" value="${esc(x0.f)}" placeholder="El que cuida la montaña." maxlength="160"></label>
+            <label class="f"><span>Colección</span><select id="c">${colOpts}</select></label>
+            <label class="f"><span>Subcolección</span><select id="u"></select></label>
+            <label class="f"><span>Formato</span><select id="o"><option value="vertical" ${x0.o === "vertical" ? "selected" : ""}>Vertical (30 × 37)</option><option value="horizontal" ${["horizontal", "panoramico"].includes(x0.o) ? "selected" : ""}>Horizontal (37 × 30)</option>${["triptico", "diptico"].includes(x0.o) ? `<option value="${x0.o}" selected>${x0.o === "triptico" ? "Tríptico" : "Díptico"}</option>` : ""}</select></label>
+            <label class="f"><span>Precio (vacío = estándar S/ ${PRECIO_STD(x0)})</span><input id="pr" type="number" min="1" value="${x0.pr || ""}" placeholder="${PRECIO_STD(x0)}"></label>
+          </div>
+          <div style="margin-top:10px"><span class="small" style="font-weight:500;color:var(--fg2)">Va bien en</span>
+            <div class="checks">${["sala", "dormitorio", "oficina", "comedor"].map(a => `<label class="check"><input type="checkbox" name="a" value="${a}" ${(x0.a || []).includes(a) ? "checked" : ""}> <span>${a[0].toUpperCase() + a.slice(1)}</span></label>`).join("")}</div></div>
+          <div class="checks" style="margin-top:6px"><label class="check"><input type="checkbox" id="t" ${x0.t ? "checked" : ""}> <span>Marcar como «Más pedido»</span></label><label class="check"><input type="checkbox" id="nw" ${x0.nw ? "checked" : ""}> <span>Marcar como «Nuevo»</span></label></div>
+          <label class="f" style="margin-top:10px"><span>Descripción para la ficha (opcional)</span><textarea id="dd" rows="3" placeholder="Si lo dejas vacío, se arma sola con la frase, la medida y el precio.">${esc(x0.d || "")}</textarea></label>
+        </div>
+      </div>
+      <div class="ed-col"><div class="sec" style="position:sticky;top:12px"><h3>Vista previa</h3><div id="prev">${vistaPrevia(imagen, ["horizontal", "panoramico"].includes(x0.o))}</div></div></div>
+      <div class="guardar">
+        <button class="btn btn--p" id="publicar">${p && p.estado !== "borrador" ? "Guardar y publicar" : "Publicar en la web"}</button>
+        <button class="btn" id="borrador">Guardar borrador</button>
+        ${p && p.estado !== "oculto" && !esNuevo ? `<button class="btn btn--ghost" id="ocultar">Ocultar de la web</button>` : ""}
+        ${p && p.estado === "oculto" ? `<button class="btn btn--ghost" id="mostrar">Volver a mostrar</button>` : ""}
+        ${p && p.f && p.estado !== "web" ? `<button class="btn btn--ghost" id="restaurar" title="${p.f.base ? "Deshace los cambios del panel" : "Borra este cuadro"}">${p.f.base ? "Deshacer cambios" : "Eliminar"}</button>` : ""}
+        ${p && p.estado !== "borrador" ? `<a class="btn btn--ghost" href="/cuadro/${esc(x0.s)}/" target="_blank" rel="noopener">${ic("web")} Ver en la web</a>` : ""}
+      </div>
+    </div></section>`;
+  document.body.append(d);
+  const cerrar = () => d.remove();
+  d.addEventListener("click", e => { if (e.target === d || e.target.closest(".cerrar")) cerrar(); });
+  const pintarSubs = () => { const ss = subsDe($("#c", d).value); $("#u", d).innerHTML = ss.length ? ss.map(([k, n]) => `<option value="${k}" ${k === x0.u ? "selected" : ""}>${esc(n)}</option>`).join("") : `<option value="">—</option>`; };
+  pintarSubs(); $("#c", d).addEventListener("change", pintarSubs);
+  const horiz = () => $("#o", d).value === "horizontal";
+  const prev = () => $("#prev", d).innerHTML = vistaPrevia(imagenNueva || imagen, horiz());
+  $("#o", d).addEventListener("change", prev);
+  $$("#modo button", d).forEach(b => b.addEventListener("click", () => { $$("#modo button", d).forEach(z => z.classList.toggle("on", z === b)); $("#m-ia", d).hidden = b.dataset.m !== "ia"; $("#m-subir", d).hidden = b.dataset.m !== "subir"; }));
+  $("#archivo", d).addEventListener("change", e => { const f = e.target.files[0]; if (!f) return; const r = new FileReader(); r.onload = () => { imagenNueva = r.result; prev(); toast("Imagen lista"); }; r.readAsDataURL(f); });
+  $("#gen", d).addEventListener("click", async () => {
+    const idea = $("#idea", d).value.trim(); if (!idea) return toast("Describe el cuadro primero");
+    const b = $("#gen", d); b.disabled = true; b.textContent = "Generando…";
+    const op = $("#opciones", d); op.innerHTML = '<div class="sk"></div>'.repeat(4);
+    const res = await Promise.allSettled([0, 1, 2, 3].map(() => api("ia/imagen", { method: "POST", body: { idea, color: $("#color", d).checked } })));
+    const ok = res.filter(r => r.status === "fulfilled").map(r => r.value.imagen);
+    op.innerHTML = ok.length ? ok.map((src, i) => `<button class="opcion" data-i="${i}"><img src="${src}" alt="Opción ${i + 1}"></button>`).join("") : `<p class="err">${esc((res.find(r => r.status === "rejected") || {}).reason?.message || "No se pudo generar")}</p>`;
+    $$(".opcion", op).forEach(o => o.addEventListener("click", () => { $$(".opcion", op).forEach(z => z.classList.toggle("on", z === o)); imagenNueva = ok[+o.dataset.i]; prev(); }));
+    if (ok.length && !$("#n", d).value.trim()) $("#sugerir", d).click();
+    b.disabled = false; b.textContent = "✨ Generar otras 4";
+  });
+  $("#sugerir", d).addEventListener("click", async () => {
+    const idea = $("#idea", d).value.trim() || $("#n", d).value.trim(); if (!idea) return toast("Escribe la idea o el nombre");
+    const b = $("#sugerir", d); b.disabled = true; b.textContent = "Pensando…";
+    try { const r = await api("ia/textos", { method: "POST", body: { idea } });
+      if (r.nombre) $("#n", d).value = r.nombre; if (r.frase) $("#f", d).value = r.frase;
+      if (r.coleccion) { $("#c", d).value = r.coleccion; pintarSubs(); }
+      if (r.ambientes && r.ambientes.length) $$('[name="a"]', d).forEach(c => c.checked = r.ambientes.includes(c.value));
+      if (r.descripcion && !$("#dd", d).value.trim()) $("#dd", d).value = r.descripcion;
+      toast("Textos sugeridos: revísalos y ajústalos");
+    } catch (e) { toast(e.message); }
+    b.disabled = false; b.textContent = "Sugerir nombre y frase";
+  });
+  const datos = () => ({ n: $("#n", d).value.trim(), f: $("#f", d).value.trim(), c: $("#c", d).value, u: $("#u", d).value, o: $("#o", d).value,
+    pr: $("#pr", d).value ? +$("#pr", d).value : undefined, a: $$('[name="a"]:checked', d).map(c => c.value), t: $("#t", d).checked, nw: $("#nw", d).checked,
+    d: $("#dd", d).value.trim(), i: x0.i || !!imagenNueva, m: x0.m, q: x0.q, p: x0.p, k: x0.k });
+  async function guardar(estado) {
+    const dt = datos();
+    if (!dt.n) return toast("Ponle un nombre al cuadro");
+    if (esNuevo && !imagenNueva) return toast("Falta la imagen: créala con IA o súbela");
+    const btns = $$(".guardar .btn", d); btns.forEach(b => b.disabled = true);
+    try {
+      let slug = x0.s;
+      if (esNuevo) { const r = await api("productos", { method: "POST", body: { nuevo: true, datos: { ...dt, i: 0 }, estado: "borrador" } }); slug = r.slug; }
+      if (imagenNueva) {
+        toast("Preparando imágenes…");
+        const { obra, t, im } = await variantes(imagenNueva, horiz());
+        const og = await imagenOG(im, dt, horiz());
+        await subir(`${slug}/obra.webp`, obra); await subir(`${slug}/t.webp`, t); await subir(`${slug}/og.jpg`, og);
+        dt.m = Date.now().toString(36); dt.i = true;
+      }
+      await api("productos", { method: "POST", body: { slug, datos: dt, estado } });
+      toast(estado === "publicado" ? "¡Publicado! Ya está en la web." : "Borrador guardado");
+      cerrar(); if (alGuardar) alGuardar(); else vistaProductos();
+    } catch (e) { toast(e.message); btns.forEach(b => b.disabled = false); }
+  }
+  $("#publicar", d).addEventListener("click", () => guardar("publicado"));
+  $("#borrador", d).addEventListener("click", () => guardar("borrador"));
+  $("#ocultar", d)?.addEventListener("click", async () => { await api("productos/" + x0.s, { method: "PATCH", body: { estado: "oculto" } }); toast("Oculto de la web"); cerrar(); alGuardar && alGuardar(); });
+  $("#mostrar", d)?.addEventListener("click", async () => { await api("productos/" + x0.s, { method: "PATCH", body: { estado: "publicado" } }); toast("Visible otra vez"); cerrar(); alGuardar && alGuardar(); });
+  $("#restaurar", d)?.addEventListener("click", async () => { if (!confirm(p.f.base ? "¿Deshacer los cambios y dejarlo como estaba en la web?" : "¿Eliminar este cuadro del panel?")) return;
+    await api("productos/" + x0.s, { method: "DELETE" }); toast("Listo"); cerrar(); alGuardar && alGuardar(); });
+}
+
 /* ---------- próximamente ---------- */
 const PRONTO = {
   productos: ["Productos", "Crear, editar y ocultar cuadros, cambiar precios y subir imágenes, con un botón «Publicar» que actualiza la web."],
@@ -603,6 +799,8 @@ async function render() {
     if (sec === "entregas") return vistaEntregas();
     if (sec === "ajustes") return vistaAjustes();
     if (sec === "marketing") return vistaMarketing();
+    if (sec === "productos") return vistaProductos();
+    if (sec === "generador") { await vistaProductos(); editorProducto(null); return; }
     if (PRONTO[sec]) return vistaPronto(sec);
     return vistaResumen();
   } catch (e) { if (YO) app.innerHTML = `<p class="cargando">${esc(e.message)}</p>`; }

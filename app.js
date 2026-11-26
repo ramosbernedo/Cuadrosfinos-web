@@ -43,7 +43,11 @@ const colDe = id => COLECCIONES.find(c => c.id === id);
 const subNombre = x => ((colDe(x.c)?.subs || []).find(s => s[0] === x.u) || [])[1] || "";
 const piezas = x => x.o === "triptico" ? 3 : x.o === "diptico" ? 2 : 1;
 const esH = x => x.o === "horizontal" || x.o === "panoramico";
-const precioBase = x => x.q ? null : x.o === "triptico" ? P.triptico : x.o === "diptico" ? P.diptico : P.pieza;
+const precioBase = x => x.q ? null : x.pr ? x.pr : x.o === "triptico" ? P.triptico : x.o === "diptico" ? P.diptico : P.pieza;
+// Imagen de un cuadro: las del panel viven en /media/<slug>/, las de la web en /img/cuadros/
+const imgSrc = (x, { thumb = false, panel = 0 } = {}) => x.m
+  ? `/media/${x.s}/${thumb ? "t" : "obra"}${panel ? "-" + panel : ""}.webp?v=${encodeURIComponent(x.m)}`
+  : `/img/cuadros/${thumb ? "t/" : ""}${x.s}${panel ? "-" + panel : ""}.webp`;
 const medida = x => x.o === "triptico" ? "Tríptico 3 × (30 × 37 cm) con marco" : x.o === "diptico" ? "Díptico 2 × (30 × 37 cm) con marco" : esH(x) ? "37 × 30 cm con marco (horizontal)" : "30 × 37 cm con marco";
 DATA.forEach(x => (x._q = norm([x.n, x.f, colDe(x.c)?.nombre, subNombre(x), x.a.join(" "), x.p || "", x.o].join(" "))));
 const rank = x => (x.t ? 0 : 10) + (x.nw ? 0 : 3) + (x.i ? 0 : 20) + (x.c === "papa" ? 15 : 0) + x.idx / 100;
@@ -59,16 +63,15 @@ const once = new Set(); const T1 = (key, name, params) => { if (once.has(key)) r
 /* ---------- render ---------- */
 function pf(x, { lazy = true, thumb = false, scene = false } = {}) {
   const ld = lazy ? ' loading="lazy" decoding="async"' : "";
-  const base = thumb ? "/img/cuadros/t/" : "/img/cuadros/";
   const n = piezas(x);
   if (n > 1) {
     const inner = Array.from({ length: n }, (_, i) =>
-      `<span class="pf"><img src="${base}${x.s}-${i + 1}.webp" alt="${esc(x.n)} (panel ${i + 1})"${ld}></span>`).join("");
+      `<span class="pf"><img src="${imgSrc(x, { thumb, panel: i + 1 })}" alt="${esc(x.n)} (panel ${i + 1})"${ld}></span>`).join("");
     return scene ? inner : `<span class="set">${inner}</span>`;
   }
   const cls = "pf" + (esH(x) ? " pf--h" : "");
   if (!x.i) return `<span class="${cls}"><span class="ph"><b>${esc(x.n)}</b><i>Vista previa<br>por WhatsApp</i></span></span>`;
-  return `<span class="${cls}"><img src="${base}${x.s}.webp" alt="${esc(x.n)} — cuadro con marco negro"${ld}></span>`;
+  return `<span class="${cls}"><img src="${imgSrc(x, { thumb })}" alt="${esc(x.n)} — cuadro con marco negro"${ld}></span>`;
 }
 const precioTxt = x => x.q ? "Cotizar" : (x.p ? "Desde " : "") + soles(precioBase(x));
 function card(x, { mini = false } = {}) {
@@ -81,8 +84,8 @@ function card(x, { mini = false } = {}) {
 }
 
 function viewsHtml(x) {
-  const obra = `/img/cuadros/t/${x.s}${piezas(x) > 1 ? "-1" : ""}.webp`;
-  const fotos = [...(x.fotos || []), ...(x.i ? [[`detalle-${x.s}`, "El marco negro de cerca"]] : [])];
+  const obra = imgSrc(x, { thumb: true, panel: piezas(x) > 1 ? 1 : 0 });
+  const fotos = [...(x.fotos || []), ...(x.i && !x.m ? [[`detalle-${x.s}`, "El marco negro de cerca"]] : [])];
   return `<button class="view is-on" role="tab" id="tabObra" aria-selected="true" aria-controls="pStage" data-tab="obra">${x.i ? `<img src="${obra}" alt="" loading="lazy">` : '<span class="view__ph"></span>'}<span>Obra</span></button>` +
     `<button class="view" role="tab" id="tabPared" aria-selected="false" aria-controls="pWall" data-tab="pared"><img src="/img/ambiente/t/${PAREDES[roomFor(x)].img}.webp" alt="" loading="lazy"><span>En tu pared</span></button>` +
     `<button class="view view--3d" role="tab" aria-selected="false" aria-controls="p3d" data-tab="3d"><span class="view__3d" aria-hidden="true">3D</span><span>3D · AR</span></button>` +
@@ -170,7 +173,7 @@ function bindCatalog() {
   let saved = null; try { saved = sessionStorage.getItem(key); } catch {}
   if ("scrollRestoration" in history) history.scrollRestoration = "manual";
   addEventListener("pagehide", () => { try { sessionStorage.setItem("cf_scroll:" + location.pathname + location.search, String(scrollY)); } catch {} });
-  if (changed) renderGrid(); else reveal($("#grid"));
+  if (changed || CAT.panel) renderGrid(); else reveal($("#grid"));
   if (navEntry && navEntry.type === "back_forward" && saved !== null) {
     $$("#grid .rv").forEach(el => el.classList.add("in"));
     requestAnimationFrame(() => scrollTo(0, Number(saved)));
@@ -180,6 +183,7 @@ function bindCatalog() {
 /* ---------- ficha del cuadro (diálogo o página) ---------- */
 const dlg = $("#product");
 const inline = PAGE === "product";
+const dinamico = inline && !!document.body.dataset.dinamico;
 const S = { x: null, room: "sala", tab: "obra", pushed: false, prevUrl: null, prevTitle: document.title };
 const PAREDES = CAT.paredes;
 const roomFor = x => x.a.find(a => PAREDES[a]) || (x.a.includes("oficina") ? "estudio" : "sala");
@@ -192,14 +196,14 @@ function openProduct(slug, tab, { push = true } = {}) {
   $("#pCol").textContent = `Colección ${c.nombre}${subNombre(x) && c.subs.length > 1 ? " · " + subNombre(x) : ""}`;
   $("#pTitle").textContent = x.n;
   $("#pPhrase").textContent = x.f;
-  if (!inline) {
+  if (!inline || dinamico) {
     $("#pStage").innerHTML = pf(x, { lazy: false });
     $("#pSceneArt").innerHTML = pf(x, { lazy: false, scene: true });
     $("#pFieldList").innerHTML = (x.k || []).map(([label, ph], i) =>
       `<label class="field"><span>${esc(label)}</span><input name="f${i}" data-label="${esc(label)}" placeholder="${esc(ph)}"${/opcional/i.test(label) ? "" : " required"}></label>`).join("");
     const rel = DATA.filter(y => y.c === x.c && y.s !== x.s && y.i).sort((a, b) => rank(a) - rank(b)).slice(0, 4);
-    $("#pRelated").innerHTML = rel.map(y => card(y, { mini: true })).join("");
-    $("#pPage").href = purl(x);
+    if ($("#pRelated")) $("#pRelated").innerHTML = rel.map(y => card(y, { mini: true })).join("");
+    if ($("#pPage")) $("#pPage").href = purl(x);
     $("#pViews").innerHTML = viewsHtml(x);
   }
   $("#pMeasure").textContent = x.o === "triptico" ? "≈ 98 cm de ancho" : x.o === "diptico" ? "≈ 64 cm de ancho" : esH(x) ? "37 × 30 cm" : "30 × 37 cm";
@@ -289,7 +293,7 @@ function setTab(t, btn) {
 function zoomSrc() {
   if (S.tab === "foto") return [$("#pPhotoImg").src, $("#pPhotoImg").alt];
   if (personal(S.x)) return ["", S.x.n, $("#pStage .pf").innerHTML];
-  const x = S.x; return [`/img/cuadros/${x.s}${piezas(x) > 1 ? "-1" : ""}.webp`, x.n];
+  const x = S.x; return [imgSrc(x, { panel: piezas(x) > 1 ? 1 : 0 }), x.n];
 }
 function openZoom([src, alt, html]) {
   if (S.x) T("zoom", { item_id: S.x.s });
@@ -362,7 +366,7 @@ async function open3D() {
       let url;
       if (personal(x)) url = await artTexture(null, false, CFPersonal.svg(x.s, $$("#pFieldList input").map(v => v.value.trim())));
       else if (!x.i) continue;
-      else url = await artTexture(`/img/cuadros/${x.s}${n > 1 ? "-" + (i + 1) : ""}.webp`, h);
+      else url = await artTexture(imgSrc(x, { panel: n > 1 ? i + 1 : 0 }), h);
       const tex = await mv.createTexture(url);
       mat.pbrMetallicRoughness.baseColorTexture.setTexture(tex);
     }
