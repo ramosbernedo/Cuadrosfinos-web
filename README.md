@@ -3,7 +3,7 @@
 Tienda de cuadros en blanco y negro con marco. Sitio estático (HTML, CSS y JS) generado con Python y publicado en Cloudflare Pages.
 Catálogo e imágenes tomados de cuadros.plantify.pe (mismos dueños), con marca propia.
 
-**En línea (provisional):** https://cuadrosfinos.pages.dev
+**En línea:** https://cuadrosfinos.plantify.pe (cuadrosfinos.pages.dev redirige aquí)
 
 ## Cómo está armado
 | Archivo / carpeta | Qué es |
@@ -25,7 +25,7 @@ Catálogo e imágenes tomados de cuadros.plantify.pe (mismos dueños), con marca
 3. `python3 tools/build.py`
 4. Sube los cambios a GitHub: Cloudflare publica solo.
 
-**Pasar al dominio propio:** cambia `config.sitio` a `https://cuadrosfinos.pe` en `data/catalogo.json`, ejecuta `build.py` y súbelo.
+**Pasar al dominio propio:** cambia `config.sitio` a `https://cuadrosfinos.pe` en `data/catalogo.json`, actualiza la redirección del `<head>` en `tools/build.py` y `admin/index.html`, ejecuta `build.py` y súbelo.
 
 ## Probar
 ```bash

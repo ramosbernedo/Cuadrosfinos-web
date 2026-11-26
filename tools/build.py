@@ -140,6 +140,7 @@ def head(title, desc, path, og_img="/img/og/inicio.jpg", ld=(), preload="", og_t
 <html lang="es-PE">
 <head>
   <meta charset="utf-8">
+  <script>if(location.hostname==="cuadrosfinos.pages.dev")location.replace("https://cuadrosfinos.plantify.pe"+location.pathname+location.search+location.hash)</script>
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <title>{e(t)}</title>
   <meta name="description" content="{e(desc)}">

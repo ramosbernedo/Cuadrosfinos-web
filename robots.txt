@@ -22,4 +22,4 @@ Allow: /
 User-agent: Google-Extended
 Allow: /
 
-Sitemap: https://cuadrosfinos.pages.dev/sitemap.xml
+Sitemap: https://cuadrosfinos.plantify.pe/sitemap.xml
