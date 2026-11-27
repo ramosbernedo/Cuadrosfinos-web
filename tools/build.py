@@ -158,8 +158,8 @@ def head(title, desc, path, og_img="/img/og/inicio.jpg", ld=(), preload="", og_t
   <meta property="og:image" content="{h(og_img)}"><meta property="og:image:width" content="1200"><meta property="og:image:height" content="630">
   <meta name="twitter:card" content="summary_large_image">
   <meta name="theme-color" content="#0b0b0b">
-  <link rel="icon" href="/img/favicon.svg" type="image/svg+xml">
-  <link rel="apple-touch-icon" href="/img/icon-180.png">
+  <link rel="icon" href="/img/favicon.svg?v={ver('img/favicon.svg')}" type="image/svg+xml">
+  <link rel="apple-touch-icon" href="/img/icon-180.png?v={ver('img/icon-180.png')}">
   <link rel="manifest" href="/manifest.webmanifest">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -195,7 +195,7 @@ def header(page):
   <div class="topbar"><div class="wrap topbar__in"><span>Hechos a pedido en Lima · Envío a todo el Perú</span><span class="topbar__r">Si llega dañado, se repone</span></div></div>
   <header class="nav" id="nav">
     <div class="wrap nav__in">
-      <a href="/" class="brand" aria-label="{C['marca']}, inicio"><img class="brand__logo" src="/img/marca/logo-blanco.svg" alt="" width="157" height="40"></a>
+      <a href="/" class="brand" aria-label="{C['marca']}, inicio"><img class="brand__logo" src="/img/marca/logo-blanco.svg?v={ver('img/marca/logo-blanco.svg')}" alt="" width="157" height="40"></a>
       <nav class="nav__links" id="navLinks" aria-label="Principal">{nav_menu()}</nav>
       <div class="nav__actions">
         <button class="icon-btn" id="openSearch" aria-label="Buscar cuadro" aria-keyshortcuts="/"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg></button>
@@ -213,7 +213,7 @@ def footer():
   <footer class="footer">
     <div class="wrap footer__grid">
       <div class="footer__brand">
-        <a href="/" class="brand"><img class="brand__logo" src="/img/marca/logo-blanco.svg" alt="{C['marca']}" width="157" height="40" loading="lazy"></a>
+        <a href="/" class="brand"><img class="brand__logo" src="/img/marca/logo-blanco.svg?v={ver('img/marca/logo-blanco.svg')}" alt="{C['marca']}" width="157" height="40" loading="lazy"></a>
         <p>Cuadros en blanco y negro con marco, hechos a pedido en Lima y enviados a todo el Perú.</p>
       </div>
       <nav aria-label="Colecciones"><h2 class="footer__h">Colecciones</h2>{cols}<a href="/cuadros-personalizados/">Personalizados</a><a href="/mas-pedidos/">Más pedidos</a><a href="/nuevos/">Nuevos</a></nav>
@@ -265,6 +265,31 @@ def views_html(x):
     return "".join(out)
 
 
+def set_html(x):
+    """En un cuadro suelto que forma parte de un tríptico: «Completa el tríptico». En el tríptico: «Cada uno por separado»."""
+    tri = next((t for t in PRODS if x["s"] in t.get("set", [])), None)
+    if tri:
+        piezas_ = [BY[s] for s in tri["set"]]
+        suelto = sum(precio_total(y) for y in piezas_); ahorro = suelto - precio_total(tri)
+        thumbs = "".join(f'<span class="pd__set-p">{pf(y, thumb=True)}</span>' for y in piezas_)
+        nombres = ", ".join(y["n"].split(" · ")[0] for y in piezas_[:-1]) + " y " + piezas_[-1]["n"].split(" · ")[0]
+        return (f'<a class="pd__set" href="{purl(tri)}"><span class="pd__set-art">{thumbs}</span><span class="pd__set-txt"><small>Completa el tríptico</small>'
+                f'<b>{e(nombres)} por {soles(precio_total(tri))}</b><span>Por separado {soles(suelto)}: ahorras {soles(ahorro)} →</span></span></a>')
+    if x.get("set"):
+        links = " · ".join(f'<a href="{purl(BY[s])}">{e(BY[s]["n"])}</a>' for s in x["set"])
+        return f'<p class="pd__set-solo">¿Solo uno? Cada cuadro por separado a {soles(P["pieza"])}: {links}</p>'
+    return ""
+
+
+def buybar(x):
+    """Barra de compra fija en el celular: aparece cuando los botones principales no están a la vista."""
+    add = "" if x.get("q") else '<button class="bb__add" id="bbAdd" type="button" aria-label="Agregar a mi selección">+</button>'
+    precio_ = "Cotizar" if precio_total(x) is None else soles(precio_total(x))
+    return (f'<div class="bb" id="buyBar" aria-hidden="true"><span class="bb__img">{pf(x, thumb=True)}</span>'
+            f'<span class="bb__txt"><b>{e(x["n"])}</b><small>{precio_}</small></span>{add}'
+            f'<a class="btn btn--wa bb__wa" id="bbWa" href="{e(wa_url(f"Hola, me interesa el cuadro {x[chr(110)]} ({h(purl(x))})."))}" target="_blank" rel="noopener">{"Cotizar" if x.get("q") else "Pedir por WhatsApp"}</a></div>')
+
+
 def pd_markup(x=None, page=False):
     """Ficha del cuadro. Vacía dentro del diálogo; llena en /cuadro/<slug>/."""
     g = lambda f, d="": f(x) if x else d
@@ -279,7 +304,7 @@ def pd_markup(x=None, page=False):
         f'<label class="field"><span>{e(l)}</span><input name="f{i}" data-label="{e(l)}" placeholder="{e(ph)}"{"" if "opcional" in l.lower() else " required"}></label>'
         for i, (l, ph) in enumerate(x.get("k") or [])))
     title_tag = "h1" if page else "h2"
-    desc = g(lambda x: f'<p class="pd__desc">{e(descripcion(x))}</p>') if page else '<p class="pd__desc" id="pDesc" hidden></p>'
+    desc = g(lambda x: f'<p class="pd__desc">{e(descripcion(x)[len(x["f"]):].strip() if descripcion(x).startswith(x["f"]) else descripcion(x))}</p>') if page else '<p class="pd__desc" id="pDesc" hidden></p>'
     return f'''
     <div class="pd">
       <div class="pd__media">
@@ -314,6 +339,20 @@ def pd_markup(x=None, page=False):
           <button class="btn btn--light btn--block" id="pAdd"{" hidden" if (x and x.get("q")) else ""}>Agregar a mi selección</button>
           <a class="btn btn--wa btn--block" id="pWa" href="{e(wa_url(f"Hola, me interesa el cuadro {x['n']} ({h('/cuadro/' + x['s'] + '/')})." if x else "Hola, quiero hacer un pedido de cuadros."))}" target="_blank" rel="noopener">{"Cotizar por WhatsApp" if (x and x.get("q")) else "Pedir este por WhatsApp"}</a>
         </div>
+        <ul class="pd__trust">
+          <li><b>Pagas al confirmar</b> por WhatsApp: Yape, Plin, transferencia o tarjeta</li>
+          <li><b>Listo en 4 a 6 días</b> hábiles en Lima · envío a todo el Perú</li>
+          <li><b>Si llega dañado, se repone</b> · embalado con esquineros</li>
+        </ul>
+        {g(lambda x: set_html(x)) if page else ""}
+        <dl class="pd__specs">
+          <div><dt>Medida</dt><dd id="pSize">{e(g(medida, "30 × 37 cm con marco"))}</dd></div>
+          <div><dt>Marco</dt><dd>Negro, listo para colgar</dd></div>
+          <div><dt>Va bien en</dt><dd id="pRooms">{e(g(ambientes_txt))}</dd></div>
+          <div><dt>Entrega</dt><dd>{C['entrega']}</dd></div>
+          <div><dt>Garantía</dt><dd>Si llega dañado, se repone</dd></div>
+        </dl>
+        {desc}
         <div class="share" id="pShareBox">
           <p class="label">Compartir este cuadro</p>
           <div class="share__row">
@@ -322,14 +361,6 @@ def pd_markup(x=None, page=False):
             <button class="share__btn" id="shCopy" type="button"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="9" y="9" width="11" height="11" rx="1"/><path d="M5 15V5a1 1 0 0 1 1-1h10"/></svg><span>Copiar enlace</span></button>
             <button class="share__btn" id="pShare" type="button" hidden><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3v12M7 8l5-5 5 5M5 13v7h14v-7"/></svg>Más</button>
           </div>
-        {desc}
-        <dl class="pd__specs">
-          <div><dt>Medida</dt><dd id="pSize">{e(g(medida, "30 × 37 cm con marco"))}</dd></div>
-          <div><dt>Marco</dt><dd>Negro, listo para colgar</dd></div>
-          <div><dt>Va bien en</dt><dd id="pRooms">{e(g(ambientes_txt))}</dd></div>
-          <div><dt>Entrega</dt><dd>{C['entrega']}</dd></div>
-          <div><dt>Garantía</dt><dd>Si llega dañado, se repone</dd></div>
-        </dl>
         </div>
       </div>
     </div>'''
@@ -537,8 +568,8 @@ def build_home():
       <div class="hero__shade" aria-hidden="true"></div>
       <div class="wrap hero__in">
         <div class="hero__copy">
-          <p class="kicker">Cuadros Finos · Lima, Perú</p>
-          <h1>Cuadros que dicen<br><span>quién vive aquí</span></h1>
+          <p class="kicker">Hechos en Lima, Perú</p>
+          <h1><b class="l">Cuadros que dicen</b> <span class="l">quién vive aquí</span></h1>
           <p class="hero__lead">Cuadros en blanco y negro con marco para la sala, el despacho y el dormitorio. Hechos a pedido en Lima, listos para colgar y enviados a todo el Perú.</p>
           <div class="hero__cta"><a href="#colecciones" class="btn btn--light">Encuentra tu cuadro</a><button class="btn btn--line" data-open-quiz>Ayúdame a elegir</button></div>
         </div>
@@ -713,6 +744,7 @@ def build_product(x, robots="index,follow"):
   <main id="main">
     {crumbs_html(crumbs)}
     <article class="wrap pd-page" id="pdRoot" data-slug="{x["s"]}">{pd_markup(x, page=True)}</article>
+    {buybar(x)}
     <section class="sec sec--tight"><div class="wrap">
       <header class="sec__head"><div><p class="kicker">Misma colección</p><h2>Combinan con este</h2></div><a class="link-arrow" href="/{col["url"]}/">Ver toda la colección {e(col["nombre"])}</a></header>
       <div class="cards">{"".join(card(y) for y in rel)}</div>
