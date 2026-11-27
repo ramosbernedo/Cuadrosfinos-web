@@ -1328,6 +1328,21 @@
    "nw": 1
   },
   {
+   "s": "circulo-de-transmutacion",
+   "c": "cosmos",
+   "u": "geometria",
+   "n": "Círculo de transmutación",
+   "f": "Nada se crea de la nada.",
+   "a": [
+    "sala",
+    "dormitorio",
+    "oficina"
+   ],
+   "o": "vertical",
+   "i": 1,
+   "nw": 1
+  },
+  {
    "s": "nuestra-fecha",
    "c": "cosmos",
    "u": "luna-cielo",
