@@ -79,6 +79,12 @@ async function newPage(b, vp = { width: 1366, height: 860 }) {
     const wa = decodeURIComponent(await q.getAttribute("#shWa", "href"));
     ok(`[${name}] Compartir por WhatsApp lleva el enlace del cuadro`, wa.includes("/cuadro/gorila-respeto/") && wa.includes("Gorila"));
     ok(`[${name}] Compartir en Facebook y copiar enlace están visibles`, await q.isVisible("#shFb") && await q.isVisible("#shCopy"));
+    ok(`[${name}] Ficha: confianza junto al botón (pago, plazo, garantía)`, (await q.$$eval(".pd__trust li", l => l.length)) === 3);
+    if (name === "celular") {
+      ok("[celular] Barra de compra fija visible al entrar a la ficha", await q.isVisible("#buyBar") && (await q.textContent("#buyBar")).includes("S/"));
+      await q.locator("#pBuy").scrollIntoViewIfNeeded(); await q.waitForTimeout(450);
+      ok("[celular] La barra se oculta cuando se ven los botones principales", !(await q.evaluate(() => document.getElementById("buyBar").classList.contains("is-on"))));
+    }
     await q.goBack(); await q.waitForLoadState("networkidle"); await q.waitForTimeout(300);
     ok(`[${name}] Atrás vuelve al catálogo con el filtro`, new URL(q.url()).search.includes("c=poder") && /de 84/.test(await q.textContent("#count")));
     ok(`[${name}] …y en el mismo lugar de la página`, Math.abs((await q.evaluate(() => scrollY)) - y0) < 400, `${y0} → ${await q.evaluate(() => scrollY)}`);
