@@ -94,10 +94,10 @@ async function llegadaFicha(r, slug, dev = PHONE) {
     F(r, /cotiza/i.test(pr), `No hay precio, solo «${pr.trim()}»: pedir cotización frena la compra por impulso`);
     await p.ctx.close();
   });
-  await esc(n++, "Llega a un cuadro sin foto", "ver cómo es antes de comprar", async r => {
-    const p = await page(); await go(p, "/cuadro/paso-a-paso/");
-    const img = await p.$("#pStage img");
-    F(r, !img, "La ficha no muestra imagen (solo «Vista previa por WhatsApp»): baja la confianza");
+  await esc(n++, "Ningún cuadro del catálogo sin foto", "ver cómo es antes de comprar", async r => {
+    const p = await page(); await go(p, "/cuadro/leon-fuerza/");
+    const sinFoto = await p.evaluate(() => window.CATALOGO.productos.filter(x => !x.i).map(x => x.s));
+    F(r, sinFoto.length, `Cuadros sin foto en el catálogo: ${sinFoto.join(", ")}`);
     await p.ctx.close();
   });
   await esc(n++, "Celular pequeño (iPhone SE)", "ver precio y botón al entrar a una ficha", async r => { const p = await llegadaFicha(r, "leon-fuerza", SMALL); await p.ctx.close(); });

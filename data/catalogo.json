@@ -147,7 +147,7 @@
    ],
    "h1": "Cuadros botánicos",
    "seoTitle": "Cuadros botánicos con marco: monstera, olivo y hojas",
-   "seoDesc": "Láminas botánicas con marco negro: monstera, ave del paraíso, olivo y helechos. Para sala, comedor y dormitorio. S/ 84, envío a todo el Perú.",
+   "seoDesc": "Láminas botánicas con marco negro: monstera, ave del paraíso y olivo. Para sala, comedor y dormitorio. S/ 84, envío a todo el Perú.",
    "claves": "planta plantas naturaleza verde hojas flores flor tropical jardín baño spa"
   },
   {
@@ -1326,77 +1326,6 @@
    "o": "vertical",
    "i": 1,
    "nw": 1
-  },
-  {
-   "s": "paso-a-paso",
-   "c": "poder",
-   "u": "frases",
-   "n": "Paso a paso",
-   "f": "Para la pared del que no se rinde.",
-   "a": [
-    "oficina",
-    "dormitorio"
-   ],
-   "o": "vertical"
-  },
-  {
-   "s": "jesus-en-linea",
-   "c": "fe",
-   "u": "jesus",
-   "n": "Rostro de Jesús en línea",
-   "f": "Sereno, en un solo trazo.",
-   "a": [
-    "sala",
-    "dormitorio"
-   ],
-   "o": "vertical"
-  },
-  {
-   "s": "helechos",
-   "c": "botanico",
-   "u": "laminas",
-   "n": "Helechos · lámina",
-   "f": "Lámina de herbario, como las antiguas.",
-   "a": [
-    "sala",
-    "comedor"
-   ],
-   "o": "vertical"
-  },
-  {
-   "s": "rama-de-olivo",
-   "c": "botanico",
-   "u": "laminas",
-   "n": "Rama de olivo",
-   "f": "Paz en la entrada de casa.",
-   "a": [
-    "entrada",
-    "comedor"
-   ],
-   "o": "vertical"
-  },
-  {
-   "s": "lima-de-noche",
-   "c": "lugares",
-   "u": "ciudades",
-   "n": "Lima de noche",
-   "f": "La Costa Verde desde arriba.",
-   "a": [
-    "sala",
-    "oficina"
-   ],
-   "o": "horizontal"
-  },
-  {
-   "s": "balanza-contable",
-   "c": "oficio",
-   "u": "finanzas",
-   "n": "Balance",
-   "f": "Para el estudio contable.",
-   "a": [
-    "oficina"
-   ],
-   "o": "vertical"
   },
   {
    "s": "nuestra-fecha",

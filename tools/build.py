@@ -900,7 +900,10 @@ Sitemap: {h('/sitemap.xml')}
   X-Robots-Tag: noindex
   Cache-Control: public, max-age=3600
 """)
-    write("_redirects", "/todos/ /#catalogo 301\n/cuadros-de-leon/ /cuadros-motivacionales/ 301\n/cuadros-de-ciudades/ /cuadros-de-peru-y-ciudades/ 301\n/cuadros-para-oficina-y-profesionales/ /cuadros-para-profesionales/ 301\n")
+    write("_redirects", "/todos/ /#catalogo 301\n/cuadros-de-leon/ /cuadros-motivacionales/ 301\n/cuadros-de-ciudades/ /cuadros-de-peru-y-ciudades/ 301\n/cuadros-para-oficina-y-profesionales/ /cuadros-para-profesionales/ 301\n"
+          # cuadros retirados del catálogo (no tenían foto) → su colección
+          "/cuadro/paso-a-paso/* /cuadros-motivacionales/ 301\n/cuadro/jesus-en-linea/* /cuadros-religiosos/ 301\n/cuadro/helechos/* /cuadros-botanicos/ 301\n"
+          "/cuadro/rama-de-olivo/* /cuadros-botanicos/ 301\n/cuadro/lima-de-noche/* /cuadros-de-peru-y-ciudades/ 301\n/cuadro/balanza-contable/* /cuadros-para-profesionales/ 301\n")
 
 
 def build_feeds():
