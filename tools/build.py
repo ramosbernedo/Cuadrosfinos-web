@@ -243,8 +243,7 @@ def views_html(x):
     obra = f'/img/cuadros/t/{x["s"]}.webp' if piezas(x) == 1 else f'/img/cuadros/t/{x["s"]}-1.webp'
     thumb_obra = f'<img src="{obra}" alt="" loading="lazy">' if x.get("i") else '<span class="view__ph"></span>'
     out = [f'<button class="view is-on" role="tab" id="tabObra" aria-selected="true" aria-controls="pStage" data-tab="obra">{thumb_obra}<span>Obra</span></button>',
-           f'<button class="view" role="tab" id="tabPared" aria-selected="false" aria-controls="pWall" data-tab="pared"><img src="/img/ambiente/t/pared-{room_for(x)}.webp" alt="" loading="lazy"><span>En tu pared</span></button>',
-           f'<button class="view view--3d" role="tab" aria-selected="false" aria-controls="p3d" data-tab="3d"><span class="view__3d" aria-hidden="true">3D</span><span>3D · AR</span></button>']
+           f'<button class="view" role="tab" id="tabPared" aria-selected="false" aria-controls="pWall" data-tab="pared"><img src="/img/ambiente/t/pared-{room_for(x)}.webp" alt="" loading="lazy"><span>En tu pared</span></button>']
     for f, alt in fotos(x):
         out.append(f'<button class="view" role="tab" aria-selected="false" aria-controls="pPhoto" data-tab="foto" data-src="/img/ambiente/{f}.webp" data-alt="{e(alt)}"><img src="/img/ambiente/t/{f}.webp" alt="" loading="lazy"><span class="sr">{e(alt)}</span></button>')
     return "".join(out)
@@ -276,10 +275,6 @@ def pd_markup(x=None, page=False):
             <div class="seg" id="sceneRoom" role="radiogroup" aria-label="Ambiente">{"".join(f'<button role="radio" aria-checked="{str(k == g(room_for, "sala")).lower()}" data-v="{k}">{e(v["nombre"])}</button>' for k, v in PAREDES.items())}</div>
             <p class="wall-note">Foto real a escala: cada cuadro mide {g(lambda x: "37 × 30" if es_h(x) else "30 × 37", "30 × 37")} cm.</p>
           </div>
-        </div>
-        <div class="pd__3d" id="p3d" role="tabpanel" aria-label="Cuadro en 3D" hidden>
-          <div class="mv-wrap" id="mvWrap"><p class="mv-loading">Cargando el cuadro en 3D…</p></div>
-          <p class="wall-note" id="p3dNote">Gíralo con el dedo o el mouse. En el celular, toca <b>Ver en mi pared</b> y apunta la cámara a la pared: aparece a tamaño real.</p>
         </div>
         <button class="zoom-btn" id="pZoom" aria-label="Ampliar imagen"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 3h6v6M9 21H3v-6M21 3l-7 7M3 21l7-7"/></svg></button>
         <div class="views" id="pViews" role="tablist" aria-label="Vistas del cuadro">{g(views_html)}</div>
@@ -712,7 +707,7 @@ def build_data_js():
 def build_seo(paths):
     urls = []
     for p, imgs in paths:
-        im = "".join(f"<image:image><image:loc>{h(i)}</image:loc></image:image>" for i in imgs)
+        im = "".join(f"<image:image><image:loc>{i if i.startswith("http") else h(i)}</image:loc></image:image>" for i in imgs)
         pr = "1.0" if p == "/" else "0.8" if not p.startswith("/cuadro/") else "0.7"
         urls.append(f"<url><loc>{h(p)}</loc><lastmod>{HOY}</lastmod><priority>{pr}</priority>{im}</url>")
     write("sitemap.xml", '<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9" xmlns:image="http://www.google.com/schemas/sitemap-image/1.1">\n' + "\n".join(urls) + "\n</urlset>\n")
@@ -789,9 +784,6 @@ Sitemap: {h('/sitemap.xml')}
   Cache-Control: public, max-age=30, stale-while-revalidate=600
 /vendor/*
   Cache-Control: public, max-age=31536000, immutable
-/3d/*
-  Content-Type: model/gltf-binary
-  Cache-Control: public, max-age=2592000
 
 /tools/*
   X-Robots-Tag: noindex

@@ -173,17 +173,17 @@ export async function onRequest(ctx) {
       q(`SELECT disp, COUNT(DISTINCT sesion) sesiones, COUNT(DISTINCT CASE WHEN nombre='generate_lead' THEN sesion END) pedidos FROM eventos WHERE fecha >= datetime('now', ?1) GROUP BY disp ORDER BY sesiones DESC`),
       q(`SELECT COALESCE(region,'—') region, COUNT(DISTINCT sesion) sesiones, COUNT(DISTINCT CASE WHEN nombre='generate_lead' THEN sesion END) pedidos FROM eventos WHERE fecha >= datetime('now', ?1) GROUP BY 1 ORDER BY sesiones DESC LIMIT 12`),
       q(`SELECT slug s, COUNT(DISTINCT CASE WHEN nombre='view_item' THEN sesion END) vieron,
-          COUNT(DISTINCT CASE WHEN nombre IN ('ver_pared','ver_3d','realidad_aumentada','personalizar') THEN sesion END) probaron,
+          COUNT(DISTINCT CASE WHEN nombre IN ('ver_pared','personalizar') THEN sesion END) probaron,
           COUNT(DISTINCT CASE WHEN nombre='add_to_cart' THEN sesion END) agregaron
         FROM eventos WHERE fecha >= datetime('now', ?1) AND slug IS NOT NULL GROUP BY slug HAVING vieron > 0 ORDER BY vieron DESC LIMIT 40`),
       q(`SELECT lower(termino) termino, COUNT(*) veces, MIN(COALESCE(valor, 1)) min_resultados FROM eventos WHERE nombre='search' AND fecha >= datetime('now', ?1) AND termino IS NOT NULL
         GROUP BY 1 ORDER BY veces DESC LIMIT 25`),
-      q(`WITH s AS (SELECT sesion, MAX(nombre='view_item') vio, MAX(nombre IN ('ver_pared','ver_3d','realidad_aumentada')) probo, MAX(nombre='generate_lead') pidio
+      q(`WITH s AS (SELECT sesion, MAX(nombre='view_item') vio, MAX(nombre = 'ver_pared') probo, MAX(nombre='generate_lead') pidio
           FROM eventos WHERE fecha >= datetime('now', ?1) GROUP BY sesion)
         SELECT probo, COUNT(*) sesiones, SUM(pidio) pedidos FROM s WHERE vio = 1 GROUP BY probo`),
       q(`SELECT COALESCE(termino,'—') metodo, COUNT(*) veces FROM eventos WHERE nombre='share' AND fecha >= datetime('now', ?1) GROUP BY 1 ORDER BY veces DESC`),
       q(`SELECT pagina, COUNT(*) vistas, COUNT(DISTINCT sesion) personas FROM eventos WHERE nombre='page_view' AND fecha >= datetime('now', ?1) GROUP BY pagina ORDER BY vistas DESC LIMIT 20`),
-      q(`SELECT nombre, COUNT(*) n FROM eventos WHERE fecha >= datetime('now', ?1) AND nombre IN ('ver_pared','ver_3d','realidad_aumentada','personalizar','zoom','ver_foto','ayuda_inicio','ayuda_resultado','contacto_whatsapp','search','filtrar') GROUP BY nombre`),
+      q(`SELECT nombre, COUNT(*) n FROM eventos WHERE fecha >= datetime('now', ?1) AND nombre IN ('ver_pared','personalizar','zoom','ver_foto','ayuda_inicio','ayuda_resultado','contacto_whatsapp','search','filtrar') GROUP BY nombre`),
       q(`SELECT COALESCE(fuente,'directo') fuente, COUNT(DISTINCT sesion) visitas, COUNT(DISTINCT CASE WHEN nombre='view_item' THEN sesion END) vieron,
           COUNT(DISTINCT CASE WHEN nombre='add_to_cart' THEN sesion END) agregaron, COUNT(DISTINCT CASE WHEN nombre='generate_lead' THEN sesion END) pidieron
         FROM eventos WHERE fecha >= datetime('now', ?1) GROUP BY 1 ORDER BY visitas DESC LIMIT 8`),

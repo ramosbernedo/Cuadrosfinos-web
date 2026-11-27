@@ -27,7 +27,7 @@ Sin IDs no se carga nada. Con IDs aparece un aviso de cookies (Ley 29733): Analy
 | 1 | `view_item_list` | — | Ve el catálogo, una colección o un ambiente |
 | 2 | `select_item` | — | Toca un cuadro (dice desde dónde: colección, búsqueda, guía, relacionados…) |
 | 3 | `view_item` | ViewContent | Abre la página del cuadro |
-| 4 | `ver_pared`, `ver_3d`, `ver_foto`, `zoom`, `personalizar`, `realidad_aumentada` | (personalizado) | Interactúa con el cuadro |
+| 4 | `ver_pared`, `ver_foto`, `zoom`, `personalizar` | (personalizado) | Interactúa con el cuadro |
 | 5 | `add_to_cart` | AddToCart | Lo agrega a «Mi selección» |
 | 6 | `view_cart` | — | Abre «Mi selección» |
 | 7 | `add_shipping_info`, `add_payment_info` | AddPaymentInfo | Escribe su distrito / elige pago |

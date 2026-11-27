@@ -87,7 +87,7 @@ function track(name, params = {}) {
   if (DEBUG) console.log("%c[medición] " + name, "color:#25d366;font-weight:600", p);
 }
 // ---------- Medición propia → panel (/api/ev), por lotes y sin cookies ----------
-const PROPIOS = new Set(["page_view", "view_item", "select_item", "ver_pared", "ver_3d", "ver_foto", "realidad_aumentada", "personalizar", "add_to_cart",
+const PROPIOS = new Set(["page_view", "view_item", "select_item", "ver_pared", "ver_foto", "personalizar", "add_to_cart",
   "remove_from_cart", "view_cart", "add_shipping_info", "add_payment_info", "begin_checkout", "generate_lead", "search", "share", "contacto_whatsapp",
   "ayuda_inicio", "ayuda_resultado", "filtrar", "zoom"]);
 const sid = (() => { try { let v = sessionStorage.getItem("cf_sid"); if (!v) { v = Math.random().toString(36).slice(2, 12) + Date.now().toString(36).slice(-4); sessionStorage.setItem("cf_sid", v); } return v; } catch { return "s" + Math.random().toString(36).slice(2, 10); } })();

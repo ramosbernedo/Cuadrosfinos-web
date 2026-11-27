@@ -683,18 +683,6 @@ html.lock{overflow:hidden}
 .share__btn--wa:hover{border-color:var(--wa);color:var(--wa)}
 .pd__buy + .share{border-top:0;padding-top:14px;margin-top:10px}
 
-/* 3D y realidad aumentada */
-.view__3d{position:absolute;inset:0;display:grid;place-items:center;font-family:var(--display);font-stretch:112%;font-size:1.05rem;letter-spacing:.06em;background:radial-gradient(circle at 50% 40%,#3a3734,#141312);color:var(--fg)}
-.view--3d::after{content:"";position:absolute;inset:16px 18px 26px;border:1.5px solid rgba(255,255,255,.35);transform:perspective(60px) rotateY(-14deg);pointer-events:none}
-.pd__3d{display:flex;flex-direction:column;gap:12px}
-.mv-wrap{position:relative;aspect-ratio:1;background:radial-gradient(70% 60% at 50% 40%,#e9e5de,#bdb6ab);overflow:hidden}
-.mv-wrap model-viewer{width:100%;height:100%;--poster-color:transparent;--progress-bar-color:transparent;opacity:0;transition:opacity .4s}
-.mv-wrap model-viewer.is-ready{opacity:1}
-.mv-loading{position:absolute;inset:0;display:grid;place-items:center;color:#4a453f;font-size:.85rem}
-.ar-btn{position:absolute;left:50%;bottom:16px;transform:translateX(-50%);box-shadow:0 10px 30px -10px rgba(0,0,0,.5)}
-.pd__3d .wall-note b{color:var(--fg);font-weight:500}
-.ar-btn{bottom:12px;min-height:44px;padding:0 22px}
-
 /* Aviso de cookies */
 .consent{position:fixed;left:16px;right:16px;bottom:16px;z-index:150;max-width:560px;margin:auto;background:var(--bg-2);border:1px solid var(--line-2);padding:16px 18px;display:flex;gap:14px;align-items:center;justify-content:space-between;flex-wrap:wrap;box-shadow:0 20px 50px -20px rgba(0,0,0,.8);font-size:.85rem;color:var(--fg-2)}
 .consent p{flex:1 1 260px}
