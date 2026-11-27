@@ -6,7 +6,7 @@ Crea: index.html, 404.html, cuadro/<slug>/index.html, una página por colección
       data.js, sitemap.xml, robots.txt, llms.txt, llms-full.txt, manifest.webmanifest y _headers.
 Para cambiar de dominio, edita config.sitio en data/catalogo.json y vuelve a ejecutarlo.
 """
-import datetime, hashlib, html, json, os, shutil
+import datetime, hashlib, html, json, os, re, shutil, urllib.parse
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 CAT = json.load(open(os.path.join(ROOT, "data", "catalogo.json"), encoding="utf-8"))
@@ -170,7 +170,7 @@ def head(title, desc, path, og_img="/img/og/inicio.jpg", ld=(), preload="", og_t
 </head>'''
 
 
-NAV = [("/#catalogo", "Catálogo"), ("/#colecciones", "Colecciones"), ("/cuadros-personalizados/", "Personalizados"), ("/#como", "Cómo se pide"), ("/#faq", "Preguntas")]
+NAV = [("/cuadros-para-sala/", "Sala"), ("/cuadros-para-dormitorio/", "Dormitorio"), ("/cuadros-para-oficina/", "Oficina"), ("/cuadros-religiosos/", "Religiosos"), ("/cuadros-personalizados/", "Personalizados"), ("/#catalogo", "Todos")]
 
 
 def header(page):
@@ -297,7 +297,7 @@ def pd_markup(x=None, page=False):
         </form>
         <div class="pd__buy" id="pBuy">
           <button class="btn btn--light btn--block" id="pAdd"{" hidden" if (x and x.get("q")) else ""}>Agregar a mi selección</button>
-          <a class="btn btn--wa btn--block" id="pWa" href="https://wa.me/{C['whatsapp']}" target="_blank" rel="noopener">{"Cotizar por WhatsApp" if (x and x.get("q")) else "Pedir este por WhatsApp"}</a>
+          <a class="btn btn--wa btn--block" id="pWa" href="{e(wa_url(f"Hola, me interesa el cuadro {x['n']} ({h('/cuadro/' + x['s'] + '/')})." if x else "Hola, quiero hacer un pedido de cuadros."))}" target="_blank" rel="noopener">{"Cotizar por WhatsApp" if (x and x.get("q")) else "Pedir este por WhatsApp"}</a>
         </div>
         <div class="share" id="pShareBox">
           <p class="label">Compartir este cuadro</p>
@@ -342,7 +342,7 @@ def overlays(with_product_dialog=False):
         </form>
         <div class="bag-total"><span>Total</span><strong id="bagTotal">S/ 0</strong></div>
         <p class="muted small">Envío y pago se confirman por WhatsApp. No pagas nada en la web.</p>
-        <a class="btn btn--wa btn--block" id="bagWa" href="#" target="_blank" rel="noopener">Enviar pedido por WhatsApp</a>
+        <a class="btn btn--wa btn--block" id="bagWa" href="{e(wa_url("Hola, quiero hacer un pedido de cuadros."))}" target="_blank" rel="noopener">Enviar pedido por WhatsApp</a>
         <button class="link-btn small" id="bagShare">Compartir mi selección</button>
       </footer>
     </div>
@@ -456,7 +456,24 @@ def cols_grid():
     return "".join(out)
 
 
+def wa_url(msg):
+    return f"https://wa.me/{C['whatsapp']}?text={urllib.parse.quote(msg)}"
+
+
+def wa_links(content):
+    """Pone el enlace real de WhatsApp en cada <a data-wa> para que funcione aunque el JavaScript no cargue."""
+    def fix(m):
+        tag = m.group(0)
+        msg = html.unescape(re.search(r'data-wa="([^"]*)"', tag).group(1))
+        tag = tag.replace('href="#"', f'href="{e(wa_url(msg))}"', 1)
+        if "target=" not in tag:
+            tag = tag[:-1] + ' target="_blank" rel="noopener">'
+        return tag
+    return re.sub(r'<a [^>]*data-wa="[^"]*"[^>]*>', fix, content)
+
+
 def write(path, content):
+    content = wa_links(content)
     full = os.path.join(ROOT, path.lstrip("/"))
     os.makedirs(os.path.dirname(full), exist_ok=True)
     open(full, "w", encoding="utf-8").write(content)

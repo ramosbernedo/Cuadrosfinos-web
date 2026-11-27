@@ -24,7 +24,7 @@
  "colecciones": [
   {
    "id": "poder",
-   "nombre": "Poder",
+   "nombre": "Motivacionales",
    "url": "cuadros-motivacionales",
    "titulo": "Fuerza, visión y lealtad",
    "bajada": "Animales y símbolos para la oficina de quien construye algo propio.",
@@ -50,7 +50,7 @@
   },
   {
    "id": "fe",
-   "nombre": "Fe",
+   "nombre": "Religiosos",
    "url": "cuadros-religiosos",
    "titulo": "La fe también vive en casa",
    "bajada": "Arte sacro en línea fina y claroscuro. Con el apellido de tu familia si quieres.",
@@ -80,7 +80,7 @@
   },
   {
    "id": "abstracto",
-   "nombre": "Abstracto",
+   "nombre": "Abstractos",
    "url": "cuadros-abstractos",
    "titulo": "Textura, piedra y silencio",
    "bajada": "Piezas que ordenan un ambiente sin gritar.",
@@ -110,7 +110,7 @@
   },
   {
    "id": "botanico",
-   "nombre": "Botánico",
+   "nombre": "Botánicos",
    "url": "cuadros-botanicos",
    "titulo": "Hojas, ramas y aire",
    "bajada": "Láminas botánicas para la sala, el comedor y el dormitorio.",
@@ -131,7 +131,7 @@
   },
   {
    "id": "lugares",
-   "nombre": "Lugares",
+   "nombre": "Perú y ciudades",
    "url": "cuadros-de-peru-y-ciudades",
    "titulo": "El lugar que te hizo",
    "bajada": "Perú, el mar y tu ciudad en un cuadro.",
@@ -156,7 +156,7 @@
   },
   {
    "id": "cosmos",
-   "nombre": "Cosmos",
+   "nombre": "Geometría y cielo",
    "url": "cuadros-de-geometria-sagrada",
    "titulo": "Geometría sagrada y tu cielo",
    "bajada": "Símbolos antiguos, la luna y el cielo exacto de tu fecha.",
@@ -177,7 +177,7 @@
   },
   {
    "id": "oficio",
-   "nombre": "Oficio",
+   "nombre": "Profesionales",
    "url": "cuadros-para-profesionales",
    "titulo": "Para el despacho y el consultorio",
    "bajada": "El regalo de graduación o de apertura que sí se cuelga.",
