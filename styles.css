@@ -838,7 +838,7 @@ html.lock{overflow:hidden}
   .hero__slides{aspect-ratio:16/10}
   .hero__shade{height:62.5vw}
   .hero h1{font-size:1.85rem}
-  .hero__cta .btn--line{display:none}
+  .hero .hero__cta .btn--line{display:none}
   .hero__foot{display:none}
   .hero__in{padding-bottom:4px}
 }
@@ -854,3 +854,24 @@ html.lock{overflow:hidden}
 .rev figcaption a{text-decoration:underline}
 @media (max-width:900px){.revs{display:flex;overflow-x:auto;scroll-snap-type:x mandatory;scrollbar-width:none}.rev{flex:0 0 82%;scroll-snap-align:start}}
 @media (max-width:620px){.bag-form{grid-template-columns:1fr 1fr;gap:8px 10px}.bag-form .check{grid-column:1/-1}.bag-form .field span{font-size:.66rem}}
+/* ---------- Escala de espaciado: secciones más juntas, sin bandas vacías ---------- */
+.sec{padding:80px 0}
+.sec--tight{padding:56px 0}
+.cta{padding:88px 0}
+.footer{padding-top:56px}
+.more:has(#more[hidden]){display:none}
+@media (max-width:900px){
+  .sec{padding:64px 0}
+  .sec--tight{padding:48px 0}
+  .cta{padding:72px 0}
+}
+@media (max-width:620px){
+  .sec{padding:48px 0}
+  .sec--tight{padding:40px 0}
+  .cta{padding:56px 0}
+  .footer{padding-top:44px}
+  .sec__head{margin-bottom:28px}
+  .more{margin-top:28px}
+  .hero .hero__cta{margin-top:20px}
+}
+.faq .sec__head{justify-content:flex-start;align-self:start;align-items:flex-start}
