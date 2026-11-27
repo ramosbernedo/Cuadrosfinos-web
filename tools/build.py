@@ -52,12 +52,14 @@ def img_og(x): return f"/img/og/{x['s']}.jpg"
 def ambientes_txt(x): return ", ".join(a.capitalize() for a in x["a"])
 def rank(x):
     return (0 if x.get("t") else 10) + (0 if x.get("nw") else 3) + (0 if x.get("i") else 20) + (15 if x["c"] == "papa" else 0) + x["idx"] / 100
+NUEVOS_TAG_MAX = 8  # la etiqueta «Nuevo» solo en los más recientes (la colección Nuevos los muestra todos)
 VFILTRO = {"top": lambda x: x.get("t"), "nuevos": lambda x: x.get("nw"), "personalizados": lambda x: x.get("p")}
+NUEVO_TAG = {x["s"] for x in [y for y in PRODS if y.get("nw") and y.get("i") and not y.get("t")][:NUEVOS_TAG_MAX]}
 
 
 def precio_txt(x):
     t = precio_total(x)
-    return "Cotizar" if t is None else ("Desde " if x.get("p") else "") + soles(precio(x))
+    return "Cotizar" if t is None else soles(t)
 
 
 def descripcion(x):
@@ -108,10 +110,10 @@ def nombre_html(n):
     return f'{e(a)}<span class="t-sub"><span class="sr"> · </span>{e(b)}</span>'
 
 
-def card(x, mini=False):
-    tag = ('<span class="tag">Más pedido</span>' if x.get("t") else '<span class="tag tag--ghost">Nuevo</span>' if x.get("nw")
+def card(x, mini=False, add=None):
+    tag = ('<span class="tag">Más pedido</span>' if x.get("t") else '<span class="tag tag--ghost">Nuevo</span>' if x["s"] in NUEVO_TAG
            else '<span class="tag tag--ghost">Personalizable</span>' if x.get("p") else "")
-    add = "" if (x.get("q") or mini) else f'<button class="card__add" data-add="{x["s"]}" aria-label="Agregar a mi selección: {e(x["n"])}">+</button>'
+    add = "" if (x.get("q") or (mini if add is None else not add)) else f'<button class="card__add" data-add="{x["s"]}" aria-label="Agregar a mi selección: {e(x["n"])}">+</button>'
     frase = "" if mini else f'<p>{e(x["f"])}</p>'
     return (f'<article class="card{"" if mini else " rv"}" data-s="{x["s"]}"><div class="card__stage">{tag}{pf(x, thumb=True)}{add}</div>'
             f'<h3>{nombre_html(x["n"])}</h3>{frase}<span class="card__price">{precio_txt(x)}</span>'
@@ -297,7 +299,7 @@ def buybar(x):
             f'<a class="btn btn--wa bb__wa" id="bbWa" href="{e(wa_url(f"Hola, me interesa el cuadro {x[chr(110)]} ({h(purl(x))})."))}" target="_blank" rel="noopener">{"Cotizar" if x.get("q") else "Pedir por WhatsApp"}</a></div>')
 
 
-def pd_markup(x=None, page=False):
+def pd_markup(x=None, page=False, combo=""):
     """Ficha del cuadro. Vacía dentro del diálogo; llena en /cuadro/<slug>/."""
     g = lambda f, d="": f(x) if x else d
     stage = g(lambda x: pf(x, lazy=False))
@@ -346,13 +348,13 @@ def pd_markup(x=None, page=False):
           <button class="btn btn--light btn--block" id="pAdd"{" hidden" if (x and x.get("q")) else ""}>Agregar a mi selección</button>
           <a class="btn btn--wa btn--block" id="pWa" href="{e(wa_url(f"Hola, me interesa el cuadro {x['n']} ({h('/cuadro/' + x['s'] + '/')})." if x else "Hola, quiero hacer un pedido de cuadros."))}" target="_blank" rel="noopener">{"Cotizar por WhatsApp" if (x and x.get("q")) else "Pedir este por WhatsApp"}</a>
         </div>
+        <p class="pd__pack" id="pPack"{"" if (x and not x.get("p") and not x.get("pr") and piezas(x) == 1) else " hidden"}><b>Lleva 3 por {soles(P["triptico"])}</b> combinando los que quieras</p>
         <ul class="pd__trust">
-          <li id="pPack"{"" if (x and not x.get("p") and not x.get("pr") and piezas(x) == 1) else " hidden"}><b>Lleva 3 por {soles(P["triptico"])}</b> · combinando los cuadros que quieras</li>
-          <li><b>Pagas al confirmar</b> por WhatsApp: Yape, Plin, transferencia o tarjeta</li>
           <li id="pEta"><b>Envío gratis</b> · listo en 4 a 6 días hábiles en Lima</li>
-          <li><b>Si llega dañado, se repone</b> · embalado con esquineros</li>
-          <li><b>¿Es para regalo?</b> Avísanos por WhatsApp y lo coordinamos</li>
+          <li><b>Pagas al confirmar</b> · Yape, Plin, transferencia o tarjeta</li>
+          <li><b>Si llega dañado, se repone</b> · ¿es regalo? avísanos</li>
         </ul>
+        {combo}
         {g(lambda x: set_html(x)) if page else ""}
         <dl class="pd__specs">
           <div><dt>Medida</dt><dd id="pSize">{e(g(medida, "30 × 37 cm con marco"))}</dd></div>
@@ -390,11 +392,13 @@ def overlays(with_product_dialog=False):
       <header class="drawer__head"><h2 id="bagTitle">Mi selección</h2><button class="modal__close" data-close-bag aria-label="Cerrar selección">×</button></header>
       <div class="drawer__body" id="bagList"></div>
       <footer class="drawer__foot" id="bagFoot" hidden>
+        <details class="bag-det" id="bagDet"><summary>Datos de entrega <span class="muted">(opcional)</span></summary>
         <form class="bag-form" id="bagForm" autocomplete="on">
           <label class="field"><span>Distrito o ciudad de entrega</span><input name="lugar" id="bagLugar" placeholder="Ej.: Surco, Lima · Arequipa" autocomplete="address-level2"></label>
           <label class="field"><span>Forma de pago</span><select name="pago" id="bagPago"><option value="">Lo veo por WhatsApp</option><option>Yape</option><option>Plin</option><option>Transferencia</option><option>Tarjeta</option></select></label>
           <label class="check"><input type="checkbox" id="bagRegalo"> <span>Es para regalo</span></label>
         </form>
+        </details>
         <div class="bag-total bag-total--dsc" id="bagDsc" hidden><span>Descuento por cantidad</span><strong id="bagDscN"></strong></div>
         <div class="bag-total"><span>Total</span><strong id="bagTotal">S/ 0</strong></div>
         <p class="muted small" id="bagEta">Envío y pago se confirman por WhatsApp. No pagas nada en la web.</p>
@@ -653,7 +657,7 @@ def build_home():
       </div>
     </section>
 
-    <section class="sec craft" aria-labelledby="craftTitle">
+    <section class="sec craft" id="como" aria-labelledby="craftTitle">
       <div class="wrap craft__grid">
         <div class="craft__media">
           <img class="craft__big rv" src="/img/ambiente/taller.webp" alt="Armado a mano de un cuadro con marco negro en el taller" loading="lazy">
@@ -661,21 +665,16 @@ def build_home():
           <img class="craft__sm2 rv" src="/img/ambiente/t/foco-esc-2.webp" alt="Cuadros recién llegados en su caja con esquineros" loading="lazy">
         </div>
         <div class="craft__copy">
-          <p class="kicker">Hecho a mano en Lima</p><h2 id="craftTitle">Cada cuadro se arma a pedido</h2>
-          <p>Imprimimos la obra, la montamos en su marco negro y la protegemos con esquineros para el viaje. Por eso tarda 4 a 6 días: no sale de un almacén, sale del taller.</p>
-          <ul class="ticks"><li>Marco negro listo para colgar, con su colgador</li><li>Embalaje con esquineros, también a provincia</li><li>Si llega dañado, se repone</li></ul>
+          <p class="kicker">Hecho a mano en Lima · Cómo se pide</p><h2 id="craftTitle">Cada cuadro se arma a pedido</h2>
+          <p>Imprimimos la obra, la montamos en su marco negro y la protegemos con esquineros para el viaje. No sale de un almacén, sale del taller. Se pide en tres pasos, sin registrarte:</p>
+          <ol class="steps steps--compact">
+            <li><span>01</span><div><h3>Elige</h3><p>Guarda los que te gusten en tu selección y míralos en tu pared.</p></div></li>
+            <li><span>02</span><div><h3>Pide por WhatsApp</h3><p>Te llega el pedido armado; confirmamos dirección y pago (Yape, Plin, transferencia o tarjeta).</p></div></li>
+            <li><span>03</span><div><h3>Recíbelo listo</h3><p>En 4 a 6 días hábiles en Lima, con envío gratis a todo el Perú.</p></div></li>
+          </ol>
         </div>
       </div>
-    </section>
-
-    <section class="sec sec--alt" id="como" aria-labelledby="comoTitle">
       <div class="wrap">
-        <header class="sec__head"><div><p class="kicker">Cómo se pide</p><h2 id="comoTitle">Tres pasos, sin registrarte</h2></div></header>
-        <ol class="steps">
-          <li><span>01</span><h3>Elige</h3><p>Guarda los cuadros que te gusten en tu selección. Míralos en tu pared, uno solo o en tríptico.</p></li>
-          <li><span>02</span><h3>Pide por WhatsApp</h3><p>Te llega el pedido armado con nombres y precios. Ahí confirmamos la dirección y el pago: Yape, Plin, transferencia o tarjeta.</p></li>
-          <li><span>03</span><h3>Recíbelo listo</h3><p>Lo imprimimos y enmarcamos en Lima en 4 a 6 días hábiles. El envío es gratis a todo el Perú; a provincia va por agencia con esquineros.</p></li>
-        </ol>
         <div class="spec">
           <div class="spec__item"><strong>30 × 37 cm</strong><span>Medida única con marco. Vertical u horizontal.</span></div>
           <div class="spec__item"><strong>Marco negro</strong><span>Impresión + marco, listo para colgar.</span></div>
@@ -745,7 +744,8 @@ def build_product(x, robots="index,follow"):
     path = purl(x)
     col = COL[x["c"]]
     crumbs = [("Inicio", "/"), (col["nombre"], f"/{col['url']}/"), (x["n"], path)]
-    rel = sorted([y for y in PRODS if y["c"] == x["c"] and y["s"] != x["s"] and y.get("i")], key=rank)[:4]
+    misma = sorted([y for y in PRODS if y["c"] == x["c"] and y["s"] != x["s"] and y.get("i")], key=rank)
+    rel = misma[:4]
     if len(rel) < 4:
         rel += [y for y in sorted(PRODS, key=rank) if y not in rel and y["s"] != x["s"] and y.get("i")][:4 - len(rel)]
     otros_amb = "".join(f'<a class="pill" href="/{AMB_BY[a]["url"]}/">Cuadros para {a}</a>' for a in x["a"] if a in AMB_BY)
@@ -766,14 +766,18 @@ def build_product(x, robots="index,follow"):
     faqs = [("¿Qué medida tiene?", medida(x) + ". " + ("Unos 98 cm de ancho colgados con separación." if x["o"] == "triptico" else "Listo para colgar.")),
             ("¿Cuánto demora?", "Se hace a pedido en 4 a 6 días hábiles en Lima. A provincia se suma el tiempo de la agencia. El envío es gratis."),
             ("¿Cómo lo pido?", "Agrégalo a tu selección o pídelo directo por WhatsApp; ahí confirmamos dirección y pago (Yape, Plin, transferencia o tarjeta).")]
+    combina = [y for y in rel if not y.get("p") and y.get("i")][:4]
+    combo = (f'<div class="pd__combo"><p class="label">Combínalo{" · 3 por " + soles(P["triptico"]) if not x.get("p") and piezas(x) == 1 else ""}</p>'
+             f'<div class="cards cards--scroll cards--combo">{"".join(card(y, mini=True, add=True) for y in combina)}</div></div>') if combina else ""
+    mas = (misma[4:8] if len(misma) >= 8 else [y for y in sorted(PRODS, key=rank) if y["s"] != x["s"] and y not in rel and y.get("i")][:4])
     body = f'''
   <main id="main">
     {crumbs_html(crumbs)}
-    <article class="wrap pd-page" id="pdRoot" data-slug="{x["s"]}">{pd_markup(x, page=True)}</article>
+    <article class="wrap pd-page" id="pdRoot" data-slug="{x["s"]}">{pd_markup(x, page=True, combo=combo)}</article>
     {buybar(x)}
     <section class="sec sec--tight"><div class="wrap">
-      <header class="sec__head"><div><p class="kicker">Misma colección</p><h2>Combinan con este</h2></div><a class="link-arrow" href="/{col["url"]}/">Ver toda la colección {e(col["nombre"])}</a></header>
-      <div class="cards">{"".join(card(y) for y in rel)}</div>
+      <header class="sec__head"><div><p class="kicker">Misma colección</p><h2>Más de {e(col["nombre"])}</h2></div><a class="link-arrow" href="/{col["url"]}/">Ver toda la colección {e(col["nombre"])}</a></header>
+      <div class="cards">{"".join(card(y) for y in mas)}</div>
       <div class="pills pills--top">{otros_amb}<a class="pill" href="/cuadros-personalizados/">Personalizados</a><a class="pill" href="/#catalogo">Todos los cuadros</a></div>
     </div></section>
 

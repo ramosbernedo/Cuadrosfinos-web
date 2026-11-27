@@ -94,9 +94,11 @@ function pf(x, { lazy = true, thumb = false, scene = false } = {}) {
   return `<span class="${cls}"><img src="${imgSrc(x, { thumb })}" alt="${esc(x.n)} — cuadro con marco negro"${ld}></span>`;
 }
 const nombreHtml = n => n.length <= 22 || !n.includes(" · ") ? esc(n) : (([a, ...b]) => `${esc(a)}<span class="t-sub"><span class="sr"> · </span>${esc(b.join(" · "))}</span>`)(n.split(" · "));
-const precioTxt = x => x.q ? "Cotizar" : (x.p ? "Desde " : "") + soles(precioBase(x));
+const precioTxt = x => x.q ? "Cotizar" : soles(precioBase(x) + (x.p ? P.personalizar : 0));
+// «Nuevo» solo en los más recientes (igual que tools/build.py → NUEVO_TAG)
+const NUEVO_TAG = new Set(CAT.productos.filter(x => x.nw && x.i && !x.t).slice(0, 8).map(x => x.s));
 function card(x, { mini = false, add: conAdd = !mini } = {}) {
-  const tag = x.t ? '<span class="tag">Más pedido</span>' : x.nw ? '<span class="tag tag--ghost">Nuevo</span>' : x.p ? '<span class="tag tag--ghost">Personalizable</span>' : "";
+  const tag = x.t ? '<span class="tag">Más pedido</span>' : NUEVO_TAG.has(x.s) ? '<span class="tag tag--ghost">Nuevo</span>' : x.p ? '<span class="tag tag--ghost">Personalizable</span>' : "";
   const inBag = bag.some(b => b.s === x.s);
   const add = x.q || !conAdd ? "" : `<button class="card__add${inBag ? " is-in" : ""}" data-add="${x.s}" aria-label="${inBag ? "Ya está en tu selección" : "Agregar a mi selección"}: ${esc(x.n)}">${inBag ? "✓" : "+"}</button>`;
   return `<article class="card${mini ? "" : " rv"}" data-s="${x.s}"><div class="card__stage">${tag}${pf(x, { thumb: true })}${add}</div>` +
@@ -268,8 +270,8 @@ function openProduct(slug, tab, { push = true } = {}) {
     $("#pAdd").hidden = false; $("#pWa").textContent = "Pedir este por WhatsApp";
   }
   updateProductWa(); refreshAddBtn();
-  if ($("#pPack")) { $("#pPack").hidden = !enPack(x); $("#pPack").innerHTML = `<b>${packTxt()}</b> · combinando los cuadros que quieras`; }
-  if ($("#pEta")) $("#pEta").innerHTML = `<b>Pide hoy y llega ${eta()}</b> en Lima · envío gratis a todo el Perú`;
+  if ($("#pPack")) { $("#pPack").hidden = !enPack(x); $("#pPack").innerHTML = `<b>${packTxt()}</b> combinando los que quieras`; }
+  if ($("#pEta")) $("#pEta").innerHTML = `<b>Envío gratis</b> · pide hoy y llega ${eta()} en Lima`;
   if (window.requestIdleCallback) requestIdleCallback(preloadWalls, { timeout: 2500 }); else setTimeout(preloadWalls, 1200);
   S.room = roomFor(x);
   setTab(tab || "obra"); renderScene();
@@ -598,7 +600,7 @@ function renderBag() {
     </div>`;
   }).join("") + bagUpsell() : `<div class="bag-empty"><p>Aún no guardas cuadros.</p><p class="muted small">Toca “+” en cualquier cuadro para armar tu selección y pedir todo en un solo mensaje.</p><a href="/#catalogo" class="btn btn--line" data-close-bag>Ver cuadros</a></div>`;
   $("#bagWa").href = waLink(bagMessage());
-  if ($("#bagEta")) $("#bagEta").textContent = `Envío gratis. Pide hoy y llega ${eta()} en Lima. El pago se confirma por WhatsApp: no pagas nada en la web.`;
+  if ($("#bagEta")) $("#bagEta").textContent = `Envío gratis. Pide hoy y llega ${eta()} en Lima. Pagas al confirmar por WhatsApp (Yape, Plin, transferencia o tarjeta): nada en la web.`;
 }
 const drawer = $("#bag");
 let lastFocus = null;
@@ -739,11 +741,15 @@ function renderSearch(q) {
   const temas = [];
   if (q.trim()) {
     COLECCIONES.forEach(c => (c.subs || []).forEach(([id, n]) => { if (matches({ _q: norm(n + " " + ((c.subClaves || {})[id] || "")) }, q)) temas.push({ url: `/${c.url}/?sub=${id}#catalogo`, t: `${c.nombre} · ${n}`, k: DATA.filter(x => x.c === c.id && x.u === id).length }); }));
-    [...COLECCIONES, ...VIRTUALES, ...AMBS].forEach(c => { if (matches({ _q: norm([c.nombre, c.h1, c.claves].join(" ")) }, q)) temas.push({ url: `/${c.url}/`, t: c.h1 || c.nombre, k: 0 }); });
+    [...COLECCIONES, ...VIRTUALES, ...AMBS].forEach(c => { if (matches({ _q: norm([c.nombre, c.h1, c.claves].join(" ")) }, q)) temas.push({ url: `/${c.url}/`, t: c.h1Corto || c.h1 || c.nombre, k: 0 }); });
   }
   const cols = temas.filter((c, i) => temas.findIndex(o => o.url.split("?")[0] === c.url.split("?")[0]) === i || c.url.includes("?")).slice(0, 3);
-  $("#sRes").innerHTML = head + cols.map(c => `<a class="s-item s-item--col" role="listitem" href="${c.url}"><span class="s-ico">→</span><span><b>${esc(c.t)}</b><small>${c.k ? c.k + " cuadros" : "Ver todos"}</small></span><em></em></a>`).join("") +
-    (list.length ? list.map(x => `<a class="s-item" role="listitem" href="${purl(x)}">${pf(x, { thumb: true })}<span><b>${esc(x.n)}</b><small>${esc(colDe(x.c).nombre)} · ${esc(x.f)}</small></span><em>${precioTxt(x)}</em></a>`).join("")
+  // Si el nombre de un cuadro coincide (p. ej. «león»), esos cuadros van antes que los temas
+  const itemHtml = x => `<a class="s-item" role="listitem" href="${purl(x)}">${pf(x, { thumb: true })}<span><b>${esc(x.n)}</b><small>${esc(colDe(x.c).nombre)} · ${esc(x.f)}</small></span><em>${precioTxt(x)}</em></a>`;
+  const primeros = q.trim() ? list.filter(x => relevancia(x, q) > 0).slice(0, 3) : [];
+  list = list.filter(x => !primeros.includes(x));
+  $("#sRes").innerHTML = head + primeros.map(itemHtml).join("") + cols.map(c => `<a class="s-item s-item--col" role="listitem" href="${c.url}"><span class="s-ico">→</span><span><b>${esc(c.t)}</b><small>${c.k ? c.k + " cuadros" : "Ver todos"}</small></span><em></em></a>`).join("") +
+    (list.length || primeros.length ? list.map(itemHtml).join("")
       : `<div class="s-empty"><p>No tenemos un cuadro de “${esc(q)}” todavía. <span class="muted">Estos son los que más se piden:</span></p></div>` +
         DATA.filter(x => x.t && x.i).slice(0, 4).map(x => `<a class="s-item s-item--sug" role="listitem" href="${purl(x)}">${pf(x, { thumb: true })}<span><b>${esc(x.n)}</b><small>${esc(colDe(x.c).nombre)} · ${esc(x.f)}</small></span><em>${precioTxt(x)}</em></a>`).join("") +
         `<div class="s-empty"><p class="muted small">O mira por tema:</p><div class="pills">${COLECCIONES.map(c => `<a class="pill" href="/${c.url}/">${esc(c.nombre)}</a>`).join("")}</div><p class="small"><a class="u" href="${waLink("Hola, busco un cuadro de: " + q)}" target="_blank" rel="noopener">Pídenos uno a medida por WhatsApp</a></p></div>`);
