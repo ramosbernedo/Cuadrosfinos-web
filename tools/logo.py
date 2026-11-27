@@ -14,6 +14,7 @@ from fontTools.ttLib import TTFont
 from fontTools.varLib.instancer import instantiateVariableFont
 from fontTools.pens.svgPathPen import SVGPathPen
 from fontTools.pens.transformPen import TransformPen
+from fontTools.pens.boundsPen import BoundsPen
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 FUENTE = os.path.join(ROOT, "tools", "fuentes", "archivo-variable.woff2")
@@ -35,21 +36,32 @@ def instancia(peso):
 NEGRITA, LIVIANA = instancia(700), instancia(300)
 
 
-def texto(font, palabra, x, base, tam, ancho):
-    """Palabra en trazos, desde x hasta x+ancho (reparte el espacio entre letras, como textLength)."""
+def texto(font, palabra, x, base, tam, track=0.0):
+    """Palabra en trazos desde x, con espacio extra entre letras de track (en em). Devuelve (trazos, ancho visible)."""
     gs, cmap = font.getGlyphSet(), font.getBestCmap()
-    upm = font["head"].unitsPerEm
-    s = tam / upm
-    nombres = [cmap[ord(c)] for c in palabra]
-    avances = [font["hmtx"][n][0] * s for n in nombres]
-    hueco = (ancho - sum(avances)) / (len(nombres) - 1)
-    trazos, cx = [], x
-    for n, av in zip(nombres, avances):
+    s = tam / font["head"].unitsPerEm
+    trazos, cx, fin = [], x, x
+    for c in palabra:
+        n = cmap[ord(c)]
         pen = SVGPathPen(gs, ntos=lambda v: f"{v:.2f}".rstrip("0").rstrip("."))
         gs[n].draw(TransformPen(pen, (s, 0, 0, -s, cx, base)))
         trazos.append(pen.getCommands())
-        cx += av + hueco
-    return "".join(trazos)
+        bp = BoundsPen(gs); gs[n].draw(bp)
+        fin = cx + bp.bounds[2] * s
+        cx += font["hmtx"][n][0] * s + track * tam
+    return "".join(trazos), fin - x
+
+
+def nombre(x, arriba, alto, gap=0.53, track=0.06):
+    """CUADROS (negrita) y FINOS (liviana) del mismo tamaño, alineados a la izquierda.
+    El bloque mide `alto` desde la altura de mayúsculas de CUADROS hasta la base de FINOS."""
+    cap = NEGRITA["OS/2"].sCapHeight / NEGRITA["head"].unitsPerEm
+    h = alto / (2 + gap)            # altura de mayúscula de cada línea
+    tam = h / cap
+    b1, b2 = arriba + h, arriba + alto
+    t1, w1 = texto(NEGRITA, "CUADROS", x, b1, tam, track)
+    t2, w2 = texto(LIVIANA, "FINOS", x, b2, tam, track)
+    return f'<path d="{t1}"/><path d="{t2}"/>', max(w1, w2)
 
 
 def simbolo(x, y, lado):
@@ -64,16 +76,18 @@ def svg(w, h, cuerpo, color, titulo):
 
 def main():
     os.makedirs(OUT, exist_ok=True)
-    horizontal = (simbolo(0, 0, 100)
-                  + f'<path d="{texto(NEGRITA, "CUADROS", 124, 52, 38, 232)}"/>'
-                  + f'<path d="{texto(LIVIANA, "FINOS", 125, 92, 29, 229)}"/>')
-    vertical = (simbolo(72, 0, 96)
-                + f'<path d="{texto(NEGRITA, "CUADROS", 0, 136, 30, 240)}"/>'
-                + f'<path d="{texto(LIVIANA, "FINOS", 1, 172, 23, 238)}"/>')
-    for nombre, color in COLORES.items():
-        open(os.path.join(OUT, f"logo-{nombre}.svg"), "w").write(svg(356, 100, horizontal, color, "Cuadros Finos"))
-        open(os.path.join(OUT, f"logo-vertical-{nombre}.svg"), "w").write(svg(240, 174, vertical, color, "Cuadros Finos"))
-        open(os.path.join(OUT, f"simbolo-{nombre}.svg"), "w").write(svg(100, 100, simbolo(0, 0, 100), color, "Cuadros Finos"))
+    # Horizontal: el nombre va centrado en la altura del marco (12 arriba y 12 abajo) y a 22 del símbolo.
+    letras, ancho = nombre(122, 12, 76)
+    horizontal, W = simbolo(0, 0, 100) + letras, round(122 + ancho + 1)
+    # Vertical: símbolo arriba, nombre centrado debajo.
+    letras_v, ancho_v = nombre(0, 0, 56)
+    VW = round(max(ancho_v, 96)) + 2
+    vertical = simbolo((VW - 96) / 2, 0, 96) + f'<g transform="translate({(VW - ancho_v) / 2:.2f} 118)">{letras_v}</g>'
+    VH = 118 + 56 + 2
+    for clave, color in COLORES.items():
+        open(os.path.join(OUT, f"logo-{clave}.svg"), "w").write(svg(W, 100, horizontal, color, "Cuadros Finos"))
+        open(os.path.join(OUT, f"logo-vertical-{clave}.svg"), "w").write(svg(VW, VH, vertical, color, "Cuadros Finos"))
+        open(os.path.join(OUT, f"simbolo-{clave}.svg"), "w").write(svg(100, 100, simbolo(0, 0, 100), color, "Cuadros Finos"))
     # Favicon: fondo negro redondeado, marco y destello proporcionalmente más gruesos para que se lean en 16 px.
     fav = ('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32">'
            f'<rect width="32" height="32" rx="6" fill="{FONDO}"/>'
