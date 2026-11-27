@@ -274,7 +274,7 @@ def set_html(x):
         thumbs = "".join(f'<span class="pd__set-p">{pf(y, thumb=True)}</span>' for y in piezas_)
         nombres = ", ".join(y["n"].split(" · ")[0] for y in piezas_[:-1]) + " y " + piezas_[-1]["n"].split(" · ")[0]
         return (f'<a class="pd__set" href="{purl(tri)}"><span class="pd__set-art">{thumbs}</span><span class="pd__set-txt"><small>Completa el tríptico</small>'
-                f'<b>{e(nombres)} por {soles(precio_total(tri))}</b><span>Por separado {soles(suelto)}: ahorras {soles(ahorro)} →</span></span></a>')
+                f'<b>{e(nombres)} por {soles(precio_total(tri))}</b><span>Los 3 juntos, listos para colgar con su separación →</span></span></a>')
     if x.get("set"):
         links = " · ".join(f'<a href="{purl(BY[s])}">{e(BY[s]["n"])}</a>' for s in x["set"])
         return f'<p class="pd__set-solo">¿Solo uno? Cada cuadro por separado a {soles(P["pieza"])}: {links}</p>'
