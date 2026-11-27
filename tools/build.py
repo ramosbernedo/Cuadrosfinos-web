@@ -572,7 +572,8 @@ def resenas_html():
     Sin reseñas, la sección no aparece."""
     rs = CAT.get("resenas") or []
     if not rs: return ""
-    items = "".join(f'<figure class="rev">{f"<p class=\\"rev__stars\\" aria-label=\\"{int(r[chr(101)])} de 5\\">{chr(9733) * int(r[chr(101)])}</p>" if r.get("e") else ""}<blockquote>“{e(r["t"])}”</blockquote>'
+    estrellas = lambda r: f'<p class="rev__stars" aria-label="{int(r["e"])} de 5">{"★" * int(r["e"])}</p>' if r.get("e") else ""
+    items = "".join(f'<figure class="rev">{estrellas(r)}<blockquote>“{e(r["t"])}”</blockquote>'
                     f'<figcaption><b>{e(r["n"])}</b>{" · " + e(r["l"]) if r.get("l") else ""}'
                     f'{f" · <a href=\"{purl(BY[r[chr(115)]])}\">{e(BY[r[chr(115)]][chr(110)])}</a>" if r.get("s") in BY else ""}</figcaption></figure>' for r in rs[:6])
     return f'''
