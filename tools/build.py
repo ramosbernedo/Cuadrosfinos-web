@@ -497,7 +497,7 @@ def build_home():
       <div class="hero__shade" aria-hidden="true"></div>
       <div class="wrap hero__in">
         <div class="hero__copy">
-          <p class="kicker">Cuadros Finos · Lima, Perú</p>
+          <p class="kicker">Hechos en Lima, Perú</p>
           <h1><b class="l">Cuadros que dicen</b> <span class="l">quién vive aquí</span></h1>
           <p class="hero__lead">Cuadros en blanco y negro con marco para la sala, el despacho y el dormitorio. Hechos a pedido en Lima, listos para colgar y enviados a todo el Perú.</p>
           <div class="hero__cta"><a href="#catalogo" class="btn btn--light">Ver los {len(PRODS)} cuadros</a><button class="btn btn--line" data-open-quiz>Ayúdame a elegir</button></div>
