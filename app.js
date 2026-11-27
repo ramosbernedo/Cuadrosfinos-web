@@ -478,11 +478,11 @@ function bindProduct() {
     window.CFTrack && CFTrack.pedido({ codigo: code, via: S.x.q ? "cotizar" : "ficha", lugar: ent.lugar || "", pago: ent.pago || "", regalo: !!ent.regalo,
       items: [{ s: S.x.s, n: S.x.n, qty: 1, precio: it.price, f: S.x.p ? fieldValues().filter(([, v]) => v) : null }] });
   });
-  // Barra de compra fija (celular): visible mientras los botones principales no se ven; usa los mismos botones
+  // Barra de compra fija (celular): visible mientras los botones principales no se ven completos; usa los mismos botones
   const bar = $("#buyBar");
   if (bar && "IntersectionObserver" in window) {
     const ver = v => { bar.classList.toggle("is-on", v); bar.setAttribute("aria-hidden", String(!v)); document.body.classList.toggle("bb-on", v); };
-    new IntersectionObserver(([en]) => ver(!en.isIntersecting), { rootMargin: "0px 0px -24px 0px" }).observe($("#pBuy"));
+    new IntersectionObserver(([en]) => ver(en.intersectionRatio < 0.99), { threshold: [0, 0.99, 1] }).observe($("#pBuy"));
     $("#bbWa").addEventListener("click", e => { e.preventDefault(); T("barra_compra", { item_id: S.x.s, accion: "whatsapp" }); $("#pWa").click(); });
     $("#bbAdd")?.addEventListener("click", () => { T("barra_compra", { item_id: S.x.s, accion: "agregar" }); $("#pAdd").click(); });
   }
@@ -706,6 +706,8 @@ function renderSearch(q) {
     list = vistos.length ? vistos : DATA.filter(x => x.t);
   }
   list = list.slice(0, 8);
+  // Enter abre el cuadro si su nombre coincide con lo buscado (p. ej. «machu»); si no, el primer tema.
+  sdlg.dataset.top = q.trim() && list[0] && relevancia(list[0], q) > 0 ? "cuadro" : "";
   const head = !q.trim() ? `<p class="search__hint">${store.get("cf_vistos", []).length ? "Vistos recientemente" : "Los más pedidos"}</p>` : "";
   // Temas y subtemas que coinciden (p. ej. «médico» → Profesionales · Salud)
   const temas = [];
@@ -764,7 +766,7 @@ function bindGeneral() {
   $("#sq").addEventListener("input", e => { renderSearch(e.target.value); const v = e.target.value.trim(); clearTimeout(window.__ts); if (v.length >= 3) window.__ts = setTimeout(() => T("search", { search_term: v, lugar: "buscador", resultados: DATA.filter(x => matches(x, v)).length }), 1200); });
   $("#search form").addEventListener("submit", e => {
     e.preventDefault();
-    const first = $("#sRes a.s-item"); if (first) return first.click();
+    const first = (sdlg.dataset.top === "cuadro" && $("#sRes a.s-item:not(.s-item--col)")) || $("#sRes a.s-item"); if (first) return first.click();
   });
   document.addEventListener("keydown", e => {
     const typing = /input|textarea|select/i.test(document.activeElement.tagName);

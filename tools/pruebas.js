@@ -193,8 +193,8 @@ async function newPage(b, vp = { width: 1366, height: 860 }) {
     await q.click('#sceneRoom [data-v="oficina"]');
     await q.waitForTimeout(300);
     ok("Cambiar ambiente en la pared (foto real)", (await q.getAttribute("#pSceneBg", "src")).includes("pared-oficina") && await q.evaluate(() => document.querySelector("#pSceneBg").naturalWidth > 0));
-    const sticky = await q.$eval("#pBuy", e => getComputedStyle(e).position);
-    ok("Botones de compra fijos abajo en celular", sticky === "sticky");
+    const fija = await q.$eval("#buyBar", e => getComputedStyle(e).position);
+    ok("Botones de compra fijos abajo en celular", fija === "fixed" && await q.isVisible("#bbWa"));
     await q.goto(BASE + "/cuadro/foco-disciplina-ejecucion/", { waitUntil: "networkidle" });
     ok("Ficha con galería de fotos reales", (await q.$$eval("#pViews .view", v => v.length)) >= 10);
     await q.click("#pViews .view[data-tab=\"foto\"] >> nth=0"); await q.waitForTimeout(300);
