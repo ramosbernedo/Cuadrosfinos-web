@@ -368,6 +368,202 @@ async function llegadaFicha(r, slug, dev = PHONE) {
   });
   await esc(n++, "Escritorio: ficha", "precio y botón visibles en la primera pantalla", async r => { const p = await llegadaFicha(r, "ultima-cena", DESK); await p.ctx.close(); });
 
+
+  /* ================= 101+: velocidad, mensaje, personalizados, más celulares, imágenes, precios, anuncios, accesibilidad ================= */
+  const CAT = await (async () => { const p = await page(); await go(p, "/"); const c = await p.evaluate(() => window.CATALOGO); await p.ctx.close(); return c; })();
+  const PR = CAT.config.precio, prods = CAT.productos;
+  const piezasN = x => x.o === "triptico" ? 3 : x.o === "diptico" ? 2 : 1;
+  const precioEsperado = x => x.q ? null : (x.pr || (piezasN(x) === 3 ? PR.triptico : piezasN(x) === 2 ? PR.diptico : PR.pieza)) + (x.p ? PR.personalizar : 0);
+  const soles = n => "S/ " + n.toLocaleString("es-PE");
+  const n_vel = u => ({ "/": "portada", "/cuadros-para-sala/": "colección", "/cuadro/tigre-en-el-agua/": "ficha" }[u] || "ficha de tríptico");
+
+  // Velocidad con internet móvil lento (4G lento: 150 ms, 1,6 Mbps; CPU 4× más lenta)
+  async function velocidad(r, url) {
+    const ctx = await browser.newContext({ ...PHONE, deviceScaleFactor: 1 }); await ctx.route(/wa\.me|facebook\.com|googletagmanager|clarity/, q => q.abort());
+    const p = await ctx.newPage(); const cdp = await ctx.newCDPSession(p);
+    await cdp.send("Network.enable"); await cdp.send("Network.emulateNetworkConditions", { offline: false, latency: 150, downloadThroughput: 1.6e6 / 8, uploadThroughput: 750e3 / 8 });
+    await cdp.send("Emulation.setCPUThrottlingRate", { rate: 4 });
+    let bytes = 0; p.on("response", async res => { try { bytes += Number(res.headers()["content-length"] || 0) || (await res.body()).length; } catch {} });
+    await p.addInitScript(() => { window.__lcp = 0; new PerformanceObserver(l => { for (const e of l.getEntries()) window.__lcp = e.startTime; }).observe({ type: "largest-contentful-paint", buffered: true }); });
+    await p.goto(BASE + url, { waitUntil: "load", timeout: 60000 }); await p.waitForTimeout(800);
+    const lcp = Math.round(await p.evaluate(() => window.__lcp)); r.metricas.lcp_ms = lcp; r.metricas.kb = Math.round(bytes / 1024);
+    F(r, lcp > 3000, `Lo principal tarda ${(lcp / 1000).toFixed(1)} s en verse con 4G lento (meta: 3 s)`);
+    F(r, bytes > 2.5e6, `La página descarga ${Math.round(bytes / 1024)} KB (meta: < 2.500 KB)`);
+    await ctx.close();
+  }
+  for (const [u] of [["/", "portada"], ["/cuadros-para-sala/", "colección"], ["/cuadro/tigre-en-el-agua/", "ficha"], ["/cuadro/triptico-fuerza-vision-lealtad/", "ficha de tríptico"]])
+    await esc(n++, "Velocidad con 4G lento", `${n_vel(u)} carga en menos de 3 s`, r => velocidad(r, u));
+
+  // Mensaje de WhatsApp completo
+  await esc(n++, "Pedido mixto por WhatsApp", "3 sueltos + tríptico + personalizado + datos de entrega en el mensaje", async r => {
+    const bag = [{ s: "leon-fuerza", f: null, qty: 1 }, { s: "tigre-en-el-agua", f: null, qty: 1 }, { s: "monstera", f: null, qty: 1 },
+      { s: "triptico-fuerza-vision-lealtad", f: null, qty: 1 }, { s: "bendice-este-hogar", f: [["Apellido de la familia", "Familia Quispe"]], qty: 1 }];
+    const p = await page(PHONE, { storage: { cf_bag: bag, cf_entrega: { lugar: "Surco, Lima", pago: "Yape", regalo: true } } });
+    await go(p, "/"); await p.click("#openBag"); await p.waitForTimeout(200);
+    const msg = msgOf(await p.getAttribute("#bagWa", "href"));
+    for (const b of bag) { const x = prods.find(y => y.s === b.s); F(r, !msg.includes(x.n), `Falta «${x.n}» en el mensaje`); F(r, !msg.includes(`/cuadro/${b.s}/`), `Falta el enlace de «${x.n}»`); }
+    const esperado = 3 * PR.pieza + PR.triptico + PR.pieza + PR.personalizar - (3 * PR.pieza - PR.triptico);
+    F(r, !msg.includes("Descuento por cantidad"), "No muestra el descuento por cantidad");
+    F(r, !msg.includes(`Total: ${soles(esperado)}`), `El total no es ${soles(esperado)}: ${(msg.match(/Total: [^\n]+/) || [""])[0]}`);
+    F(r, !/Familia Quispe/.test(msg), "No lleva el apellido del personalizado");
+    F(r, !/Surco/.test(msg) || !/Yape/.test(msg) || !/regalo/i.test(msg), "No lleva lugar, pago o regalo");
+    F(r, !/envío gratis/i.test(msg), "No recuerda el envío gratis");
+    await p.ctx.close();
+  });
+  await esc(n++, "Pedido directo desde la ficha", "el mensaje lleva nombre, medida, precio y enlace", async r => {
+    const p = await page(); await go(p, "/cuadro/ultima-cena/"); await p.click("#pWa").catch(() => {});
+    const msg = msgOf(await waHref(p));
+    for (const t of ["La Última Cena", "cm", soles(PR.pieza), "/cuadro/ultima-cena/"]) F(r, !msg.includes(t), `Falta «${t}» en el mensaje`);
+    await p.ctx.close();
+  });
+
+  // Personalizados de punta a punta
+  const valores = { "Apellido de la familia": "Familia Quispe Rojas", "Fecha y hora": "14/02/2020, 9 p. m.", "Lugar": "Barranco, Lima", "Frase (opcional)": "La noche que dijimos sí",
+    "Ciudad o lugar": "Arequipa", "Texto (opcional)": "Donde empezó todo", "Nombres": "Ana & Luis", "Fecha": "14 de febrero de 2020", "Desde (año)": "2015" };
+  for (const x of prods.filter(y => y.p)) await esc(n++, "Personaliza un regalo", `«${x.n}»: escribe, ve la vista previa y pide`, async r => {
+    const p = await page(); await go(p, `/cuadro/${x.s}/`);
+    for (const inp of await p.$$("#pFieldList input")) { const l = await inp.getAttribute("data-label"); await inp.fill(valores[l] || "Prueba"); }
+    await p.waitForTimeout(300);
+    const prev = await p.evaluate(() => (document.querySelector("#pStage .pf") || {}).innerHTML || "");
+    const clave = (valores[(x.k || [])[0]?.[0]] || "").split(/[ ,&]/)[0];
+    if (/<svg/.test(prev)) F(r, clave && !prev.toUpperCase().includes(clave.toUpperCase()), `La vista previa no muestra «${clave}»`); else r.ok.push("Sin vista previa en vivo (se envía por WhatsApp)");
+    const msg = msgOf(await waHref(p));
+    for (const [l] of x.k || []) { const v = valores[l]; if (v) F(r, !msg.includes(v.replace(/&/g, "&")), `El mensaje no lleva «${l}: ${v}»`); }
+    F(r, !msg.includes(soles(precioEsperado(x))), `El mensaje no lleva el precio ${soles(precioEsperado(x))}`);
+    await p.ctx.close();
+  });
+
+  // Visual en más celulares y tablet
+  const equipos = [["Android chico (Galaxy S8, 360 px)", devices["Galaxy S8"]], ["Android (Pixel 7)", devices["Pixel 7"]], ["iPhone grande (14 Pro Max)", devices["iPhone 14 Pro Max"]], ["Tablet (iPad Mini)", devices["iPad Mini"]]];
+  for (const [nom, dev] of equipos) for (const u of ["/", "/cuadros-religiosos/", "/cuadro/triptico-fuerza-vision-lealtad/"])
+    await esc(n++, nom, `${u}: sin desbordes, textos cortados ni huecos`, async r => {
+      const p = await page({ ...dev, deviceScaleFactor: 1 }); await go(p, u);
+      await p.evaluate(() => document.querySelectorAll(".rv").forEach(e => e.classList.add("in")));
+      const res = await p.evaluate(() => {
+        const out = [];
+        if (document.documentElement.scrollWidth > innerWidth + 1) out.push(`La página se desborda a lo ancho (${document.documentElement.scrollWidth} px en ${innerWidth})`);
+        const vis = e => { const r = e.getBoundingClientRect(), cs = getComputedStyle(e); return r.width > 0 && r.height > 0 && cs.visibility !== "hidden" && !e.closest("dialog,.drawer,[hidden],.sr,.nav__links"); };
+        document.querySelectorAll("main .btn, main h1, main h2, main h3, main .chip, main .card__price").forEach(e => {
+          if (!vis(e)) return;
+          if (e.scrollWidth > e.clientWidth + 2 && getComputedStyle(e).overflowX === "visible" && !e.closest(".filters__row,.cards--scroll,.cards--combo")) {
+            const r = e.getBoundingClientRect(); if (r.right > innerWidth + 1) out.push(`Texto cortado: «${e.textContent.trim().slice(0, 30)}»`); }
+        });
+        // Huecos grandes entre contenidos
+        const hojas = [...document.querySelectorAll("main *")].filter(e => vis(e) && (["IMG", "BUTTON", "A", "INPUT", "SELECT"].includes(e.tagName) || [...e.childNodes].some(c => c.nodeType === 3 && c.textContent.trim())));
+        const iv = hojas.map(e => { const r = e.getBoundingClientRect(); return [r.top + scrollY, r.bottom + scrollY]; }).sort((a, b) => a[0] - b[0]);
+        let fin = iv.length ? iv[0][1] : 0; const lim = innerWidth > 700 ? 220 : 170;
+        for (const [t, b] of iv) { if (t - fin > lim) out.push(`Hueco vacío de ${Math.round(t - fin)} px en y=${Math.round(fin)}`); fin = Math.max(fin, b); }
+        return out;
+      });
+      res.forEach(m => r.friccion.push(m)); if (!res.length) r.ok.push("Sin desbordes ni huecos");
+      await p.ctx.close();
+    });
+
+  // Imágenes: todas las fotos de todos los cuadros cargan
+  await esc(n++, "Recorre todo el catálogo", `las fotos de los ${prods.length} cuadros existen y cargan`, async r => {
+    const p = await page(); await go(p, "/"); const malas = [];
+    for (const x of prods) {
+      const n_ = piezasN(x), rutas = [];
+      for (const t of ["t/", ""]) for (let i = 0; i < n_; i++) rutas.push(x.m ? `/media/${x.s}/${t ? "t" : "obra"}${n_ > 1 ? "-" + (i + 1) : ""}.webp` : `/img/cuadros/${t}${x.s}${n_ > 1 ? "-" + (i + 1) : ""}.webp`);
+      rutas.push(`/img/og/${x.s}.jpg`);
+      for (const u of rutas) { const res = await p.request.get(BASE + u); if (res.status() !== 200 || (await res.body()).length < 1500) malas.push(`${x.n}: ${u} (${res.status()})`); }
+    }
+    r.metricas.revisadas = prods.length; malas.slice(0, 8).forEach(m => r.friccion.push("Foto rota: " + m)); if (malas.length > 8) r.friccion.push(`…y ${malas.length - 8} más`);
+    await p.ctx.close();
+  });
+  await esc(n++, "Ve el catálogo completo", "ninguna tarjeta queda sin foto al cargar", async r => {
+    const p = await page(); await go(p, "/");
+    while (await p.isVisible("#more")) { await p.click("#more"); await p.waitForTimeout(100); }
+    await p.evaluate(async () => { document.querySelectorAll("#grid img").forEach(i => (i.loading = "eager")); await Promise.all([...document.querySelectorAll("#grid img")].map(i => i.complete ? 0 : new Promise(ok => { i.onload = i.onerror = ok; setTimeout(ok, 5000); }))); });
+    const rotas = await p.$$eval("#grid img", is => is.filter(i => !i.naturalWidth).map(i => i.alt));
+    r.metricas.tarjetas = await p.$$eval("#grid .card", c => c.length);
+    F(r, rotas.length, `Tarjetas sin foto: ${rotas.slice(0, 5).join(", ")}`); F(r, await p.$$eval("#grid .ph", e => e.length), "Hay tarjetas con «Vista previa por WhatsApp» en vez de foto");
+    await p.ctx.close();
+  });
+
+  // Precios: tarjeta = ficha = selección = mensaje (los 79 cuadros)
+  await esc(n++, "Compara precios en todo el recorrido", `tarjeta, ficha, selección y mensaje coinciden en los ${prods.length} cuadros`, async r => {
+    const p = await page(); await go(p, "/");
+    while (await p.isVisible("#more")) { await p.click("#more"); await p.waitForTimeout(80); }
+    const tarjetas = Object.fromEntries(await p.$$eval("#grid .card", cs => cs.map(c => [c.dataset.s, c.querySelector(".card__price").textContent.trim()])));
+    const malos = [];
+    for (const x of prods) {
+      const esp = precioEsperado(x); const espTxt = esp === null ? "Cotizar" : soles(esp);
+      if (tarjetas[x.s] !== espTxt) malos.push(`${x.n}: tarjeta «${tarjetas[x.s]}» ≠ ${espTxt}`);
+      await go(p, `/cuadro/${x.s}/`); const ficha = (await textOf(p, "#pPrice")).trim();
+      if (esp !== null && ficha !== espTxt) malos.push(`${x.n}: ficha «${ficha}» ≠ ${espTxt}`);
+    }
+    // Selección y mensaje: un cuadro de cada tipo
+    for (const s of ["leon-fuerza", "triptico-fuerza-vision-lealtad", "caballo-negro", "niebla-diptico"].filter(s => prods.some(x => x.s === s))) {
+      const x = prods.find(y => y.s === s), q = await page(PHONE, { storage: { cf_bag: [{ s, f: null, qty: 1 }] } }); await go(q, "/"); await q.click("#openBag"); await q.waitForTimeout(150);
+      const tot = (await textOf(q, "#bagTotal")).trim(), msg = msgOf(await q.getAttribute("#bagWa", "href"));
+      if (tot !== soles(precioEsperado(x))) malos.push(`${x.n}: selección «${tot}» ≠ ${soles(precioEsperado(x))}`);
+      if (!msg.includes(`Total: ${soles(precioEsperado(x))}`)) malos.push(`${x.n}: el mensaje no dice ${soles(precioEsperado(x))}`);
+      await q.ctx.close();
+    }
+    malos.slice(0, 8).forEach(m => r.friccion.push(m)); if (malos.length > 8) r.friccion.push(`…y ${malos.length - 8} más`);
+    await p.ctx.close();
+  });
+
+  // Anuncios: enlaces con UTM y fbclid
+  for (const [red, qs] of [["Facebook", "utm_source=facebook&utm_medium=cpc&utm_campaign=navidad&fbclid=IwAR0abc"], ["Instagram", "utm_source=instagram&utm_medium=paid&utm_campaign=reels"], ["Google", "utm_source=google&utm_medium=shopping&utm_campaign=catalogo&gclid=Cj0abc"]])
+    await esc(n++, `Llega desde un anuncio de ${red}`, "la página funciona y se guarda el origen para el pedido", async r => {
+      const p = await page(); const errs = []; p.on("pageerror", e => errs.push(e.message));
+      await go(p, `/cuadro/leon-fuerza/?${qs}`);
+      F(r, errs.length, "Errores en la página: " + errs.join(" | "));
+      F(r, !(await p.evaluate(() => document.querySelector("#buyBar")?.classList.contains("is-on"))), "No aparece la barra de compra");
+      const o = await p.evaluate(() => (window.CFTrack && CFTrack.origen()) || {}); r.metricas.origen = o.utm_source;
+      F(r, o.utm_source !== red.toLowerCase(), `No guardó el origen (${JSON.stringify(o).slice(0, 80)})`);
+      await go(p, "/cuadros-religiosos/"); const o2 = await p.evaluate(() => (window.CFTrack && CFTrack.origen()) || {});
+      F(r, o2.utm_source !== red.toLowerCase(), "Pierde el origen al seguir navegando");
+      await p.ctx.close();
+    });
+
+  // Accesibilidad
+  async function accesible(r, url, dev = PHONE) {
+    const p = await page(dev); await go(p, url); await p.evaluate(() => document.querySelectorAll(".rv").forEach(e => e.classList.add("in")));
+    const res = await p.evaluate(() => {
+      const out = { contraste: [], toque: [], alt: [], nombre: [], etiqueta: [] };
+      const vis = e => { const r = e.getBoundingClientRect(), cs = getComputedStyle(e); return r.width > 0 && r.height > 0 && cs.visibility !== "hidden" && +cs.opacity > .2 && !e.closest("dialog:not([open]),.drawer,[hidden],.sr,[aria-hidden=true]"); };
+      const rgb = s => (s.match(/[\d.]+/g) || []).map(Number);
+      const lum = ([r, g, b]) => { const f = c => (c /= 255) <= .03928 ? c / 12.92 : ((c + .055) / 1.055) ** 2.4; return .2126 * f(r) + .7152 * f(g) + .0722 * f(b); };
+      const fondo = e => { for (let x = e; x; x = x.parentElement) { const cs = getComputedStyle(x); if (cs.backgroundImage !== "none" && x !== document.body) return null; const c = rgb(cs.backgroundColor); if (c.length >= 3 && (c[3] ?? 1) > .9) return c; } return [11, 11, 11]; };
+      document.querySelectorAll("main *, footer *, header *").forEach(e => {
+        if (!vis(e) || ![...e.childNodes].some(c => c.nodeType === 3 && c.textContent.trim())) return;
+        const cs = getComputedStyle(e), bg = fondo(e); if (!bg) return;
+        const c = rgb(cs.color); if ((c[3] ?? 1) < .5) return;
+        const L1 = lum(c), L2 = lum(bg), ratio = (Math.max(L1, L2) + .05) / (Math.min(L1, L2) + .05);
+        const grande = parseFloat(cs.fontSize) >= 24 || (parseFloat(cs.fontSize) >= 18.6 && +cs.fontWeight >= 700);
+        if (ratio < (grande ? 3 : 4.5)) out.contraste.push(`«${e.textContent.trim().slice(0, 28)}» ${ratio.toFixed(1)}:1`);
+      });
+      document.querySelectorAll("main button, main .btn, main .chip, main input, main select, header button, .card__add, .bb a, .bb button").forEach(e => {
+        if (!vis(e)) return; const r = (e.closest("label") || e).getBoundingClientRect(); if (r.height < 32 || r.width < 32) out.toque.push(`«${(e.textContent || e.getAttribute("aria-label") || e.placeholder || "").trim().slice(0, 24)}» ${Math.round(r.width)}×${Math.round(r.height)}`);
+      });
+      document.querySelectorAll("img").forEach(i => { if (!i.hasAttribute("alt")) out.alt.push(i.getAttribute("src")); });
+      document.querySelectorAll("button, a[href]").forEach(e => { if (!vis(e)) return; const n = (e.getAttribute("aria-label") || e.textContent || e.title || "").trim() || [...e.querySelectorAll("img")].map(i => i.alt).join(""); if (!n) out.nombre.push(e.outerHTML.slice(0, 60)); });
+      document.querySelectorAll("input, select").forEach(e => { if (!vis(e)) return; if (!(e.labels && e.labels.length) && !e.getAttribute("aria-label")) out.etiqueta.push(e.id || e.name); });
+      out.lang = document.documentElement.lang; return out;
+    });
+    const uniq = a => [...new Set(a)];
+    F(r, !res.lang, "La página no declara el idioma");
+    F(r, res.contraste.length, `Texto con poco contraste (${res.contraste.length}): ${uniq(res.contraste).slice(0, 4).join("; ")}`);
+    F(r, res.toque.length, `Botones chicos para el dedo (${res.toque.length}): ${uniq(res.toque).slice(0, 4).join("; ")}`);
+    F(r, res.alt.length, `Imágenes sin texto alternativo: ${res.alt.length}`);
+    F(r, res.nombre.length, `Botones o enlaces sin nombre para lector de pantalla: ${res.nombre.length}`);
+    F(r, res.etiqueta.length, `Campos sin etiqueta: ${res.etiqueta.join(", ")}`);
+    await p.ctx.close();
+  }
+  for (const [u, nom] of [["/", "portada"], ["/cuadros-para-sala/", "colección"], ["/cuadro/leon-fuerza/", "ficha"], ["/cuadro/bendice-este-hogar/", "personalizado"]])
+    await esc(n++, "Accesibilidad (contraste, toque, lector de pantalla)", nom, r => accesible(r, u));
+  await esc(n++, "Accesibilidad con teclado", "llegar al botón de pedir solo con Tab", async r => {
+    const p = await page(DESK); await go(p, "/cuadro/leon-fuerza/"); let llego = false;
+    for (let i = 0; i < 60 && !llego; i++) { await p.keyboard.press("Tab"); llego = await p.evaluate(() => document.activeElement && document.activeElement.id === "pWa"); }
+    F(r, !llego, "No se llega al botón «Pedir por WhatsApp» con el teclado en 60 Tabs");
+    const foco = await p.evaluate(() => { const cs = getComputedStyle(document.activeElement); return cs.outlineStyle !== "none" || cs.boxShadow !== "none"; });
+    F(r, llego && !foco, "El botón enfocado no muestra el foco");
+    await p.ctx.close();
+  });
+
   await browser.close();
   const mal = R.filter(r => r.friccion.length);
   console.log(`\n${R.length} escenarios · ${R.length - mal.length} sin fricción · ${mal.length} con fricción`);
