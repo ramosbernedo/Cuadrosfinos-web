@@ -46,7 +46,13 @@
    "h1": "Cuadros motivacionales y de animales",
    "seoTitle": "Cuadros motivacionales y de animales con marco",
    "seoDesc": "Cuadros de león, águila, lobo, gorila y tigre en blanco y negro, y frases de disciplina para la oficina. Con marco a S/ 84, tríptico S/ 149.",
-   "foto": "col-poder"
+   "foto": "col-poder",
+   "claves": "motivación motivacional éxito emprendedor emprendimiento negocio empresa empresario liderazgo líder gimnasio gym fuerza poder ambición",
+   "subClaves": {
+    "animales": "animal animales fauna salvaje felino",
+    "frases": "frase frases texto palabras",
+    "simbolos": "símbolo símbolos"
+   }
   },
   {
    "id": "fe",
@@ -76,7 +82,14 @@
    "h1": "Cuadros religiosos",
    "seoTitle": "Cuadros religiosos con marco: Jesús, Virgen y santos",
    "seoDesc": "Cuadros religiosos con marco: La Última Cena, Señor de los Milagros, Sagrado Corazón, Virgen María y Bendice este hogar con tu apellido. Desde S/ 84.",
-   "foto": "col-fe"
+   "foto": "col-fe",
+   "claves": "religioso religiosa religión católico católica cristiano cristiana fe dios biblia iglesia sagrado santo santa oración bendición espiritual",
+   "subClaves": {
+    "jesus": "jesucristo cristo señor",
+    "virgen-santos": "virgen maría santos santo arcángel",
+    "simbolos": "cruz símbolo",
+    "hogar": "familia hogar casa apellido bendición"
+   }
   },
   {
    "id": "abstracto",
@@ -106,7 +119,14 @@
    "h1": "Cuadros abstractos y minimalistas",
    "seoTitle": "Cuadros abstractos y minimalistas con marco",
    "seoDesc": "Cuadros abstractos de textura, piedra, mármol y arte en línea, minimalistas y con toques de color. Con marco negro, listos para colgar, a S/ 84.",
-   "foto": "col-abstracto"
+   "foto": "col-abstracto",
+   "claves": "abstracto abstractos moderno moderna minimalista contemporáneo decorativo neutro elegante",
+   "subClaves": {
+    "textura": "textura piedra mármol",
+    "minimal": "minimal simple",
+    "color": "color colores",
+    "linea": "línea dibujo trazo rostro mujer"
+   }
   },
   {
    "id": "botanico",
@@ -127,7 +147,8 @@
    ],
    "h1": "Cuadros botánicos",
    "seoTitle": "Cuadros botánicos con marco: monstera, olivo y hojas",
-   "seoDesc": "Láminas botánicas con marco negro: monstera, ave del paraíso, olivo y helechos. Para sala, comedor y dormitorio. S/ 84, envío a todo el Perú."
+   "seoDesc": "Láminas botánicas con marco negro: monstera, ave del paraíso, olivo y helechos. Para sala, comedor y dormitorio. S/ 84, envío a todo el Perú.",
+   "claves": "planta plantas naturaleza verde hojas flores flor tropical jardín"
   },
   {
    "id": "lugares",
@@ -152,7 +173,13 @@
    ],
    "h1": "Cuadros de Perú y ciudades",
    "seoTitle": "Cuadros de Perú: Machu Picchu, cóndor y tu ciudad",
-   "seoDesc": "Cuadros de Machu Picchu, el cóndor de los Andes, las dunas de Ica, el mar y el mapa personalizado de tu ciudad. Con marco, hechos en Lima, desde S/ 84."
+   "seoDesc": "Cuadros de Machu Picchu, el cóndor de los Andes, las dunas de Ica, el mar y el mapa personalizado de tu ciudad. Con marco, hechos en Lima, desde S/ 84.",
+   "claves": "lugar lugares paisaje paisajes viaje turismo",
+   "subClaves": {
+    "peru": "perú andes cusco machu picchu sierra montaña montañas",
+    "mar": "mar playa costa océano olas",
+    "ciudades": "ciudad ciudades lima arequipa trujillo piura chiclayo cusco mapa"
+   }
   },
   {
    "id": "cosmos",
@@ -173,7 +200,12 @@
    ],
    "h1": "Cuadros de geometría sagrada, luna y cielo",
    "seoTitle": "Cuadros de geometría sagrada, luna y cielo",
-   "seoDesc": "Flor de la vida, cubo de Metatrón, árbol de la vida, fases de la luna y el mapa del cielo de tu fecha. Cuadros con marco desde S/ 84."
+   "seoDesc": "Flor de la vida, cubo de Metatrón, árbol de la vida, fases de la luna y el mapa del cielo de tu fecha. Cuadros con marco desde S/ 84.",
+   "claves": "espiritual universo energía místico",
+   "subClaves": {
+    "geometria": "geometría sagrada mandala",
+    "luna-cielo": "luna cielo estrellas constelación astros noche"
+   }
   },
   {
    "id": "oficio",
@@ -202,7 +234,14 @@
    ],
    "h1": "Cuadros para abogados, médicos, arquitectos y contadores",
    "seoTitle": "Cuadros para abogados, médicos y arquitectos",
-   "seoDesc": "Cuadros para el estudio de abogados, el consultorio, arquitectos y contadores: Themis, vara de Esculapio y más. Regalo de graduación con marco, S/ 84."
+   "seoDesc": "Cuadros para el estudio de abogados, el consultorio, arquitectos y contadores: Themis, vara de Esculapio y más. Regalo de graduación con marco, S/ 84.",
+   "claves": "profesional profesionales profesión graduación título consultorio estudio despacho",
+   "subClaves": {
+    "derecho": "abogado abogada abogados derecho justicia jurídico legal juez notario",
+    "salud": "médico médica doctor doctora salud consultorio clínica enfermera enfermero dentista odontólogo odontología psicólogo psicóloga psicología nutricionista",
+    "arquitectura": "arquitecto arquitecta arquitectura ingeniero ingeniera ingeniería construcción planos",
+    "finanzas": "contador contadora contabilidad finanzas economista economía banco inversión negocio administrador"
+   }
   },
   {
    "id": "papa",
@@ -214,7 +253,8 @@
    "subs": [],
    "h1": "Cuadros de la visita del Papa León XIV al Perú",
    "seoTitle": "Cuadros de la visita del Papa León XIV al Perú",
-   "seoDesc": "Cuadros recuerdo de la visita del Papa León XIV al Perú: Machu Picchu, la Catedral del Cusco, el mar y la Amazonía. Con marco, hechos en Lima."
+   "seoDesc": "Cuadros recuerdo de la visita del Papa León XIV al Perú: Machu Picchu, la Catedral del Cusco, el mar y la Amazonía. Con marco, hechos en Lima.",
+   "claves": "papa león xiv pontífice visita recuerdo católico"
   }
  ],
  "virtuales": [
@@ -246,7 +286,8 @@
    "h1": "Cuadros personalizados",
    "seoTitle": "Cuadros personalizados: nombre, fecha, mapa o apellido",
    "seoDesc": "Cuadros personalizados con el mapa de tu ciudad, el cielo de tu fecha, nombres o tu apellido. Vista previa por WhatsApp antes de imprimir. S/ 124.",
-   "bajada": "Tu cielo, tu ciudad, tu apellido o tu fecha. Te mandamos la vista previa antes de imprimir."
+   "bajada": "Tu cielo, tu ciudad, tu apellido o tu fecha. Te mandamos la vista previa antes de imprimir.",
+   "claves": "personalizado personalizados personalizable regalo nombre fecha aniversario pareja boda novios mamá familia"
   }
  ],
  "ambientes": [
@@ -258,7 +299,8 @@
    "seoTitle": "Cuadros para sala: trípticos y modernos con marco",
    "seoDesc": "Cuadros para sala en blanco y negro con marco: trípticos de 98 cm para encima del sofá, animales, abstractos y botánicos. Desde S/ 84 en Lima.",
    "bajada": "Sobre el sofá, el aparador o la pared larga. Un tríptico mide unos 98 cm: ideal sobre un sofá de 2 m.",
-   "img": "horizonte"
+   "img": "horizonte",
+   "claves": "sala living sofá"
   },
   {
    "id": "dormitorio",
@@ -268,7 +310,8 @@
    "seoTitle": "Cuadros para dormitorio con marco",
    "seoDesc": "Cuadros para dormitorio con marco: piezas tranquilas, botánicas, de fe y de luna para encima de la cama. 30 × 37 cm a S/ 84, envío a todo el Perú.",
    "bajada": "Piezas tranquilas para encima de la cama o la cómoda.",
-   "img": "fases-de-la-luna"
+   "img": "fases-de-la-luna",
+   "claves": "dormitorio cuarto habitación cama"
   },
   {
    "id": "oficina",
@@ -278,7 +321,8 @@
    "seoTitle": "Cuadros para oficina y escritorio con marco",
    "seoDesc": "Cuadros para oficina con marco: león, águila, lobo, frases de disciplina y cuadros para abogados, médicos y arquitectos. Desde S/ 84, también para empresas.",
    "bajada": "Para el despacho, el consultorio o la pared detrás del escritorio.",
-   "img": "leon-fuerza"
+   "img": "leon-fuerza",
+   "claves": "oficina escritorio despacho trabajo"
   },
   {
    "id": "comedor",
@@ -288,7 +332,8 @@
    "seoTitle": "Cuadros para comedor: La Última Cena y botánicos",
    "seoDesc": "Cuadros para comedor con marco: La Última Cena, láminas botánicas, Bendice este hogar con tu apellido y abstractos cálidos. Desde S/ 84 en Lima.",
    "bajada": "Junto a la mesa: La Última Cena, láminas botánicas y piezas cálidas.",
-   "img": "ultima-cena"
+   "img": "ultima-cena",
+   "claves": "comedor cocina mesa"
   }
  ],
  "productos": [
