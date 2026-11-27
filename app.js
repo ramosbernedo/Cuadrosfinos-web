@@ -75,6 +75,11 @@ const item = (x, extra = {}) => ({ item_id: x.s, item_name: x.n, item_brand: CON
   item_category2: subNombre(x) || undefined, item_variant: x.o, price: x.q ? 0 : precioBase(x) + (x.p ? P.personalizar : 0), quantity: 1, ...extra });
 const once = new Set(); const T1 = (key, name, params) => { if (once.has(key)) return; once.add(key); T(name, params); };
 
+/* ---------- fecha estimada de llegada (días hábiles de C.entrega) ---------- */
+function habiles(n, d = new Date()) { d = new Date(d); while (n > 0) { d.setDate(d.getDate() + 1); if (d.getDay() % 6) n--; } return d; }
+const diaTxt = d => d.toLocaleDateString("es-PE", { weekday: "short", day: "numeric", month: "short" }).replace(/\./g, "").replace(",", "");
+function eta() { const [a, b] = (CONFIG.entrega.match(/(\d+)\s*a\s*(\d+)/) || [0, 4, 6]).slice(1).map(Number); return `entre el ${diaTxt(habiles(a))} y el ${diaTxt(habiles(b))}`; }
+
 /* ---------- render ---------- */
 function pf(x, { lazy = true, thumb = false, scene = false } = {}) {
   const ld = lazy ? ' loading="lazy" decoding="async"' : "";
@@ -89,10 +94,10 @@ function pf(x, { lazy = true, thumb = false, scene = false } = {}) {
   return `<span class="${cls}"><img src="${imgSrc(x, { thumb })}" alt="${esc(x.n)} — cuadro con marco negro"${ld}></span>`;
 }
 const precioTxt = x => x.q ? "Cotizar" : (x.p ? "Desde " : "") + soles(precioBase(x));
-function card(x, { mini = false } = {}) {
+function card(x, { mini = false, add: conAdd = !mini } = {}) {
   const tag = x.t ? '<span class="tag">Más pedido</span>' : x.nw ? '<span class="tag tag--ghost">Nuevo</span>' : x.p ? '<span class="tag tag--ghost">Personalizable</span>' : "";
   const inBag = bag.some(b => b.s === x.s);
-  const add = x.q || mini ? "" : `<button class="card__add${inBag ? " is-in" : ""}" data-add="${x.s}" aria-label="${inBag ? "Ya está en tu selección" : "Agregar a mi selección"}: ${esc(x.n)}">${inBag ? "✓" : "+"}</button>`;
+  const add = x.q || !conAdd ? "" : `<button class="card__add${inBag ? " is-in" : ""}" data-add="${x.s}" aria-label="${inBag ? "Ya está en tu selección" : "Agregar a mi selección"}: ${esc(x.n)}">${inBag ? "✓" : "+"}</button>`;
   return `<article class="card${mini ? "" : " rv"}" data-s="${x.s}"><div class="card__stage">${tag}${pf(x, { thumb: true })}${add}</div>` +
     `<h3>${esc(x.n)}</h3>${mini ? "" : `<p>${esc(x.f)}</p>`}<span class="card__price">${precioTxt(x)}</span>` +
     `<a class="card__open" href="${purl(x)}" aria-label="Ver ${esc(x.n)}"></a></article>`;
@@ -262,6 +267,7 @@ function openProduct(slug, tab, { push = true } = {}) {
     $("#pAdd").hidden = false; $("#pWa").textContent = "Pedir este por WhatsApp";
   }
   updateProductWa(); refreshAddBtn();
+  if ($("#pEta")) $("#pEta").innerHTML = `<b>Pide hoy y llega ${eta()}</b> en Lima · envío a todo el Perú`;
   if (window.requestIdleCallback) requestIdleCallback(preloadWalls, { timeout: 2500 }); else setTimeout(preloadWalls, 1200);
   S.room = roomFor(x);
   setTab(tab || "obra"); renderScene();
@@ -544,7 +550,7 @@ function addToBag(s, f = null) {
   T("add_to_cart", { currency: "PEN", value: unit({ s, f }), items: [item(x, { price: unit({ s, f }) })], lista: LISTA });
   saveBag(); syncAddButtons();
   const badge = $("#bagCount"); badge.classList.remove("pop"); void badge.offsetWidth; badge.classList.add("pop");
-  toast(`«${x.n}» está en tu selección`, { label: "Ver selección", fn: openBag });
+  if ($("#bag").getAttribute("aria-hidden") !== "false") toast(`«${x.n}» está en tu selección`, { label: "Ver selección", fn: openBag });
 }
 function bagMessage(code = "") {
   const total = bag.reduce((a, b) => a + unit(b) * b.qty, 0);
@@ -556,6 +562,20 @@ function bagMessage(code = "") {
   const d = store.get("cf_entrega", {});
   const extra = [d.lugar && `Entrega en: ${d.lugar}`, d.pago && `Pago: ${d.pago}`, d.regalo && "Es para regalo 🎁"].filter(Boolean).join("\n");
   return `Hola, quiero pedir estos cuadros:\n${lines.join("\n")}\n\nTotal: ${soles(total)}` + (extra ? `\n${extra}` : "") + (code ? `\nCódigo: ${code}` : "") + `\n¿Me confirman el envío${d.lugar ? "" : " a mi dirección"}?`;
+}
+/* Sugerencia en la selección: armar el tríptico (más barato que 3 sueltos) o un cuadro que combine */
+function bagUpsell() {
+  const suelto = s => bag.some(b => b.s === s && !(b.f && b.f.length));
+  for (const t of DATA.filter(x => x.set && !x.q && !bag.some(b => b.s === x.s))) {
+    const k = t.set.filter(suelto).length; if (!k) continue;
+    const ahora = t.set.filter(suelto).reduce((a, s) => a + precioBase(BY[s]), 0), dif = precioBase(t) - ahora;
+    const txt = dif < 0 ? `Ahorra ${soles(-dif)}: llévalos como tríptico a ${soles(precioBase(t))}` : `Completa el tríptico: los 3 por ${soles(precioBase(t))} (+ ${soles(dif)})`;
+    return `<div class="bag-up"><p class="kicker">Te conviene</p><div class="bag-up__row">${pf(t, { thumb: true })}<div><b>${esc(t.n)}</b><span>${txt}</span></div></div><button class="btn btn--light btn--sm btn--block" data-swap="${t.s}">Cambiar por el tríptico</button></div>`;
+  }
+  const cols = new Set(bag.map(b => BY[b.s].c));
+  const enSet = new Set(bag.flatMap(b => BY[b.s].set || []));
+  const sug = DATA.filter(x => cols.has(x.c) && x.i && !x.q && !x.p && !enSet.has(x.s) && !bag.some(b => b.s === x.s)).sort((a, b) => rank(a) - rank(b)).slice(0, 2);
+  return sug.length ? `<div class="bag-up"><p class="kicker">Combinan con tu selección</p><div class="cards cards--mini">${sug.map(x => card(x, { mini: true, add: true })).join("")}</div></div>` : "";
 }
 function renderBag() {
   const n = bag.reduce((a, b) => a + b.qty, 0);
@@ -573,8 +593,9 @@ function renderBag() {
         <div class="qty"><button data-q="${i}" data-d="-1" aria-label="Quitar uno de ${esc(x.n)}">−</button><span aria-live="polite">${b.qty}</span><button data-q="${i}" data-d="1" aria-label="Agregar uno de ${esc(x.n)}">+</button></div></div>
       <div class="bag-item__r"><strong>${soles(unit(b) * b.qty)}</strong><button class="rm" data-rm="${i}">Quitar</button></div>
     </div>`;
-  }).join("") : `<div class="bag-empty"><p>Aún no guardas cuadros.</p><p class="muted small">Toca “+” en cualquier cuadro para armar tu selección y pedir todo en un solo mensaje.</p><a href="/#catalogo" class="btn btn--line" data-close-bag>Ver cuadros</a></div>`;
+  }).join("") + bagUpsell() : `<div class="bag-empty"><p>Aún no guardas cuadros.</p><p class="muted small">Toca “+” en cualquier cuadro para armar tu selección y pedir todo en un solo mensaje.</p><a href="/#catalogo" class="btn btn--line" data-close-bag>Ver cuadros</a></div>`;
   $("#bagWa").href = waLink(bagMessage());
+  if ($("#bagEta")) $("#bagEta").textContent = `Pide hoy y llega ${eta()} en Lima. Envío y pago se confirman por WhatsApp: no pagas nada en la web.`;
 }
 const drawer = $("#bag");
 let lastFocus = null;
@@ -584,6 +605,7 @@ function openBag() {
   if (dlg && dlg.open) closeProduct();
   T("view_cart", { currency: "PEN", value: bagTotal(), items: bagItems() });
   lastFocus = document.activeElement;
+  $("#toast").classList.remove("is-on");
   drawer.removeAttribute("inert"); drawer.setAttribute("aria-hidden", "false");
   document.documentElement.classList.add("lock");
   setTimeout(() => $(".drawer__head [data-close-bag]").focus(), 60);
@@ -598,6 +620,9 @@ function bindBag() {
   drawer.addEventListener("click", e => {
     const q = e.target.closest("[data-q]");
     if (q) { const b = bag[+q.dataset.q]; if (+q.dataset.d < 0) T("remove_from_cart", { currency: "PEN", value: unit(b), items: [item(BY[b.s], { price: unit(b) })] }); b.qty += +q.dataset.d; if (b.qty < 1) bag.splice(+q.dataset.q, 1); saveBag(); syncAddButtons(); return; }
+    const sw = e.target.closest("[data-swap]");
+    if (sw) { const t = BY[sw.dataset.swap]; t.set.forEach(s => { const b = bag.find(b => b.s === s && !(b.f && b.f.length)); if (b) b.qty--; }); bag = bag.filter(b => b.qty > 0);
+      bag.push({ s: t.s, f: null, qty: 1 }); saveBag(); syncAddButtons(); T("add_to_cart", { currency: "PEN", value: precioBase(t), items: [item(t)], lista: "tríptico sugerido" }); return; }
     const rm = e.target.closest("[data-rm]");
     if (rm) {
       const [gone] = bag.splice(+rm.dataset.rm, 1); saveBag(); syncAddButtons();
@@ -682,7 +707,8 @@ function quizStep(i) {
 function quizResult() {
   const score = x => (x.a.includes(QA.room) ? 4 : 0) + (STYLE[QA.style](x) ? 8 : 0) +
     (QA.fmt === "set" ? (piezas(x) > 1 ? 6 : 0) : QA.fmt === "uno" ? (piezas(x) === 1 ? 2 : -4) : 0) + (x.t ? 2 : 0) + (x.i ? 3 : -10) + (x.q ? -3 : 0);
-  const res = DATA.filter(x => STYLE[QA.style](x)).sort((a, b) => score(b) - score(a) || a.idx - b.idx).slice(0, 6);
+  let res = DATA.filter(x => STYLE[QA.style](x)).sort((a, b) => score(b) - score(a) || a.idx - b.idx).slice(0, 6);
+  if (QA.fmt === "set" && !res.some(x => piezas(x) > 1)) res = [...DATA.filter(x => piezas(x) > 1 && x.i && x.a.includes(QA.room)).sort((a, b) => rank(a) - rank(b)).slice(0, 2), ...res].slice(0, 6);
   T("ayuda_resultado", { ambiente: QA.room, estilo: QA.style, formato: QA.fmt });
   $("#qStep").textContent = "Tu recomendación";
   $("#qTitle").textContent = "Estos van con tu pared";
@@ -690,7 +716,7 @@ function quizResult() {
   const r = $("#qRes"); r.hidden = false;
   const col = STYLE_COL[QA.style];
   const colObj = colDe(col) || VIRTUALES.find(v => v.id === col);
-  r.innerHTML = `<div class="cards">${res.map(x => card(x, { mini: true })).join("")}</div>
+  r.innerHTML = `<div class="cards">${res.map(x => card(x, { mini: true, add: true })).join("")}</div>
     <div class="quiz__actions"><a class="btn btn--light" href="/${colObj.url}/">Ver todos los de este estilo</a><button class="btn btn--line" id="qAgain">Empezar de nuevo</button></div>`;
   $("#qAgain").onclick = () => quizStep(0);
 }
@@ -718,7 +744,9 @@ function renderSearch(q) {
   const cols = temas.filter((c, i) => temas.findIndex(o => o.url.split("?")[0] === c.url.split("?")[0]) === i || c.url.includes("?")).slice(0, 3);
   $("#sRes").innerHTML = head + cols.map(c => `<a class="s-item s-item--col" role="listitem" href="${c.url}"><span class="s-ico">→</span><span><b>${esc(c.t)}</b><small>${c.k ? c.k + " cuadros" : "Ver todos"}</small></span><em></em></a>`).join("") +
     (list.length ? list.map(x => `<a class="s-item" role="listitem" href="${purl(x)}">${pf(x, { thumb: true })}<span><b>${esc(x.n)}</b><small>${esc(colDe(x.c).nombre)} · ${esc(x.f)}</small></span><em>${precioTxt(x)}</em></a>`).join("")
-      : `<div class="s-empty"><p>No tenemos un cuadro de “${esc(q)}” todavía.</p><p class="muted small">Mira por tema:</p><div class="pills">${COLECCIONES.map(c => `<a class="pill" href="/${c.url}/">${esc(c.nombre)}</a>`).join("")}</div><p class="small"><a class="u" href="${waLink("Hola, busco un cuadro de: " + q)}" target="_blank" rel="noopener">Pídenos uno a medida por WhatsApp</a></p></div>`);
+      : `<div class="s-empty"><p>No tenemos un cuadro de “${esc(q)}” todavía. <span class="muted">Estos son los que más se piden:</span></p></div>` +
+        DATA.filter(x => x.t && x.i).slice(0, 4).map(x => `<a class="s-item s-item--sug" role="listitem" href="${purl(x)}">${pf(x, { thumb: true })}<span><b>${esc(x.n)}</b><small>${esc(colDe(x.c).nombre)} · ${esc(x.f)}</small></span><em>${precioTxt(x)}</em></a>`).join("") +
+        `<div class="s-empty"><p class="muted small">O mira por tema:</p><div class="pills">${COLECCIONES.map(c => `<a class="pill" href="/${c.url}/">${esc(c.nombre)}</a>`).join("")}</div><p class="small"><a class="u" href="${waLink("Hola, busco un cuadro de: " + q)}" target="_blank" rel="noopener">Pídenos uno a medida por WhatsApp</a></p></div>`);
 }
 
 /* ---------- navegación general ---------- */
@@ -766,7 +794,7 @@ function bindGeneral() {
   $("#sq").addEventListener("input", e => { renderSearch(e.target.value); const v = e.target.value.trim(); clearTimeout(window.__ts); if (v.length >= 3) window.__ts = setTimeout(() => T("search", { search_term: v, lugar: "buscador", resultados: DATA.filter(x => matches(x, v)).length }), 1200); });
   $("#search form").addEventListener("submit", e => {
     e.preventDefault();
-    const first = (sdlg.dataset.top === "cuadro" && $("#sRes a.s-item:not(.s-item--col)")) || $("#sRes a.s-item"); if (first) return first.click();
+    const first = (sdlg.dataset.top === "cuadro" && $("#sRes a.s-item:not(.s-item--col)")) || $("#sRes a.s-item:not(.s-item--sug)"); if (first) return first.click();
   });
   document.addEventListener("keydown", e => {
     const typing = /input|textarea|select/i.test(document.activeElement.tagName);

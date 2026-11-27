@@ -47,7 +47,7 @@
    "seoTitle": "Cuadros motivacionales y de animales con marco",
    "seoDesc": "Cuadros de león, águila, lobo, gorila y tigre en blanco y negro, y frases de disciplina para la oficina. Con marco a S/ 84, tríptico S/ 149.",
    "foto": "col-poder",
-   "claves": "motivación motivacional éxito emprendedor emprendimiento negocio empresa empresario liderazgo líder gimnasio gym fuerza poder ambición",
+   "claves": "motivación motivacional éxito emprendedor emprendimiento negocio empresa empresario liderazgo líder gimnasio gym fuerza poder ambición deporte deportista fútbol disciplina dinero riqueza millonario",
    "subClaves": {
     "animales": "animal animales fauna salvaje felino",
     "frases": "frase frases texto palabras",
@@ -120,7 +120,7 @@
    "seoTitle": "Cuadros abstractos y minimalistas con marco",
    "seoDesc": "Cuadros abstractos de textura, piedra, mármol y arte en línea, minimalistas y con toques de color. Con marco negro, listos para colgar, a S/ 84.",
    "foto": "col-abstracto",
-   "claves": "abstracto abstractos moderno moderna minimalista contemporáneo decorativo neutro elegante",
+   "claves": "abstracto abstractos moderno moderna minimalista contemporáneo decorativo neutro elegante zen calma spa baño",
    "subClaves": {
     "textura": "textura piedra mármol",
     "minimal": "minimal simple",
@@ -148,7 +148,7 @@
    "h1": "Cuadros botánicos",
    "seoTitle": "Cuadros botánicos con marco: monstera, olivo y hojas",
    "seoDesc": "Láminas botánicas con marco negro: monstera, ave del paraíso, olivo y helechos. Para sala, comedor y dormitorio. S/ 84, envío a todo el Perú.",
-   "claves": "planta plantas naturaleza verde hojas flores flor tropical jardín"
+   "claves": "planta plantas naturaleza verde hojas flores flor tropical jardín baño spa"
   },
   {
    "id": "lugares",
@@ -201,7 +201,7 @@
    "h1": "Cuadros de geometría sagrada, luna y cielo",
    "seoTitle": "Cuadros de geometría sagrada, luna y cielo",
    "seoDesc": "Flor de la vida, cubo de Metatrón, árbol de la vida, fases de la luna y el mapa del cielo de tu fecha. Cuadros con marco desde S/ 84.",
-   "claves": "espiritual universo energía místico",
+   "claves": "espiritual universo energía místico zen meditación yoga buda paz",
    "subClaves": {
     "geometria": "geometría sagrada mandala",
     "luna-cielo": "luna cielo estrellas constelación astros noche"
@@ -287,7 +287,7 @@
    "seoTitle": "Cuadros personalizados: nombre, fecha, mapa o apellido",
    "seoDesc": "Cuadros personalizados con el mapa de tu ciudad, el cielo de tu fecha, nombres o tu apellido. Vista previa por WhatsApp antes de imprimir. S/ 124.",
    "bajada": "Tu cielo, tu ciudad, tu apellido o tu fecha. Te mandamos la vista previa antes de imprimir.",
-   "claves": "personalizado personalizados personalizable regalo nombre fecha aniversario pareja boda novios mamá familia"
+   "claves": "personalizado personalizados personalizable regalo nombre fecha aniversario pareja boda novios mamá familia amor enamorados bebé nacimiento hijo hija cumpleaños navidad recuerdo"
   }
  ],
  "ambientes": [
@@ -322,7 +322,7 @@
    "seoDesc": "Cuadros para oficina con marco: león, águila, lobo, frases de disciplina y cuadros para abogados, médicos y arquitectos. Desde S/ 84, también para empresas.",
    "bajada": "Para el despacho, el consultorio o la pared detrás del escritorio.",
    "img": "leon-fuerza",
-   "claves": "oficina escritorio despacho trabajo"
+   "claves": "oficina escritorio despacho trabajo negocio consultorio local tienda"
   },
   {
    "id": "comedor",
@@ -333,7 +333,7 @@
    "seoDesc": "Cuadros para comedor con marco: La Última Cena, láminas botánicas, Bendice este hogar con tu apellido y abstractos cálidos. Desde S/ 84 en Lima.",
    "bajada": "Junto a la mesa: La Última Cena, láminas botánicas y piezas cálidas.",
    "img": "ultima-cena",
-   "claves": "comedor cocina mesa"
+   "claves": "comedor cocina mesa restaurante café cafetería bar local"
   }
  ],
  "productos": [

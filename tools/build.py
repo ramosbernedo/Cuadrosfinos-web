@@ -199,7 +199,7 @@ def header(page):
       <nav class="nav__links" id="navLinks" aria-label="Principal">{nav_menu()}</nav>
       <div class="nav__actions">
         <button class="icon-btn" id="openSearch" aria-label="Buscar cuadro" aria-keyshortcuts="/"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg></button>
-        <button class="icon-btn" id="openBag" aria-label="Mi selección" aria-controls="bag"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="4" y="4" width="16" height="16"/><rect x="8" y="8" width="8" height="8"/></svg><span class="badge" id="bagCount" hidden>0</span></button>
+        <button class="icon-btn icon-btn--bag" id="openBag" aria-label="Mi selección" aria-controls="bag"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 8h14l-1 12H6z"/><path d="M9 8V6a3 3 0 0 1 6 0v2"/></svg><span class="icon-btn__lbl">Mi selección</span><span class="badge" id="bagCount" hidden>0</span></button>
         <button class="nav__toggle" id="navToggle" aria-label="Abrir menú" aria-expanded="false" aria-controls="navLinks"><span></span><span></span></button>
       </div>
     </div>
@@ -341,8 +341,9 @@ def pd_markup(x=None, page=False):
         </div>
         <ul class="pd__trust">
           <li><b>Pagas al confirmar</b> por WhatsApp: Yape, Plin, transferencia o tarjeta</li>
-          <li><b>Listo en 4 a 6 días</b> hábiles en Lima · envío a todo el Perú</li>
+          <li id="pEta"><b>Listo en 4 a 6 días</b> hábiles en Lima · envío a todo el Perú</li>
           <li><b>Si llega dañado, se repone</b> · embalado con esquineros</li>
+          <li><b>¿Es para regalo?</b> Avísanos por WhatsApp y lo coordinamos</li>
         </ul>
         {g(lambda x: set_html(x)) if page else ""}
         <dl class="pd__specs">
@@ -387,7 +388,7 @@ def overlays(with_product_dialog=False):
           <label class="check"><input type="checkbox" id="bagRegalo"> <span>Es para regalo</span></label>
         </form>
         <div class="bag-total"><span>Total</span><strong id="bagTotal">S/ 0</strong></div>
-        <p class="muted small">Envío y pago se confirman por WhatsApp. No pagas nada en la web.</p>
+        <p class="muted small" id="bagEta">Envío y pago se confirman por WhatsApp. No pagas nada en la web.</p>
         <a class="btn btn--wa btn--block" id="bagWa" href="{e(wa_url("Hola, quiero hacer un pedido de cuadros."))}" target="_blank" rel="noopener">Enviar pedido por WhatsApp</a>
         <button class="link-btn small" id="bagShare">Compartir mi selección</button>
       </footer>
@@ -568,10 +569,10 @@ def build_home():
       <div class="hero__shade" aria-hidden="true"></div>
       <div class="wrap hero__in">
         <div class="hero__copy">
-          <p class="kicker">Hechos en Lima, Perú</p>
+          <p class="kicker">Desde {soles(P['pieza'])} con marco · Hechos en Lima</p>
           <h1><b class="l">Cuadros que dicen</b> <span class="l">quién vive aquí</span></h1>
           <p class="hero__lead">Cuadros en blanco y negro con marco para la sala, el despacho y el dormitorio. Hechos a pedido en Lima, listos para colgar y enviados a todo el Perú.</p>
-          <div class="hero__cta"><a href="#colecciones" class="btn btn--light">Encuentra tu cuadro</a><button class="btn btn--line" data-open-quiz>Ayúdame a elegir</button></div>
+          <div class="hero__cta"><a href="#top" class="btn btn--light">Ver los más pedidos</a><button class="btn btn--line" data-open-quiz>Ayúdame a elegir</button></div>
         </div>
         <div class="hero__foot">
           <a class="hero__cap" id="heroCap" href="{PORTADA[0]["url"]}"><span>En la foto</span><b id="heroCapTxt">{e(PORTADA[0]["pie"])}</b> →</a>
@@ -586,7 +587,6 @@ def build_home():
       <li><b>Yape · Plin · tarjeta</b><span>pagas al confirmar</span></li>
       <li><b>Garantía</b><span>si llega dañado, se repone</span></li>
     </ul>
-{explorar()}
 
     <section class="sec" id="top" aria-labelledby="topTitle">
       <div class="wrap">
@@ -594,6 +594,8 @@ def build_home():
         <div class="cards cards--scroll" id="topGrid">{"".join(card(x) for x in top)}</div>
       </div>
     </section>
+{explorar()}
+
 
     <section class="sec--wall" aria-labelledby="wallTitle">
       <div class="wrap wall-teaser">
@@ -697,13 +699,12 @@ def landing(kind, obj, items):
           <p class="kicker">{e(obj.get("titulo") or obj["nombre"])}</p>
           <h1>{e(obj["h1"])}</h1>
           <p class="hero__lead">{e(obj["bajada"])}</p>
-          <p class="lhero__intro">{e(intro)}</p>
         </div>
         <div class="lhero__art" aria-hidden="true">{"".join(f'<span class="lhero__p">{pf(x, thumb=True, lazy=False)}</span>' for x in hero_items)}</div>
       </div>
     </section>
 {catalog_section(f"{n} cuadros", obj["nombre"], items, preset_col=preset.get("col", ""), preset_room=preset.get("room", ""), limite=LIMITE["landing"])}
-    <section class="sec sec--alt"><div class="wrap"><h2 class="sub-h">Sigue explorando</h2><div class="pills">{links}</div></div></section>
+    <section class="sec sec--alt"><div class="wrap"><p class="lhero__intro">{e(intro)}</p><h2 class="sub-h">Sigue explorando</h2><div class="pills">{links}</div></div></section>
 {faq_html(faqs)}
 {cta()}
   </main>'''
