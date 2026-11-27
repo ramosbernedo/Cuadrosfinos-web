@@ -49,11 +49,24 @@ const imgSrc = (x, { thumb = false, panel = 0 } = {}) => x.m
   ? `/media/${x.s}/${thumb ? "t" : "obra"}${panel ? "-" + panel : ""}.webp?v=${encodeURIComponent(x.m)}`
   : `/img/cuadros/${thumb ? "t/" : ""}${x.s}${panel ? "-" + panel : ""}.webp`;
 const medida = x => x.o === "triptico" ? "Tríptico 3 × (30 × 37 cm) con marco" : x.o === "diptico" ? "Díptico 2 × (30 × 37 cm) con marco" : esH(x) ? "37 × 30 cm con marco (horizontal)" : "30 × 37 cm con marco";
-DATA.forEach(x => (x._q = norm([x.n, x.f, colDe(x.c)?.nombre, subNombre(x), x.a.join(" "), x.p || "", x.o].join(" "))));
+const AMBS = CAT.ambientes, PERS = VIRTUALES.find(v => v.id === "personalizados") || {};
+const subClaves = x => (colDe(x.c)?.subClaves || {})[x.u] || "";
+// Texto donde se busca: nombre (pesa más), colección, subtema, palabras clave del tema y del ambiente
+DATA.forEach(x => {
+  x._n = norm(x.n);
+  x._q = norm([x.n, x.f, colDe(x.c)?.nombre, colDe(x.c)?.claves, subNombre(x), subClaves(x),
+    x.a.map(a => (AMBS.find(m => m.id === a) || {}).claves || a).join(" "), x.p ? "personalizado " + (PERS.claves || "") : "", x.o].join(" "));
+});
 // cuadros «Nuevo» creados/editados desde el panel: el más reciente primero (x.m = fecha de la imagen en base 36)
 const fresco = x => x.nw && x.m ? parseInt(x.m, 36) || 0 : 0;
 const rank = x => (x.t ? 0 : 10) + (x.nw ? 0 : 3) + (x.i ? 0 : 20) + (x.c === "papa" ? 15 : 0) + (fresco(x) ? -0.5 : x.idx / 100);
-const matches = (x, q) => norm(q).split(/\s+/).filter(Boolean).every(t => x._q.includes(t.replace(/s$/, "")));
+// Búsqueda: cada palabra debe coincidir con el comienzo de una palabra del cuadro (leones → león, abogados → abogado)
+const VACIAS = new Set(["de", "del", "la", "las", "el", "los", "y", "e", "o", "para", "con", "en", "un", "una", "mi", "cuadro", "cuadros"]);
+const tokens = q => norm(q).replace(/[^a-z0-9ñ ]/g, " ").split(/\s+/).filter(t => t && !VACIAS.has(t));
+const variantes = t => [...new Set([t, t.length > 4 ? t.replace(/es$/, "") : t, t.length > 3 ? t.replace(/s$/, "") : t])];
+const tokHit = (txt, t) => variantes(t).some(v => v.length <= 2 ? new RegExp(`(^|[^a-z0-9ñ])${v}([^a-z0-9ñ]|$)`).test(txt) : new RegExp(`(^|[^a-z0-9ñ])${v}`).test(txt));
+const matches = (x, q) => { const ts = tokens(q); return ts.length ? ts.every(t => tokHit(x._q, t)) : true; };
+const relevancia = (x, q) => tokens(q).reduce((a, t) => a + (tokHit(x._n, t) ? 3 : 0), 0);
 
 /* ---------- medición (medicion.js) ---------- */
 const T = (name, params) => { try { window.CFTrack && CFTrack.track(name, params); } catch {} };
@@ -108,13 +121,15 @@ function reveal(root = document) {
 /* ---------- catálogo ---------- */
 const hasCatalog = !!$("#grid");
 const F = { col: document.body.dataset.col || "", sub: "", q: "", room: document.body.dataset.room || "", sort: "" };
+const LIM0 = Number($("#catalogo")?.dataset.limite) || 24; let lim = LIM0;
 const F0 = { ...F };
 
+const pasa = (x, f) => { const vf = VFILTRO[f.col];
+  return (!f.col || (vf ? vf(x) : x.c === f.col)) && (!f.sub || x.u === f.sub) && (!f.room || x.a.includes(f.room)) && (!f.q || matches(x, f.q)); };
 function filtered() {
-  const vf = VFILTRO[F.col];
-  let list = DATA.filter(x => (!F.col || (vf ? vf(x) : x.c === F.col)) && (!F.sub || x.u === F.sub) &&
-    (!F.room || x.a.includes(F.room)) && (!F.q || matches(x, F.q)));
-  if (F.sort === "az") list.sort((a, b) => a.n.localeCompare(b.n, "es"));
+  let list = DATA.filter(x => pasa(x, F));
+  if (F.q && !F.sort) list.sort((a, b) => relevancia(b, F.q) - relevancia(a, F.q) || rank(a) - rank(b));
+  else if (F.sort === "az") list.sort((a, b) => a.n.localeCompare(b.n, "es"));
   else if (F.sort === "nuevo") list.sort((a, b) => (b.nw ? 1 : 0) - (a.nw ? 1 : 0) || fresco(b) - fresco(a) || rank(a) - rank(b));
   else if (F.sort === "precio") list.sort((a, b) => (precioBase(a) ?? 1e9) - (precioBase(b) ?? 1e9) || rank(a) - rank(b));
   else if (F.col === "nuevos") list.sort((a, b) => fresco(b) - fresco(a) || rank(a) - rank(b));
@@ -126,13 +141,23 @@ function renderFilters() {
   const c = colDe(F.col);
   $("#subFilters").innerHTML = c && c.subs.length > 1 ? [["", "Todo " + c.nombre], ...c.subs].map(([id, n]) =>
     `<button class="chip${F.sub === id ? " is-on" : ""}" data-sub="${id}" aria-pressed="${F.sub === id}">${esc(n)}</button>`).join("") : "";
-  $("#room").value = F.room; $("#sort").value = F.sort;
+  $$("#roomFilters [data-room]").forEach(b => b.setAttribute("aria-pressed", String(b.dataset.room === F.room)));
+  // Conteos en vivo: cuántos quedan si tocas ese tema o ese ambiente (con lo demás que ya elegiste)
+  $$("#colFilters [data-col]").forEach(b => { const n = DATA.filter(x => pasa(x, { ...F, col: b.dataset.col, sub: "" })).length;
+    $("small", b).textContent = n; b.classList.toggle("is-zero", !n && b.dataset.col !== F.col); });
+  $$("#roomFilters [data-room]").forEach(b => { const n = DATA.filter(x => pasa(x, { ...F, room: b.dataset.room })).length;
+    $("small", b).textContent = n; b.classList.toggle("is-zero", !n && b.dataset.room !== F.room); });
+  $("#sort").value = F.sort;
   if ($("#q").value !== F.q) $("#q").value = F.q;
+  $("#resetFilters").hidden = !(F.q || F.sub || F.col !== F0.col || F.room !== F0.room || (PAGE === "home" && (F.col || F.room)));
 }
 function renderGrid() {
   const list = filtered();
-  $("#grid").innerHTML = list.map(x => card(x)).join("");
+  $("#grid").innerHTML = list.slice(0, lim).map(x => card(x)).join("");
+  const resto = list.length - Math.min(lim, list.length);
+  $("#more").hidden = resto <= 0; $("#moreN").textContent = `quedan ${resto}`;
   $("#empty").hidden = list.length > 0;
+  $("#emptyQ").textContent = F.q ? `“${F.q}”` : "cuadros con esos filtros";
   $("#count").textContent = list.length === DATA.length ? `${list.length} cuadros` : `${list.length} de ${DATA.length} cuadros`;
   reveal($("#grid"));
   T("view_item_list", { item_list_id: F.col || F.room || "todos", item_list_name: listaNombre(), items: list.slice(0, 20).map((x, i) => item(x, { index: i })) });
@@ -140,7 +165,7 @@ function renderGrid() {
 function syncUrl() {
   if (PAGE !== "home") return;
   const u = new URL(location.href);
-  [["q", F.q], ["c", F.col], ["amb", F.room]].forEach(([k, v]) => v ? u.searchParams.set(k, v) : u.searchParams.delete(k));
+  [["q", F.q], ["c", F.col], ["sub", F.sub], ["amb", F.room]].forEach(([k, v]) => v ? u.searchParams.set(k, v) : u.searchParams.delete(k));
   history.replaceState(history.state, "", u.pathname + u.search + u.hash);
 }
 const listaNombre = () => [F.col && ((colDe(F.col) || VIRTUALES.find(v => v.id === F.col) || {}).nombre || F.col), F.room && "Ambiente " + F.room, F.q && "Búsqueda"].filter(Boolean).join(" · ") || "Todos los cuadros";
@@ -148,6 +173,7 @@ function setFilter(patch, scroll) {
   if (patch.col !== undefined || patch.room !== undefined || patch.sub !== undefined || patch.sort !== undefined)
     T("filtrar", { coleccion: patch.col ?? F.col, subcoleccion: patch.sub ?? F.sub, ambiente: patch.room ?? F.room, orden: patch.sort ?? F.sort });
   if (patch.q && patch.q.length >= 3) { clearTimeout(window.__tq); window.__tq = setTimeout(() => T("search", { search_term: patch.q, resultados: filtered().length }), 1200); }
+  if (patch.col !== undefined || patch.sub !== undefined || patch.room !== undefined || patch.q !== undefined) lim = LIM0;
   Object.assign(F, patch);
   renderFilters(); renderGrid(); syncUrl();
   if (scroll) $("#catalogo").scrollIntoView({ behavior: reduced ? "auto" : "smooth" });
@@ -156,6 +182,7 @@ function bindCatalog() {
   if (!hasCatalog) return;
   const params = new URLSearchParams(location.search);
   if (PAGE === "home") Object.assign(F, { q: params.get("q") || "", col: params.get("c") || "", room: params.get("amb") || "" });
+  if (params.get("sub") && (colDe(F.col)?.subs || []).some(s => s[0] === params.get("sub"))) F.sub = params.get("sub");
   $("#colFilters").addEventListener("click", e => { const b = e.target.closest("[data-col]"); if (b) setFilter({ col: b.dataset.col, sub: "" }); });
   $("#colFilters").addEventListener("keydown", e => {
     if (!["ArrowRight", "ArrowLeft"].includes(e.key)) return;
@@ -165,10 +192,12 @@ function bindCatalog() {
   });
   $("#subFilters").addEventListener("click", e => { const b = e.target.closest("[data-sub]"); if (b) setFilter({ sub: b.dataset.sub }); });
   let t; $("#q").addEventListener("input", e => { clearTimeout(t); t = setTimeout(() => setFilter({ q: e.target.value.trim() }), 140); });
-  $("#room").addEventListener("change", e => setFilter({ room: e.target.value }));
+  $("#roomFilters").addEventListener("click", e => { const b = e.target.closest("[data-room]"); if (b) setFilter({ room: b.dataset.room }); });
+  $("#resetFilters").addEventListener("click", () => setFilter({ col: PAGE === "home" ? "" : F0.col, sub: "", q: "", room: PAGE === "home" ? "" : F0.room }));
+  $("#more").addEventListener("click", () => { const desde = lim; lim += LIM0 * 2; renderGrid(); $$("#grid .card")[desde]?.querySelector(".card__open")?.focus({ preventScroll: true }); T("ver_mas", { lista: listaNombre(), mostrados: lim }); });
   $("#sort").addEventListener("change", e => setFilter({ sort: e.target.value }));
   $("#clearFilters").addEventListener("click", () => setFilter({ col: "", sub: "", q: "", room: "" }));
-  const changed = F.q || F.col !== F0.col || F.room !== F0.room;
+  const changed = F.q || F.sub || F.col !== F0.col || F.room !== F0.room;
   renderFilters();
   // Con cuadros del panel, los contadores fijos del HTML se actualizan
   if (CAT.panel) {
@@ -181,11 +210,13 @@ function bindCatalog() {
   const key = "cf_scroll:" + location.pathname + location.search;
   let saved = null; try { saved = sessionStorage.getItem(key); } catch {}
   if ("scrollRestoration" in history) history.scrollRestoration = "manual";
-  addEventListener("pagehide", () => { try { sessionStorage.setItem("cf_scroll:" + location.pathname + location.search, String(scrollY)); } catch {} });
-  if (changed || CAT.panel) renderGrid(); else reveal($("#grid"));
-  if (navEntry && navEntry.type === "back_forward" && saved !== null) {
+  addEventListener("pagehide", () => { try { sessionStorage.setItem("cf_scroll:" + location.pathname + location.search, String(scrollY)); sessionStorage.setItem("cf_lim:" + location.pathname + location.search, String(lim)); } catch {} });
+  const volviendo = navEntry && navEntry.type === "back_forward" && saved !== null;
+  if (volviendo) { try { lim = Math.max(LIM0, Number(sessionStorage.getItem(key.replace("cf_scroll:", "cf_lim:"))) || LIM0); } catch {} }
+  if (changed || CAT.panel || lim !== LIM0) renderGrid(); else reveal($("#grid"));
+  if (volviendo) {
     $$("#grid .rv").forEach(el => el.classList.add("in"));
-    requestAnimationFrame(() => scrollTo(0, Number(saved)));
+    requestAnimationFrame(() => scrollTo({ top: Number(saved), behavior: "instant" }));
   } else if (changed && (F.q || F.col || F.room) && PAGE === "home") setTimeout(() => $("#catalogo").scrollIntoView(), 50);
 }
 
@@ -660,17 +691,23 @@ const sdlg = $("#search");
 function openSearch() { sdlg.showModal(); $("#sq").value = ""; renderSearch(""); $("#sq").focus(); }
 function renderSearch(q) {
   let list;
-  if (q.trim()) list = DATA.filter(x => matches(x, q)).sort((a, b) => rank(a) - rank(b));
+  if (q.trim()) list = DATA.filter(x => matches(x, q)).sort((a, b) => relevancia(b, q) - relevancia(a, q) || rank(a) - rank(b));
   else {
     const vistos = store.get("cf_vistos", []).map(s => BY[s]).filter(Boolean);
     list = vistos.length ? vistos : DATA.filter(x => x.t);
   }
   list = list.slice(0, 8);
   const head = !q.trim() ? `<p class="search__hint">${store.get("cf_vistos", []).length ? "Vistos recientemente" : "Los más pedidos"}</p>` : "";
-  const cols = q.trim() ? [...COLECCIONES, ...VIRTUALES, ...CAT.ambientes].filter(c => matches({ _q: norm(c.nombre + " " + (c.h1 || "")) }, q)).slice(0, 3) : [];
-  $("#sRes").innerHTML = head + cols.map(c => `<a class="s-item s-item--col" role="listitem" href="/${c.url}/"><span class="s-ico">→</span><span><b>${esc(c.h1 || c.nombre)}</b><small>Ver colección</small></span><em></em></a>`).join("") +
+  // Temas y subtemas que coinciden (p. ej. «médico» → Profesionales · Salud)
+  const temas = [];
+  if (q.trim()) {
+    COLECCIONES.forEach(c => (c.subs || []).forEach(([id, n]) => { if (matches({ _q: norm(n + " " + ((c.subClaves || {})[id] || "")) }, q)) temas.push({ url: `/${c.url}/?sub=${id}#catalogo`, t: `${c.nombre} · ${n}`, k: DATA.filter(x => x.c === c.id && x.u === id).length }); }));
+    [...COLECCIONES, ...VIRTUALES, ...AMBS].forEach(c => { if (matches({ _q: norm([c.nombre, c.h1, c.claves].join(" ")) }, q)) temas.push({ url: `/${c.url}/`, t: c.h1 || c.nombre, k: 0 }); });
+  }
+  const cols = temas.filter((c, i) => temas.findIndex(o => o.url.split("?")[0] === c.url.split("?")[0]) === i || c.url.includes("?")).slice(0, 3);
+  $("#sRes").innerHTML = head + cols.map(c => `<a class="s-item s-item--col" role="listitem" href="${c.url}"><span class="s-ico">→</span><span><b>${esc(c.t)}</b><small>${c.k ? c.k + " cuadros" : "Ver todos"}</small></span><em></em></a>`).join("") +
     (list.length ? list.map(x => `<a class="s-item" role="listitem" href="${purl(x)}">${pf(x, { thumb: true })}<span><b>${esc(x.n)}</b><small>${esc(colDe(x.c).nombre)} · ${esc(x.f)}</small></span><em>${precioTxt(x)}</em></a>`).join("")
-      : `<p class="muted" style="padding:20px">Nada con “${esc(q)}”. <a class="u" href="${waLink("Hola, busco un cuadro de: " + q)}" target="_blank" rel="noopener">Pídelo por WhatsApp</a>.</p>`);
+      : `<div class="s-empty"><p>No tenemos un cuadro de “${esc(q)}” todavía.</p><p class="muted small">Mira por tema:</p><div class="pills">${COLECCIONES.map(c => `<a class="pill" href="/${c.url}/">${esc(c.nombre)}</a>`).join("")}</div><p class="small"><a class="u" href="${waLink("Hola, busco un cuadro de: " + q)}" target="_blank" rel="noopener">Pídenos uno a medida por WhatsApp</a></p></div>`);
 }
 
 /* ---------- navegación general ---------- */
@@ -707,6 +744,14 @@ function bindGeneral() {
   $$("dialog").forEach(d => d.addEventListener("click", e => { if (d !== dlg && (e.target === d || e.target.closest("[data-close]"))) d.close(); }));
   $("#openSearch").addEventListener("click", openSearch);
   $("#nfSearch")?.addEventListener("click", openSearch);
+  document.addEventListener("click", e => { if (e.target.closest("[data-open-search]")) { e.preventDefault(); setNav(false); openSearch(); } });
+  // «Por ambiente» y «Por tema»: se abren con clic o teclado; Esc o un clic afuera los cierran
+  const dds = $$(".nav__dd");
+  const cerrarDd = (salvo) => dds.forEach(b => { if (b !== salvo) b.setAttribute("aria-expanded", "false"); });
+  dds.forEach(b => b.addEventListener("click", () => { const o = b.getAttribute("aria-expanded") !== "true"; cerrarDd(b); b.setAttribute("aria-expanded", String(o)); if (o) T("menu", { grupo: b.textContent }); }));
+  document.addEventListener("click", e => { if (!e.target.closest(".nav__grp")) cerrarDd(); });
+  document.addEventListener("keydown", e => { if (e.key === "Escape") { const ab = dds.find(b => b.getAttribute("aria-expanded") === "true"); if (ab) { cerrarDd(); ab.focus(); } } });
+  $$(".nav__grp").forEach(g => g.addEventListener("focusout", e => { if (!g.contains(e.relatedTarget)) cerrarDd(); }));
   $("#sq").addEventListener("input", e => { renderSearch(e.target.value); const v = e.target.value.trim(); clearTimeout(window.__ts); if (v.length >= 3) window.__ts = setTimeout(() => T("search", { search_term: v, lugar: "buscador", resultados: DATA.filter(x => matches(x, v)).length }), 1200); });
   $("#search form").addEventListener("submit", e => {
     e.preventDefault();

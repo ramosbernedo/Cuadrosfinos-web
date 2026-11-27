@@ -115,7 +115,7 @@ async function newPage(b, vp = { width: 1366, height: 860 }) {
     const n = await q.$$eval("#grid .card", c => c.length);
     ok("?q=leon filtra el catálogo (búsqueda sin tildes)", n > 0 && n < 84, `${n} resultados`);
     await q.goto(BASE + "/?c=fe&amb=dormitorio", { waitUntil: "networkidle" });
-    ok("?c=fe&amb=dormitorio aplica ambos filtros", /de 84/.test(await q.textContent("#count")) && (await q.$eval("#room", s => s.value)) === "dormitorio");
+    ok("?c=fe&amb=dormitorio aplica ambos filtros", /de 84/.test(await q.textContent("#count")) && (await q.getAttribute('#roomFilters [data-room="dormitorio"]', "aria-pressed")) === "true");
     await q.click('#colFilters [data-col="poder"]');
     ok("Elegir Poder muestra subcolecciones", (await q.$$eval("#subFilters .chip", c => c.length)) === 4);
     ok("La URL guarda el filtro (se puede compartir)", q.url().includes("c=poder"));
@@ -126,7 +126,19 @@ async function newPage(b, vp = { width: 1366, height: 860 }) {
     await q.goto(BASE + "/cuadros-religiosos/", { waitUntil: "networkidle" });
     ok("Página de colección llega filtrada", (await q.$eval('#colFilters [data-col="fe"]', e => e.getAttribute("aria-selected"))) === "true" && /17 de 84/.test(await q.textContent("#count")));
     await q.goto(BASE + "/cuadros-para-sala/", { waitUntil: "networkidle" });
-    ok("Página de ambiente llega filtrada", (await q.$eval("#room", s => s.value)) === "sala");
+    ok("Página de ambiente llega filtrada", (await q.getAttribute('#roomFilters [data-room="sala"]', "aria-pressed")) === "true");
+    await q.click('#colFilters [data-col="fe"]');
+    ok("Sala + Religiosos: el conteo coincide con el chip", (await q.textContent("#count")).startsWith((await q.textContent('#roomFilters [data-room="sala"] small')) + " de"));
+    ok("«Quitar filtros» aparece y vuelve a la sala", await q.isVisible("#resetFilters") && (await q.click("#resetFilters"), (await q.getAttribute('#colFilters [data-col=""]', "aria-selected")) === "true"));
+    await q.goto(BASE + "/", { waitUntil: "networkidle" });
+    ok("Portada: 12 cuadros y «Ver más»", (await q.$$eval("#grid .card:not([hidden])", c => c.length)) === 12 && await q.isVisible("#more"));
+    await q.click("#more"); ok("«Ver más» agrega cuadros", (await q.$$eval("#grid .card", c => c.length)) > 12);
+    await q.goto(BASE + "/?q=abogados", { waitUntil: "networkidle" });
+    ok("Buscar «abogados» encuentra cuadros (palabras clave y plurales)", (await q.$$eval("#grid .card", c => c.length)) >= 2);
+    await q.goto(BASE + "/?q=bebe", { waitUntil: "networkidle" });
+    ok("Sin resultados sugiere temas", await q.isVisible("#empty .pills a"));
+    await q.hover('.nav__dd[aria-controls="ddTem"]'); await q.waitForTimeout(300);
+    ok("Menú «Por tema» se despliega", await q.isVisible('#ddTem a[href="/cuadros-religiosos/"]'));
     ok("Sin errores en filtros", !q._errors.length, q._errors.join(" | "));
     await q.close();
   }
@@ -213,6 +225,7 @@ async function newPage(b, vp = { width: 1366, height: 860 }) {
     ok("3D: listo para ver en la pared (realidad aumentada en la pared, tamaño fijo)", (await q.getAttribute("#mv", "ar-placement")) === "wall" && (await q.getAttribute("#mv", "ar-scale")) === "fixed");
     await q.click("#navToggle"); await q.waitForTimeout(450);
     ok("Menú móvil abre", (await q.getAttribute("#navToggle", "aria-expanded")) === "true" && await q.isVisible("#navLinks a"));
+    ok("Menú móvil muestra ambientes y temas", await q.isVisible('#ddAmb a[href="/cuadros-para-sala/"]') && await q.isVisible('#ddTem a[href="/cuadros-religiosos/"]'));
     await q.keyboard.press("Escape");
     ok("Escape cierra el menú móvil", (await q.getAttribute("#navToggle", "aria-expanded")) === "false");
     await q.goto(BASE + "/", { waitUntil: "networkidle" });
