@@ -158,8 +158,8 @@ def head(title, desc, path, og_img="/img/og/inicio.jpg", ld=(), preload="", og_t
   <meta property="og:image" content="{h(og_img)}"><meta property="og:image:width" content="1200"><meta property="og:image:height" content="630">
   <meta name="twitter:card" content="summary_large_image">
   <meta name="theme-color" content="#0b0b0b">
-  <link rel="icon" href="/img/favicon.svg" type="image/svg+xml">
-  <link rel="apple-touch-icon" href="/img/icon-180.png">
+  <link rel="icon" href="/img/favicon.svg?v={ver('img/favicon.svg')}" type="image/svg+xml">
+  <link rel="apple-touch-icon" href="/img/icon-180.png?v={ver('img/icon-180.png')}">
   <link rel="manifest" href="/manifest.webmanifest">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -195,7 +195,7 @@ def header(page):
   <div class="topbar"><div class="wrap topbar__in"><span>Hechos a pedido en Lima · Envío a todo el Perú</span><span class="topbar__r">Si llega dañado, se repone</span></div></div>
   <header class="nav" id="nav">
     <div class="wrap nav__in">
-      <a href="/" class="brand" aria-label="{C['marca']}, inicio"><img class="brand__logo" src="/img/marca/logo-blanco.svg" alt="" width="157" height="40"></a>
+      <a href="/" class="brand" aria-label="{C['marca']}, inicio"><img class="brand__logo" src="/img/marca/logo-blanco.svg?v={ver('img/marca/logo-blanco.svg')}" alt="" width="157" height="40"></a>
       <nav class="nav__links" id="navLinks" aria-label="Principal">{nav_menu()}</nav>
       <div class="nav__actions">
         <button class="icon-btn" id="openSearch" aria-label="Buscar cuadro" aria-keyshortcuts="/"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg></button>
@@ -213,7 +213,7 @@ def footer():
   <footer class="footer">
     <div class="wrap footer__grid">
       <div class="footer__brand">
-        <a href="/" class="brand"><img class="brand__logo" src="/img/marca/logo-blanco.svg" alt="{C['marca']}" width="157" height="40" loading="lazy"></a>
+        <a href="/" class="brand"><img class="brand__logo" src="/img/marca/logo-blanco.svg?v={ver('img/marca/logo-blanco.svg')}" alt="{C['marca']}" width="157" height="40" loading="lazy"></a>
         <p>Cuadros en blanco y negro con marco, hechos a pedido en Lima y enviados a todo el Perú.</p>
       </div>
       <nav aria-label="Colecciones"><h2 class="footer__h">Colecciones</h2>{cols}<a href="/cuadros-personalizados/">Personalizados</a><a href="/mas-pedidos/">Más pedidos</a><a href="/nuevos/">Nuevos</a></nav>
@@ -568,8 +568,8 @@ def build_home():
       <div class="hero__shade" aria-hidden="true"></div>
       <div class="wrap hero__in">
         <div class="hero__copy">
-          <p class="kicker">Cuadros Finos · Lima, Perú</p>
-          <h1>Cuadros que dicen<br><span>quién vive aquí</span></h1>
+          <p class="kicker">Hechos en Lima, Perú</p>
+          <h1><b class="l">Cuadros que dicen</b> <span class="l">quién vive aquí</span></h1>
           <p class="hero__lead">Cuadros en blanco y negro con marco para la sala, el despacho y el dormitorio. Hechos a pedido en Lima, listos para colgar y enviados a todo el Perú.</p>
           <div class="hero__cta"><a href="#colecciones" class="btn btn--light">Encuentra tu cuadro</a><button class="btn btn--line" data-open-quiz>Ayúdame a elegir</button></div>
         </div>
