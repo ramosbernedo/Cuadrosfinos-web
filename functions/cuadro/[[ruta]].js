@@ -30,7 +30,7 @@ export async function onRequestGet(ctx) {
   const medida = piezas === 3 ? "Tríptico 3 × (30 × 37 cm) con marco" : piezas === 2 ? "Díptico 2 × (30 × 37 cm) con marco" : x.o === "horizontal" ? "37 × 30 cm con marco (horizontal)" : "30 × 37 cm con marco";
   const desc = x.d || `${x.f || ""} Cuadro de ${x.o === "horizontal" ? "37 × 30" : "30 × 37"} cm con marco negro, impreso y armado a pedido en Lima, listo para colgar. De la colección ${col.nombre}. ${precio ? "Precio: S/ " + precio + ". " : ""}Envío a todo el Perú.`.trim();
   const titulo = `${x.n} · Cuadro con marco | ${cat.config.marca}`;
-  const meta = `${x.n}: ${x.f ? x.f + " " : ""}${medida}. ${precio ? "S/ " + precio : "Cotiza por WhatsApp"}. Hecho a pedido en Lima, envío a todo el Perú.`.slice(0, 165);
+  const meta = `${x.n}: ${x.f ? x.f + " " : ""}${medida}. ${precio ? "S/ " + precio : "Cotiza por WhatsApp"}. Hecho a pedido en Lima, envío gratis a todo el Perú.`.slice(0, 165);
   const canon = `${sitio}/cuadro/${slug}/`;
   const v = x.m ? `?v=${encodeURIComponent(x.m)}` : "";
   const nuevo = !row.base || !cat.productos.some(y => y.s === slug);

@@ -74,14 +74,14 @@ def descripcion(x):
     if x.get("p"):
         partes.append(f"Personalizable ({x['p'].lower()}): te enviamos la vista previa por WhatsApp antes de imprimir.")
     t = precio_total(x)
-    partes.append("Precio a cotizar por WhatsApp." if t is None else f"Precio: {soles(t)}. Envío a todo el Perú.")
+    partes.append("Precio a cotizar por WhatsApp." if t is None else f"Precio: {soles(t)}. Envío gratis a todo el Perú.")
     return " ".join(partes)
 
 
 def meta_desc(x):
     t = precio_total(x)
     p = "Cotiza por WhatsApp" if t is None else soles(t)
-    s = f"{x['n']}: {x['f']} {medida(x)}, listo para colgar. {p}. Hecho a pedido en Lima, envío a todo el Perú."
+    s = f"{x['n']}: {x['f']} {medida(x)}, listo para colgar. {p}. Hecho a pedido en Lima, envío gratis a todo el Perú."
     return s if len(s) <= 165 else s[:162].rsplit(" ", 1)[0] + "…"
 
 
@@ -192,14 +192,14 @@ def nav_menu():
 def header(page):
     return f'''<body data-page="{page["tipo"]}"{"".join(f' data-{k}="{e(v)}"' for k, v in page.get("data", {}).items())}>
   <a class="skip" href="#main">Saltar al contenido</a>
-  <div class="topbar"><div class="wrap topbar__in"><span>Hechos a pedido en Lima · Envío a todo el Perú</span><span class="topbar__r">Si llega dañado, se repone</span></div></div>
+  <div class="topbar"><div class="wrap topbar__in"><span>Envío gratis a todo el Perú · Hechos a pedido en Lima</span><span class="topbar__r">Si llega dañado, se repone</span></div></div>
   <header class="nav" id="nav">
     <div class="wrap nav__in">
       <a href="/" class="brand" aria-label="{C['marca']}, inicio"><img class="brand__logo" src="/img/marca/logo-blanco.svg?v={ver('img/marca/logo-blanco.svg')}" alt="" width="157" height="40"></a>
       <nav class="nav__links" id="navLinks" aria-label="Principal">{nav_menu()}</nav>
       <div class="nav__actions">
         <button class="icon-btn" id="openSearch" aria-label="Buscar cuadro" aria-keyshortcuts="/"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg></button>
-        <button class="icon-btn" id="openBag" aria-label="Mi selección" aria-controls="bag"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="4" y="4" width="16" height="16"/><rect x="8" y="8" width="8" height="8"/></svg><span class="badge" id="bagCount" hidden>0</span></button>
+        <button class="icon-btn icon-btn--bag" id="openBag" aria-label="Mi selección" aria-controls="bag"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 8h14l-1 12H6z"/><path d="M9 8V6a3 3 0 0 1 6 0v2"/></svg><span class="icon-btn__lbl">Mi selección</span><span class="badge" id="bagCount" hidden>0</span></button>
         <button class="nav__toggle" id="navToggle" aria-label="Abrir menú" aria-expanded="false" aria-controls="navLinks"><span></span><span></span></button>
       </div>
     </div>
@@ -223,7 +223,7 @@ def footer():
         <a href="/#faq">Preguntas frecuentes</a>
         <a href="#" data-wa="Hola, quiero cotizar cuadros para mi empresa u oficina.">Ventas corporativas</a>
         <a href="#" data-wa="Hola, quiero hacer un pedido de cuadros.">WhatsApp {C['whatsappVisible']}</a>
-        <span>Lima, Perú · envíos a todo el país</span>
+        <span>Lima, Perú · envío gratis a todo el país</span>
       </div>
     </div>
     <div class="wrap footer__bottom"><span>© {datetime.date.today().year} {C['marca']}</span><span class="pay"><b>Visa</b><b>Mastercard</b><b>Yape</b><b>Plin</b></span></div>
@@ -299,7 +299,7 @@ def pd_markup(x=None, page=False):
     col = g(lambda x: f"Colección {COL[x['c']]['nombre']}" + (f" · {sub_nombre(x)}" if sub_nombre(x) and len(COL[x['c']]['subs']) > 1 else ""))
     price = g(lambda x: "Cotiza por WhatsApp" if precio_total(x) is None else soles(precio_total(x)))
     note = g(lambda x: "Recuerdo de la visita del Papa: precio a consultar." if x.get("q") else
-             (f"Incluye personalización (+ {soles(P['personalizar'])}). Marco negro y envío protegido." if x.get("p") else f"{medida(x)}. Listo para colgar."))
+             (f"Incluye personalización (+ {soles(P['personalizar'])}). Marco negro y envío gratis." if x.get("p") else f"{medida(x)}. Listo para colgar."))
     fields = g(lambda x: "".join(
         f'<label class="field"><span>{e(l)}</span><input name="f{i}" data-label="{e(l)}" placeholder="{e(ph)}"{"" if "opcional" in l.lower() else " required"}></label>'
         for i, (l, ph) in enumerate(x.get("k") or [])))
@@ -340,9 +340,11 @@ def pd_markup(x=None, page=False):
           <a class="btn btn--wa btn--block" id="pWa" href="{e(wa_url(f"Hola, me interesa el cuadro {x['n']} ({h('/cuadro/' + x['s'] + '/')})." if x else "Hola, quiero hacer un pedido de cuadros."))}" target="_blank" rel="noopener">{"Cotizar por WhatsApp" if (x and x.get("q")) else "Pedir este por WhatsApp"}</a>
         </div>
         <ul class="pd__trust">
+          <li id="pPack"{"" if (x and not x.get("p") and not x.get("pr") and piezas(x) == 1) else " hidden"}><b>Lleva 3 por {soles(P["triptico"])}</b> · combinando los cuadros que quieras</li>
           <li><b>Pagas al confirmar</b> por WhatsApp: Yape, Plin, transferencia o tarjeta</li>
-          <li><b>Listo en 4 a 6 días</b> hábiles en Lima · envío a todo el Perú</li>
+          <li id="pEta"><b>Envío gratis</b> · listo en 4 a 6 días hábiles en Lima</li>
           <li><b>Si llega dañado, se repone</b> · embalado con esquineros</li>
+          <li><b>¿Es para regalo?</b> Avísanos por WhatsApp y lo coordinamos</li>
         </ul>
         {g(lambda x: set_html(x)) if page else ""}
         <dl class="pd__specs">
@@ -386,8 +388,9 @@ def overlays(with_product_dialog=False):
           <label class="field"><span>Forma de pago</span><select name="pago" id="bagPago"><option value="">Lo veo por WhatsApp</option><option>Yape</option><option>Plin</option><option>Transferencia</option><option>Tarjeta</option></select></label>
           <label class="check"><input type="checkbox" id="bagRegalo"> <span>Es para regalo</span></label>
         </form>
+        <div class="bag-total bag-total--dsc" id="bagDsc" hidden><span>Descuento por cantidad</span><strong id="bagDscN"></strong></div>
         <div class="bag-total"><span>Total</span><strong id="bagTotal">S/ 0</strong></div>
-        <p class="muted small">Envío y pago se confirman por WhatsApp. No pagas nada en la web.</p>
+        <p class="muted small" id="bagEta">Envío y pago se confirman por WhatsApp. No pagas nada en la web.</p>
         <a class="btn btn--wa btn--block" id="bagWa" href="{e(wa_url("Hola, quiero hacer un pedido de cuadros."))}" target="_blank" rel="noopener">Enviar pedido por WhatsApp</a>
         <button class="link-btn small" id="bagShare">Compartir mi selección</button>
       </footer>
@@ -482,8 +485,8 @@ def explorar():
 
 FAQ = [
     ("¿Cuánto cuesta un cuadro con marco?", f"{soles(P['pieza'])} cada cuadro de 30 × 37 cm con marco negro incluido y {soles(P['triptico'])} el tríptico de 3 piezas. Personalizar con nombre, fecha o lugar suma {soles(P['personalizar'])}."),
-    ("¿Cuánto demora?", "Se hace a pedido en 4 a 6 días hábiles en Lima. A provincia se suma el tiempo de la agencia."),
-    ("¿Hacen envíos a provincia?", "Sí, a todo el Perú (Arequipa, Trujillo, Cusco, Piura, Chiclayo y más) por agencia, con esquineros. Si llega dañado, se repone."),
+    ("¿Cuánto demora?", "Se hace a pedido en 4 a 6 días hábiles en Lima. A provincia se suma el tiempo de la agencia. El envío es gratis."),
+    ("¿Hacen envíos a provincia?", "Sí, y el envío es gratis a todo el Perú (Arequipa, Trujillo, Cusco, Piura, Chiclayo y más), por agencia y con esquineros. Si llega dañado, se repone."),
     ("¿Cómo se pide?", "Eliges uno o varios cuadros y los pides por WhatsApp; ahí confirmamos la dirección y el pago (Yape, Plin, transferencia o tarjeta). No pagas nada en la web."),
     ("¿Cómo funcionan los personalizados?", "Escribes los datos (apellido, ciudad, fecha) al pedir. Te enviamos la vista previa por WhatsApp y solo imprimimos cuando nos das el OK."),
     ("¿Qué tamaño tiene un cuadro?", "30 × 37 cm con marco (vertical) o 37 × 30 cm (horizontal). El tríptico son 3 piezas de esa medida: unos 98 cm de ancho, ideal sobre un sofá de 2 m."),
@@ -553,6 +556,21 @@ def write(path, content):
 
 
 # ---------- páginas ----------
+def resenas_html():
+    """Reseñas de clientes reales (data/catalogo.json → "resenas": [{"t": texto, "n": nombre, "l": ciudad, "s": slug opcional}]).
+    Sin reseñas, la sección no aparece."""
+    rs = CAT.get("resenas") or []
+    if not rs: return ""
+    items = "".join(f'<figure class="rev"><p class="rev__stars" aria-label="5 de 5">★★★★★</p><blockquote>“{e(r["t"])}”</blockquote>'
+                    f'<figcaption><b>{e(r["n"])}</b>{" · " + e(r["l"]) if r.get("l") else ""}'
+                    f'{f" · <a href=\"{purl(BY[r[chr(115)]])}\">{e(BY[r[chr(115)]][chr(110)])}</a>" if r.get("s") in BY else ""}</figcaption></figure>' for r in rs[:6])
+    return f'''
+    <section class="sec sec--tight" id="resenas" aria-labelledby="revTitle"><div class="wrap">
+      <header class="sec__head"><div><p class="kicker">Lo que dicen nuestros clientes</p><h2 id="revTitle">Ya cuelgan en sus casas</h2></div></header>
+      <div class="revs">{items}</div>
+    </div></section>'''
+
+
 def build_home():
     top = [x for x in sorted(PRODS, key=lambda x: x["idx"]) if x.get("t")] + [x for x in PRODS if x.get("nw") and x.get("i")][:4]
     slides = "".join(f'<img class="hero__slide{" is-on" if i == 0 else ""}" src="/img/ambiente/{sl["img"]}.webp" alt="{e(sl["alt"])}" style="--pos:{sl["pos"]}" data-pie="{e(sl["pie"])}" data-url="{sl["url"]}"{" fetchpriority=\"high\"" if i == 0 else " loading=\"lazy\""}>' for i, sl in enumerate(PORTADA))
@@ -568,10 +586,10 @@ def build_home():
       <div class="hero__shade" aria-hidden="true"></div>
       <div class="wrap hero__in">
         <div class="hero__copy">
-          <p class="kicker">Hechos en Lima, Perú</p>
+          <p class="kicker">Desde {soles(P['pieza'])} con marco · Envío gratis</p>
           <h1><b class="l">Cuadros que dicen</b> <span class="l">quién vive aquí</span></h1>
           <p class="hero__lead">Cuadros en blanco y negro con marco para la sala, el despacho y el dormitorio. Hechos a pedido en Lima, listos para colgar y enviados a todo el Perú.</p>
-          <div class="hero__cta"><a href="#colecciones" class="btn btn--light">Encuentra tu cuadro</a><button class="btn btn--line" data-open-quiz>Ayúdame a elegir</button></div>
+          <div class="hero__cta"><a href="#top" class="btn btn--light">Ver los más pedidos</a><button class="btn btn--line" data-open-quiz>Ayúdame a elegir</button></div>
         </div>
         <div class="hero__foot">
           <a class="hero__cap" id="heroCap" href="{PORTADA[0]["url"]}"><span>En la foto</span><b id="heroCapTxt">{e(PORTADA[0]["pie"])}</b> →</a>
@@ -579,14 +597,6 @@ def build_home():
         </div>
       </div>
     </section>
-    <ul class="trust" aria-label="Por qué comprar aquí">
-      <li><b>{soles(P['pieza'])}</b><span>con marco incluido</span></li>
-      <li><b>4–6 días</b><span>hecho a pedido en Lima</span></li>
-      <li><b>Todo el Perú</b><span>envío con esquineros</span></li>
-      <li><b>Yape · Plin · tarjeta</b><span>pagas al confirmar</span></li>
-      <li><b>Garantía</b><span>si llega dañado, se repone</span></li>
-    </ul>
-{explorar()}
 
     <section class="sec" id="top" aria-labelledby="topTitle">
       <div class="wrap">
@@ -594,7 +604,17 @@ def build_home():
         <div class="cards cards--scroll" id="topGrid">{"".join(card(x) for x in top)}</div>
       </div>
     </section>
+    <ul class="trust" aria-label="Por qué comprar aquí">
+      <li><b>{soles(P['pieza'])}</b><span>con marco · 3 por {soles(P['triptico'])}</span></li>
+      <li><b>4–6 días</b><span>hecho a pedido en Lima</span></li>
+      <li><b>Envío gratis</b><span>a todo el Perú, con esquineros</span></li>
+      <li><b>Yape · Plin · tarjeta</b><span>pagas al confirmar</span></li>
+      <li><b>Garantía</b><span>si llega dañado, se repone</span></li>
+    </ul>
+{explorar()}
 
+
+{resenas_html()}
     <section class="sec--wall" aria-labelledby="wallTitle">
       <div class="wrap wall-teaser">
         <div class="wall-teaser__copy">
@@ -647,7 +667,7 @@ def build_home():
         <ol class="steps">
           <li><span>01</span><h3>Elige</h3><p>Guarda los cuadros que te gusten en tu selección. Míralos en tu pared, uno solo o en tríptico.</p></li>
           <li><span>02</span><h3>Pide por WhatsApp</h3><p>Te llega el pedido armado con nombres y precios. Ahí confirmamos la dirección y el pago: Yape, Plin, transferencia o tarjeta.</p></li>
-          <li><span>03</span><h3>Recíbelo listo</h3><p>Lo imprimimos y enmarcamos en Lima en 4 a 6 días hábiles. A provincia va por agencia con esquineros.</p></li>
+          <li><span>03</span><h3>Recíbelo listo</h3><p>Lo imprimimos y enmarcamos en Lima en 4 a 6 días hábiles. El envío es gratis a todo el Perú; a provincia va por agencia con esquineros.</p></li>
         </ol>
         <div class="spec">
           <div class="spec__item"><strong>30 × 37 cm</strong><span>Medida única con marco. Vertical u horizontal.</span></div>
@@ -666,7 +686,7 @@ def build_home():
 {cta()}
   </main>'''
     page = head(f"{C['marca']} · Cuadros en blanco y negro con marco en Lima",
-                f"{len(PRODS)} cuadros en blanco y negro con marco, listos para colgar: {soles(P['pieza'])}, tríptico {soles(P['triptico'])}. Hechos a pedido en Lima, envío a todo el Perú.",
+                f"{len(PRODS)} cuadros en blanco y negro con marco, listos para colgar: {soles(P['pieza'])}, tríptico {soles(P['triptico'])}. Hechos a pedido en Lima, envío gratis a todo el Perú.",
                 "/", ld=[{"@context": "https://schema.org", **ORG}, website, faq_ld(FAQ), itemlist_ld(top, "Los cuadros más pedidos")],
                 preload='<link rel="preload" as="image" href="/img/ambiente/hero.webp" fetchpriority="high">')
     write("index.html", page + header({"tipo": "home"}) + body + footer() + overlays())
@@ -697,13 +717,12 @@ def landing(kind, obj, items):
           <p class="kicker">{e(obj.get("titulo") or obj["nombre"])}</p>
           <h1>{e(obj["h1"])}</h1>
           <p class="hero__lead">{e(obj["bajada"])}</p>
-          <p class="lhero__intro">{e(intro)}</p>
         </div>
         <div class="lhero__art" aria-hidden="true">{"".join(f'<span class="lhero__p">{pf(x, thumb=True, lazy=False)}</span>' for x in hero_items)}</div>
       </div>
     </section>
 {catalog_section(f"{n} cuadros", obj["nombre"], items, preset_col=preset.get("col", ""), preset_room=preset.get("room", ""), limite=LIMITE["landing"])}
-    <section class="sec sec--alt"><div class="wrap"><h2 class="sub-h">Sigue explorando</h2><div class="pills">{links}</div></div></section>
+    <section class="sec sec--alt"><div class="wrap"><p class="lhero__intro">{e(intro)}</p><h2 class="sub-h">Sigue explorando</h2><div class="pills">{links}</div></div></section>
 {faq_html(faqs)}
 {cta()}
   </main>'''
@@ -733,12 +752,12 @@ def build_product(x, robots="index,follow"):
         prod["offers"] = {"@type": "Offer", "url": h(path), "priceCurrency": "PEN", "price": str(t), "availability": "https://schema.org/InStock",
                           "itemCondition": "https://schema.org/NewCondition", "seller": {"@id": h("/#tienda")},
                           "priceValidUntil": f"{datetime.date.today().year + 1}-12-31",
-                          "shippingDetails": {"@type": "OfferShippingDetails", "shippingDestination": {"@type": "DefinedRegion", "addressCountry": "PE"},
+                          "shippingDetails": {"@type": "OfferShippingDetails", "shippingRate": {"@type": "MonetaryAmount", "value": "0", "currency": "PEN"}, "shippingDestination": {"@type": "DefinedRegion", "addressCountry": "PE"},
                                               "deliveryTime": {"@type": "ShippingDeliveryTime",
                                                                "handlingTime": {"@type": "QuantitativeValue", "minValue": 4, "maxValue": 6, "unitCode": "DAY"},
                                                                "transitTime": {"@type": "QuantitativeValue", "minValue": 0, "maxValue": 4, "unitCode": "DAY"}}}}
     faqs = [("¿Qué medida tiene?", medida(x) + ". " + ("Unos 98 cm de ancho colgados con separación." if x["o"] == "triptico" else "Listo para colgar.")),
-            ("¿Cuánto demora?", "Se hace a pedido en 4 a 6 días hábiles en Lima. A provincia se suma el tiempo de la agencia."),
+            ("¿Cuánto demora?", "Se hace a pedido en 4 a 6 días hábiles en Lima. A provincia se suma el tiempo de la agencia. El envío es gratis."),
             ("¿Cómo lo pido?", "Agrégalo a tu selección o pídelo directo por WhatsApp; ahí confirmamos dirección y pago (Yape, Plin, transferencia o tarjeta).")]
     body = f'''
   <main id="main">
@@ -826,7 +845,7 @@ Sitemap: {h('/sitemap.xml')}
 - Precio: {soles(P['pieza'])} por cuadro de 30 × 37 cm con marco negro (medida única, vertical u horizontal).
 - Tríptico (3 piezas, unos 98 cm de ancho): {soles(P['triptico'])}. Díptico: {soles(P['diptico'])}.
 - Personalización con nombre, fecha, apellido o mapa: + {soles(P['personalizar'])}, con vista previa por WhatsApp antes de imprimir.
-- Producción: 4 a 6 días hábiles en Lima. Envío a provincias por agencia, con esquineros.
+- Producción: 4 a 6 días hábiles en Lima. Envío gratis a todo el Perú (provincias por agencia, con esquineros).
 - Garantía: si llega dañado, se repone.
 - Pago: Yape, Plin, transferencia o tarjeta (se coordina por WhatsApp; no se paga en la web).
 - Catálogo: {len(PRODS)} cuadros. Sitio: {h('/')}
@@ -881,7 +900,10 @@ Sitemap: {h('/sitemap.xml')}
   X-Robots-Tag: noindex
   Cache-Control: public, max-age=3600
 """)
-    write("_redirects", "/todos/ /#catalogo 301\n/cuadros-de-leon/ /cuadros-motivacionales/ 301\n/cuadros-de-ciudades/ /cuadros-de-peru-y-ciudades/ 301\n/cuadros-para-oficina-y-profesionales/ /cuadros-para-profesionales/ 301\n")
+    write("_redirects", "/todos/ /#catalogo 301\n/cuadros-de-leon/ /cuadros-motivacionales/ 301\n/cuadros-de-ciudades/ /cuadros-de-peru-y-ciudades/ 301\n/cuadros-para-oficina-y-profesionales/ /cuadros-para-profesionales/ 301\n"
+          # cuadros retirados del catálogo (no tenían foto) → su colección
+          "/cuadro/paso-a-paso/* /cuadros-motivacionales/ 301\n/cuadro/jesus-en-linea/* /cuadros-religiosos/ 301\n/cuadro/helechos/* /cuadros-botanicos/ 301\n"
+          "/cuadro/rama-de-olivo/* /cuadros-botanicos/ 301\n/cuadro/lima-de-noche/* /cuadros-de-peru-y-ciudades/ 301\n/cuadro/balanza-contable/* /cuadros-para-profesionales/ 301\n")
 
 
 def build_feeds():

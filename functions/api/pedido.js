@@ -14,7 +14,7 @@ export async function onRequestPost({ request, env }) {
     f: Array.isArray(i.f) ? i.f.slice(0, 5).map(([k, v]) => [txt(k, 60), txt(v, 120)]) : null,
   })).filter(i => i.s);
   if (!items.length) return error("Sin cuadros");
-  const total = items.reduce((a, i) => a + i.precio * i.qty, 0);
+  const total = Math.max(0, items.reduce((a, i) => a + i.precio * i.qty, 0) - (num(d.descuento, 0, 100000) || 0));
   const o = d.origen || {};
   const region = [request.cf && request.cf.city, request.cf && request.cf.region].filter(Boolean).join(", ") || null;
   try {

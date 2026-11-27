@@ -26,6 +26,12 @@ Catálogo e imágenes tomados de cuadros.plantify.pe (mismos dueños), con marca
 3. `python3 tools/build.py`
 4. Sube los cambios a GitHub: Cloudflare publica solo.
 
+**Reseñas de clientes:** agrega en `data/catalogo.json` una lista `"resenas"` con reseñas reales, por ejemplo
+`"resenas": [{"t": "Llegó perfecto a Arequipa", "n": "Carla M.", "l": "Arequipa", "s": "leon-fuerza"}]` (`s`, el cuadro, es opcional).
+Con al menos una, la portada muestra la sección «Lo que dicen nuestros clientes»; sin reseñas no aparece.
+
+**Precio por cantidad:** los cuadros sueltos de 30 × 37 se cobran de 3 en 3 a `precio.triptico` y 2 a `precio.diptico` (si es menor que 2 piezas). Se ajusta solo al cambiar esos precios.
+
 **Pasar al dominio propio:** cambia `config.sitio` a `https://cuadrosfinos.pe` en `data/catalogo.json`, actualiza la redirección del `<head>` en `tools/build.py` y `admin/index.html`, ejecuta `build.py` y súbelo.
 
 ## Probar
