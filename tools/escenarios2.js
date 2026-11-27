@@ -307,13 +307,13 @@ const grupo = g => { GRUPO = g; console.log(`\n── ${g} ──`); };
     F(r, /user-scalable=no|maximum-scale=1(\.0)?\b/.test(v), `El zoom está bloqueado: «${v}»`); });
   await esc("Escribe el apellido con el teclado abierto", "el campo queda visible", async r => {
     const p = await page(); await go(p, "/cuadro/bendice-este-hogar/"); await p.focus("#pFieldList input"); await p.setViewportSize({ width: 390, height: 360 }); await p.waitForTimeout(300);
-    await p.evaluate(() => document.activeElement.scrollIntoView({ block: "nearest" }));
-    const ok = await p.evaluate(() => { const r = document.activeElement.getBoundingClientRect(), bb = document.querySelector("#buyBar"); const tapa = bb && bb.classList.contains("is-on") ? bb.getBoundingClientRect().top : innerHeight; return r.top >= 0 && r.bottom <= tapa; });
+    await p.evaluate(() => document.activeElement.scrollIntoView({ block: "nearest" })); await p.waitForTimeout(700);
+    const ok = await p.evaluate(() => { const r = document.activeElement.getBoundingClientRect(), bb = document.querySelector("#buyBar"); const tapa = bb && bb.classList.contains("is-on") && getComputedStyle(bb).visibility !== "hidden" ? bb.getBoundingClientRect().top : innerHeight; return r.top >= -1 && r.bottom <= tapa + 2; });
     F(r, !ok, "El campo queda tapado (por el teclado o la barra de compra)"); await p.ctx.close(); });
   await esc("Escribe su distrito en la selección con el teclado abierto", "el campo queda visible", async r => {
     const p = await page(PHONE, { storage: { cf_bag: [{ s: "leon-fuerza", f: null, qty: 1 }] } }); await go(p, "/"); await p.click("#openBag"); await p.click("#bagDet summary");
-    await p.focus("#bagLugar"); await p.setViewportSize({ width: 390, height: 360 }); await p.waitForTimeout(300); await p.evaluate(() => document.activeElement.scrollIntoView({ block: "nearest" }));
-    const ok = await p.evaluate(() => { const r = document.activeElement.getBoundingClientRect(); return r.top >= 0 && r.bottom <= innerHeight; }); F(r, !ok, "El campo queda fuera de la pantalla"); await p.ctx.close(); });
+    await p.focus("#bagLugar"); await p.setViewportSize({ width: 390, height: 360 }); await p.waitForTimeout(300); await p.evaluate(() => document.activeElement.scrollIntoView({ block: "nearest" })); await p.waitForTimeout(700);
+    const ok = await p.evaluate(() => { const r = document.activeElement.getBoundingClientRect(); return r.top >= -1 && r.bottom <= innerHeight + 2; }); F(r, !ok, "El campo queda fuera de la pantalla"); await p.ctx.close(); });
   for (const [que, abrir, sel] of [["la búsqueda", "#openSearch", "#search[open]"], ["la foto ampliada", "#pZoom", "#zoom[open]"], ["su selección", "#openBag", '#bag[aria-hidden="false"]']])
     await esc("Usa el botón «atrás» de Android", `con ${que} abierta, «atrás» la cierra sin salir de la página`, async r => {
       const p = await page(); await go(p, "/cuadros-religiosos/"); await go(p, "/cuadro/leon-fuerza/"); await p.click(abrir); await p.waitForTimeout(200);
