@@ -707,7 +707,7 @@ def build_data_js():
 def build_seo(paths):
     urls = []
     for p, imgs in paths:
-        im = "".join(f"<image:image><image:loc>{h(i)}</image:loc></image:image>" for i in imgs)
+        im = "".join(f"<image:image><image:loc>{i if i.startswith("http") else h(i)}</image:loc></image:image>" for i in imgs)
         pr = "1.0" if p == "/" else "0.8" if not p.startswith("/cuadro/") else "0.7"
         urls.append(f"<url><loc>{h(p)}</loc><lastmod>{HOY}</lastmod><priority>{pr}</priority>{im}</url>")
     write("sitemap.xml", '<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9" xmlns:image="http://www.google.com/schemas/sitemap-image/1.1">\n' + "\n".join(urls) + "\n</urlset>\n")

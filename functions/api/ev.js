@@ -1,7 +1,7 @@
 // POST /api/ev — eventos de la web para el panel de marketing (sin cookies, sin IP).
 import { json, error, txt, num, mismoOrigen, sinDB } from "../_lib/comun.js";
 
-const PERMITIDOS = new Set(["page_view", "view_item", "select_item", "ver_pared", "ver_3d", "ver_foto", "realidad_aumentada", "personalizar",
+const PERMITIDOS = new Set(["page_view", "view_item", "select_item", "ver_pared", "ver_foto", "personalizar",
   "add_to_cart", "remove_from_cart", "view_cart", "add_shipping_info", "add_payment_info", "begin_checkout", "generate_lead", "search", "share",
   "contacto_whatsapp", "ayuda_inicio", "ayuda_resultado", "filtrar", "zoom"]);
 
