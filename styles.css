@@ -887,3 +887,18 @@ h1,h2,h3{text-wrap:balance}
   .lhero h1 .t-sub{font-size:.52em}
   .pd__info h1,.pd__info h2{font-size:1.45rem}
 }
+/* ---------- Título de portada: siempre 2 líneas («Cuadros que dicen» / «quién vive aquí») ---------- */
+.hero h1 .l{white-space:nowrap}
+.hero__copy{max-width:none}
+.hero h1{font-size:min(3.6rem,3.7vw)}
+.hero__lead{max-width:30em}
+@media (max-width:900px){.hero h1{font-size:min(3.4rem,calc((100vw - 48px) / 13.6))}}
+@media (max-width:620px){.hero h1{font-size:calc((100vw - 32px) / 13.6)}}
+.hero h1{font-size:min(3.4rem,3.4vw)}
+@media (max-width:900px){.hero h1{font-size:min(3.4rem,calc((100vw - 48px) / 13.6))}}
+@media (max-width:620px){.hero h1{font-size:calc((100vw - 32px) / 13.6)}}
+@media (max-width:400px){
+  .hero .kicker{letter-spacing:.12em}
+  .topbar{letter-spacing:.1em}
+}
+@media (max-width:400px){.topbar__extra{display:none}}

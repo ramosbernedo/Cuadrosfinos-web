@@ -199,7 +199,7 @@ def nav_menu():
 def header(page):
     return f'''<body data-page="{page["tipo"]}"{"".join(f' data-{k}="{e(v)}"' for k, v in page.get("data", {}).items())}>
   <a class="skip" href="#main">Saltar al contenido</a>
-  <div class="topbar"><div class="wrap topbar__in"><span>Envío gratis a todo el Perú · Hechos a pedido en Lima</span><span class="topbar__r">Si llega dañado, se repone</span></div></div>
+  <div class="topbar"><div class="wrap topbar__in"><span>Envío gratis a todo el Perú<span class="topbar__extra"> · Hechos a pedido en Lima</span></span><span class="topbar__r">Si llega dañado, se repone</span></div></div>
   <header class="nav" id="nav">
     <div class="wrap nav__in">
       <a href="/" class="brand" aria-label="{C['marca']}, inicio"><img class="brand__logo" src="/img/marca/logo-blanco.svg?v={ver('img/marca/logo-blanco.svg')}" alt="" width="157" height="40"></a>
