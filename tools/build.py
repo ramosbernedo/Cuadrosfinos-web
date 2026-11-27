@@ -170,18 +170,33 @@ def head(title, desc, path, og_img="/img/og/inicio.jpg", ld=(), preload="", og_t
 </head>'''
 
 
-NAV = [("/cuadros-para-sala/", "Sala"), ("/cuadros-para-dormitorio/", "Dormitorio"), ("/cuadros-para-oficina/", "Oficina"), ("/cuadros-religiosos/", "Religiosos"), ("/cuadros-personalizados/", "Personalizados"), ("/#catalogo", "Todos")]
+def n_amb(a): return len([x for x in PRODS if a["id"] in x["a"]])
+def n_col(c): return len([x for x in PRODS if x["c"] == c["id"]])
+PERS = next(v for v in VIRT if v["id"] == "personalizados")
+
+
+def nav_menu():
+    """Menú: «Por ambiente» y «Por tema» se despliegan (en el celular se ven abiertos, en dos grupos)."""
+    li = lambda u, n, k=None: f'<a href="{u}">{e(n)}{f"<small>{k}</small>" if k is not None else ""}</a>'
+    amb = "".join(li(f'/{a["url"]}/', a["nombre"], n_amb(a)) for a in AMB)
+    tem = "".join(li(f'/{c["url"]}/', c["nombre"], n_col(c)) for c in COLS) + li(f'/{PERS["url"]}/', "Personalizados", len([x for x in PRODS if x.get("p")]))
+    dd = lambda i, t, h, links, extra="": (f'<div class="nav__grp"><button class="nav__dd" aria-expanded="false" aria-controls="dd{i}">{t}</button>'
+                                         f'<div class="nav__panel nav__panel--{i.lower()}" id="dd{i}"><p class="nav__ph">{h}</p><div class="nav__list">{links}</div>{extra}</div></div>')
+    return (f'<button class="nav__search" data-open-search><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>Busca: león, Jesús, abogado…</button>'
+            + dd("Amb", "Por ambiente", "¿Dónde lo vas a colgar?", amb)
+            + dd("Tem", "Por tema", "¿Qué te gusta?", tem)
+            + '<a class="nav__top" href="/mas-pedidos/">Más pedidos</a><a class="nav__top" href="/nuevos/">Nuevos</a><a class="nav__top" href="/#catalogo">Todos los cuadros</a>'
+            + '<div class="nav__help"><a href="/#como">Cómo se pide</a><a href="/#faq">Preguntas</a></div>')
 
 
 def header(page):
-    links = "".join(f'<a href="{u}">{n}</a>' for u, n in NAV)
     return f'''<body data-page="{page["tipo"]}"{"".join(f' data-{k}="{e(v)}"' for k, v in page.get("data", {}).items())}>
   <a class="skip" href="#main">Saltar al contenido</a>
   <div class="topbar"><div class="wrap topbar__in"><span>Hechos a pedido en Lima · Envío a todo el Perú</span><span class="topbar__r">Si llega dañado, se repone</span></div></div>
   <header class="nav" id="nav">
     <div class="wrap nav__in">
       <a href="/" class="brand" aria-label="{C['marca']}, inicio"><span class="wm" aria-hidden="true"><i></i></span><span class="brand__name">Cuadros <b>Finos</b></span></a>
-      <nav class="nav__links" id="navLinks" aria-label="Principal">{links}</nav>
+      <nav class="nav__links" id="navLinks" aria-label="Principal">{nav_menu()}</nav>
       <div class="nav__actions">
         <button class="icon-btn" id="openSearch" aria-label="Buscar cuadro" aria-keyshortcuts="/"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg></button>
         <button class="icon-btn" id="openBag" aria-label="Mi selección" aria-controls="bag"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="4" y="4" width="16" height="16"/><rect x="8" y="8" width="8" height="8"/></svg><span class="badge" id="bagCount" hidden>0</span></button>
@@ -370,28 +385,66 @@ def overlays(with_product_dialog=False):
 '''
 
 
-def catalog_section(title, kicker, items, preset_col="", preset_room="", h_tag="h2"):
-    chips = [("", "Todos", len(PRODS))] + [(v["id"], v["nombre"], len([x for x in PRODS if VFILTRO[v["id"]](x)])) for v in VIRT] + \
-            [(c["id"], c["nombre"], len([x for x in PRODS if x["c"] == c["id"]])) for c in COLS]
-    chip_html = "".join(f'<button class="chip" role="tab" data-col="{i}" aria-selected="{"true" if i == preset_col else "false"}">{e(n)}<small>{k}</small></button>' for i, n, k in chips)
-    opts = "".join(f'<option value="{a["id"]}"{" selected" if a["id"] == preset_room else ""}>{a["nombre"]}</option>' for a in AMB)
+LIMITE = {"home": 12, "landing": 24}
+
+
+def chips_tema(items_all, preset_col):
+    """Fila «Tema»: las colecciones y Personalizados (Más pedidos y Nuevos solo si la página es esa)."""
+    ch = [("", "Todos", len(items_all))] + [(c["id"], c["nombre"], n_col(c)) for c in COLS] + [("personalizados", "Personalizados", len([x for x in PRODS if x.get("p")]))]
+    if preset_col in ("top", "nuevos"):
+        v = next(v for v in VIRT if v["id"] == preset_col); ch.insert(1, (v["id"], v["nombre"], len([x for x in PRODS if VFILTRO[v["id"]](x)])))
+    return "".join(f'<button class="chip" role="tab" data-col="{i}" aria-selected="{"true" if i == preset_col else "false"}">{e(n)}<small>{k}</small></button>' for i, n, k in ch)
+
+
+def catalog_section(title, kicker, items, preset_col="", preset_room="", h_tag="h2", limite=12):
     items = sorted(items, key=rank)
+    rooms = [("", "Todos", len(PRODS))] + [(a["id"], a["nombre"], n_amb(a)) for a in AMB]
+    room_html = "".join(f'<button class="chip" data-room="{i}" aria-pressed="{"true" if i == preset_room else "false"}">{e(n)}<small>{k}</small></button>' for i, n, k in rooms)
+    sugerencias = "".join(f'<a class="pill" href="/{c["url"]}/">{e(c["nombre"])}</a>' for c in COLS[:6])
+    cards = "".join(card(x).replace('<article class="card rv"', '<article class="card rv" hidden', 1) if i >= limite else card(x) for i, x in enumerate(items))
+    resto = max(0, len(items) - limite)
+    cuenta = f"{len(items)} cuadros" if len(items) == len(PRODS) else f"{len(items)} de {len(PRODS)} cuadros"
     return f'''
-    <section class="sec" id="catalogo" aria-labelledby="catTitle">
+    <section class="sec" id="catalogo" aria-labelledby="catTitle" data-limite="{limite}">
       <div class="wrap">
         <header class="sec__head"><div><p class="kicker">{kicker}</p><{h_tag} id="catTitle">{title}</{h_tag}></div><button class="btn btn--line btn--sm" data-open-quiz>Ayúdame a elegir</button></header>
         <div class="filters">
-          <div class="filters__row" id="colFilters" role="tablist" aria-label="Colección">{chip_html}</div>
-          <div class="filters__row filters__row--sub" id="subFilters" aria-label="Subcolección"></div>
-          <div class="filters__bar">
-            <label class="search"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg><span class="sr">Buscar en el catálogo</span><input type="search" id="q" placeholder="Busca: león, Jesús, Machu Picchu…" autocomplete="off"></label>
-            <label class="select"><span>Ambiente</span><select id="room"><option value="">Todos</option>{opts}</select></label>
-            <label class="select"><span>Orden</span><select id="sort"><option value="">Recomendados</option><option value="nuevo">Nuevos primero</option><option value="az">A–Z</option><option value="precio">Precio</option></select></label>
+          <label class="search"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg><span class="sr">Buscar en el catálogo</span><input type="search" id="q" placeholder="Busca: león, Jesús, abogado, Machu Picchu…" autocomplete="off" enterkeyhint="search"></label>
+          <div class="filters__grp"><span class="filters__lbl" id="lblTema">Tema</span><div class="filters__row" id="colFilters" role="tablist" aria-labelledby="lblTema">{chips_tema(PRODS, preset_col)}</div></div>
+          <div class="filters__row filters__row--sub" id="subFilters" aria-label="Subtema"></div>
+          <div class="filters__grp"><span class="filters__lbl" id="lblRoom">Dónde</span><div class="filters__row" id="roomFilters" role="group" aria-labelledby="lblRoom">{room_html}</div></div>
+          <div class="filters__foot">
+            <p class="filters__count" id="count" aria-live="polite">{cuenta}</p>
+            <button class="link-btn small" id="resetFilters" hidden>Quitar filtros</button>
+            <label class="select select--sm"><span>Orden</span><select id="sort"><option value="">Recomendados</option><option value="nuevo">Nuevos primero</option><option value="az">A–Z</option><option value="precio">Precio</option></select></label>
           </div>
-          <p class="filters__count" id="count" aria-live="polite">{len(items)} cuadros</p>
         </div>
-        <div class="cards" id="grid">{"".join(card(x) for x in items)}</div>
-        <p class="empty" id="empty" hidden>No encontramos ese cuadro. <button class="link-btn" id="clearFilters">Ver todos</button> o <a href="#" data-wa="Hola, busco un cuadro que no encuentro en el catálogo:">pídenos uno a medida</a>.</p>
+        <div class="cards" id="grid">{cards}</div>
+        <noscript><style>#grid .card[hidden]{{display:block!important}}#more{{display:none}}</style></noscript>
+        <div class="more"><button class="btn btn--line" id="more"{"" if resto else " hidden"}>Ver más cuadros <small id="moreN">quedan {resto}</small></button></div>
+        <div class="empty" id="empty" hidden><p>No encontramos <b id="emptyQ">ese cuadro</b>.</p><p class="muted small">Prueba con un tema:</p><div class="pills pills--center">{sugerencias}</div>
+          <p><button class="link-btn" id="clearFilters">Ver todos los cuadros</button> · <a href="#" class="u" data-wa="Hola, busco un cuadro que no encuentro en el catálogo:">pídenos uno a medida por WhatsApp</a></p></div>
+      </div>
+    </section>'''
+
+
+def explorar():
+    """Bloque de la portada para encontrar el cuadro: buscador, ambientes y temas, todo a la vista."""
+    tile = lambda u, src, n, k: f'<a class="tile" href="{u}"><span class="tile__img"><img src="{src}" alt="" loading="lazy" width="56" height="56"></span><span class="tile__txt"><b>{e(n)}</b><small>{k} cuadros</small></span></a>'
+    # ambientes con foto de la habitación (las paredes de «En tu pared»); temas con su cuadro más representativo
+    foto = {"sala": "pared-sala", "dormitorio": "pared-dormitorio", "oficina": "pared-oficina", "comedor": "col-fe"}
+    amb = "".join(tile(f'/{a["url"]}/', f'/img/ambiente/t/{foto[a["id"]]}.webp' if a["id"] in foto else f'/img/cuadros/t/{a["img"]}.webp', a["nombre"], n_amb(a)) for a in AMB)
+    tem = "".join(tile(f'/{c["url"]}/', f'/img/cuadros/t/{c["img"]}.webp', c["nombre"], n_col(c)) for c in COLS)
+    return f'''
+    <section class="sec explore" id="colecciones" aria-labelledby="expTitle">
+      <div class="wrap">
+        <header class="sec__head sec__head--stack"><p class="kicker">Encuentra tu cuadro</p><h2 id="expTitle">¿Qué cuadro buscas?</h2></header>
+        <button class="explore__search" data-open-search><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg><span>Busca: león, Jesús, abogado…</span></button>
+        <h3 class="explore__h">¿Dónde lo vas a colgar?</h3>
+        <div class="tiles tiles--amb">{amb}</div>
+        <h3 class="explore__h">¿Qué te gusta?</h3>
+        <div class="tiles">{tem}</div>
+        <div class="explore__more"><a class="pill" href="/mas-pedidos/">Más pedidos</a><a class="pill" href="/nuevos/">Nuevos</a><a class="pill" href="/{PERS["url"]}/">Personalizados</a><a class="pill" href="#catalogo">Ver los {len(PRODS)} cuadros</a><button class="pill pill--light" data-open-quiz>Ayúdame a elegir</button></div>
       </div>
     </section>'''
 
@@ -445,17 +498,6 @@ def cta():
       <div class="hero__cta"><button class="btn btn--light" data-open-quiz>Ayúdame a elegir</button><a class="btn btn--line" href="#" data-wa="Hola, quiero ayuda para elegir un cuadro.">Hablar con un asesor</a></div></div></section>'''
 
 
-def cols_grid():
-    out = []
-    for i, c in enumerate(COLS):
-        k = len([x for x in PRODS if x["c"] == c["id"]])
-        media = (f'<img class="col__photo" src="/img/ambiente/t/{c["foto"]}.webp" alt="" loading="lazy">' if c.get("foto")
-                 else f'<span class="col__img">{pf(BY[c["img"]], thumb=True)}</span>')
-        out.append(f'<a class="col rv{" col--photo" if c.get("foto") else ""}" href="/{c["url"]}/"><span class="col__n">0{i + 1} · {k} cuadros</span>{media}'
-                   f'<h3>{e(c["nombre"])}</h3><p>{e(c["bajada"])}</p><small>Ver colección →</small></a>')
-    return "".join(out)
-
-
 def wa_url(msg):
     return f"https://wa.me/{C['whatsapp']}?text={urllib.parse.quote(msg)}"
 
@@ -482,11 +524,9 @@ def write(path, content):
 # ---------- páginas ----------
 def build_home():
     top = [x for x in sorted(PRODS, key=lambda x: x["idx"]) if x.get("t")] + [x for x in PRODS if x.get("nw") and x.get("i")][:4]
-    rail = "".join(f'<a href="/{c["url"]}/"><img src="/img/cuadros/t/{c["img"]}.webp" alt="" loading="lazy" width="68" height="68">{e(c["nombre"])}</a>' for c in VIRT + COLS)
     slides = "".join(f'<img class="hero__slide{" is-on" if i == 0 else ""}" src="/img/ambiente/{sl["img"]}.webp" alt="{e(sl["alt"])}" style="--pos:{sl["pos"]}" data-pie="{e(sl["pie"])}" data-url="{sl["url"]}"{" fetchpriority=\"high\"" if i == 0 else " loading=\"lazy\""}>' for i, sl in enumerate(PORTADA))
     dots = "".join(f'<button role="tab" aria-selected="{"true" if i == 0 else "false"}" aria-label="Foto {i + 1}: {e(sl["pie"])}" data-i="{i}"></button>' for i, sl in enumerate(PORTADA))
     en_casa = "".join(f'<a class="home-shot rv" href="/cuadro/foco-disciplina-ejecucion/"><img src="/img/ambiente/t/{f}.webp" alt="{e(dict((k, v) for k, v in BY["foco-disciplina-ejecucion"]["fotos"]).get(f, "Cuadros en una casa"))}" loading="lazy"></a>' for f in CAT["enCasa"])
-    amb = "".join(f'<a class="amb rv" href="/{a["url"]}/"><span class="amb__img">{pf(BY[a["img"]], thumb=True)}</span><span><b>Cuadros para {a["nombre"].lower()}</b><small>{e(a["bajada"])}</small></span></a>' for a in AMB)
     website = {"@context": "https://schema.org", "@type": "WebSite", "@id": h("/#web"), "name": C["marca"], "url": h("/"), "inLanguage": "es-PE",
                "publisher": {"@id": h("/#tienda")},
                "potentialAction": {"@type": "SearchAction", "target": {"@type": "EntryPoint", "urlTemplate": h("/?q={search_term_string}")}, "query-input": "required name=search_term_string"}}
@@ -500,7 +540,7 @@ def build_home():
           <p class="kicker">Cuadros Finos · Lima, Perú</p>
           <h1>Cuadros que dicen<br><span>quién vive aquí</span></h1>
           <p class="hero__lead">Cuadros en blanco y negro con marco para la sala, el despacho y el dormitorio. Hechos a pedido en Lima, listos para colgar y enviados a todo el Perú.</p>
-          <div class="hero__cta"><a href="#catalogo" class="btn btn--light">Ver los {len(PRODS)} cuadros</a><button class="btn btn--line" data-open-quiz>Ayúdame a elegir</button></div>
+          <div class="hero__cta"><a href="#colecciones" class="btn btn--light">Encuentra tu cuadro</a><button class="btn btn--line" data-open-quiz>Ayúdame a elegir</button></div>
         </div>
         <div class="hero__foot">
           <a class="hero__cap" id="heroCap" href="{PORTADA[0]["url"]}"><span>En la foto</span><b id="heroCapTxt">{e(PORTADA[0]["pie"])}</b> →</a>
@@ -515,7 +555,7 @@ def build_home():
       <li><b>Yape · Plin · tarjeta</b><span>pagas al confirmar</span></li>
       <li><b>Garantía</b><span>si llega dañado, se repone</span></li>
     </ul>
-    <div class="wrap"><nav class="rail" aria-label="Colecciones">{rail}</nav></div>
+{explorar()}
 
     <section class="sec" id="top" aria-labelledby="topTitle">
       <div class="wrap">
@@ -542,16 +582,7 @@ def build_home():
         <div class="home-shots">{en_casa}</div>
       </div>
     </section>
-{catalog_section("Todos los cuadros", "Catálogo completo", PRODS)}
-    <section class="sec sec--alt" id="colecciones" aria-labelledby="colTitle">
-      <div class="wrap">
-        <header class="sec__head"><div><p class="kicker">Colecciones</p><h2 id="colTitle">Elige por lo que significa</h2></div></header>
-        <div class="cols">{cols_grid()}</div>
-        <h3 class="sub-h">O elige por ambiente</h3>
-        <div class="ambs">{amb}</div>
-      </div>
-    </section>
-
+{catalog_section("Todos los cuadros", "Catálogo completo", PRODS, limite=LIMITE["home"])}
     <section class="sec" id="personalizados" aria-labelledby="persTitle">
       <div class="wrap pers">
         <div class="pers__media"><span class="pf pf--tilt"><img src="/img/cuadros/t/tu-ciudad.webp" alt="Mapa de ciudad personalizado en cuadro" loading="lazy"></span><span class="pf pf--tilt2"><img src="/img/cuadros/t/bendice-este-hogar.webp" alt="Cuadro Bendice este hogar con el apellido de la familia" loading="lazy"></span></div>
@@ -640,7 +671,7 @@ def landing(kind, obj, items):
         <div class="lhero__art" aria-hidden="true">{"".join(f'<span class="lhero__p">{pf(x, thumb=True, lazy=False)}</span>' for x in hero_items)}</div>
       </div>
     </section>
-{catalog_section(f"{n} cuadros", obj["nombre"], PRODS, preset_col=preset.get("col", ""), preset_room=preset.get("room", ""))}
+{catalog_section(f"{n} cuadros", obj["nombre"], items, preset_col=preset.get("col", ""), preset_room=preset.get("room", ""), limite=LIMITE["landing"])}
     <section class="sec sec--alt"><div class="wrap"><h2 class="sub-h">Sigue explorando</h2><div class="pills">{links}</div></div></section>
 {faq_html(faqs)}
 {cta()}
@@ -648,11 +679,7 @@ def landing(kind, obj, items):
     ld = [crumbs_ld(crumbs), {"@context": "https://schema.org", "@type": "CollectionPage", "name": obj["h1"], "url": h(path), "description": obj["seoDesc"],
                               "isPartOf": {"@id": h("/#web")}, "about": {"@id": h("/#tienda")}}, itemlist_ld(sorted(items, key=rank), obj["h1"]), faq_ld(faqs)]
     page = head(obj["seoTitle"], obj["seoDesc"], path, og_img=img_og(BY[obj["img"]]), ld=ld)
-    # El catálogo arranca filtrado: se reemplaza la grilla completa por la de la colección.
     html_ = page + header({"tipo": "landing", "data": preset}) + body + footer() + overlays()
-    grid_all = "".join(card(x) for x in sorted(PRODS, key=rank))
-    html_ = html_.replace(grid_all, "".join(card(x) for x in sorted(items, key=rank)), 1)
-    html_ = html_.replace(f'<p class="filters__count" id="count" aria-live="polite">{len(PRODS)} cuadros</p>', f'<p class="filters__count" id="count" aria-live="polite">{n} de {len(PRODS)} cuadros</p>', 1)
     write(path + "index.html", html_)
     return path
 

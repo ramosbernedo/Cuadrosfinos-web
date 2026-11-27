@@ -15,7 +15,7 @@ Catálogo e imágenes tomados de cuadros.plantify.pe (mismos dueños), con marca
 | `tools/paredes.py` | Convierte fotos reales en paredes vacías calibradas a escala para «En tu pared» |
 | `personaliza.js`, `tools/personalizados.js` | Diseños en vivo de los personalizados y sus imágenes de catálogo |
 | `medicion.js`, `docs/medicion.md` | Medición (GA4, Píxel de Meta, Clarity): embudo, código de pedido y guía para activarla |
-| `tools/pruebas.js` | 85 pruebas de navegación, SEO, 3D, medición y accesibilidad con Playwright |
+| `tools/pruebas.js` | Más de 90 pruebas de navegación, SEO, 3D, medición y accesibilidad con Playwright |
 | `app.js`, `styles.css` | Interacción y diseño |
 | `index.html`, `cuadro/…`, `cuadros-…/` | Páginas generadas (no editar a mano) |
 
@@ -40,7 +40,8 @@ node tools/pruebas.js
 - **3D y realidad aumentada**: el cuadro en 3D girable y «Ver en mi pared» con la cámara del celular, a tamaño real (model-viewer 4.3.1, alojado en `vendor/`).
 - Personalizados con vista previa en vivo.
 - Selección de varios cuadros → un solo pedido por WhatsApp; se puede compartir por enlace (`?seleccion=`).
-- “Ayúdame a elegir”, búsqueda sin tildes (tecla `/`), filtros compartibles (`?q=`, `?c=`, `?amb=`).
+- Navegación: menú «Por ambiente» y «Por tema», bloque «Encuentra tu cuadro» en la portada, filtros Tema + Dónde con conteos en vivo y «Ver más».
+- “Ayúdame a elegir”, búsqueda sin tildes con palabras clave por tema (médico, abogado, regalo…) (tecla `/`), filtros compartibles (`?q=`, `?c=`, `?sub=`, `?amb=`).
 - **SEO:** títulos y descripciones únicos, canonical, Open Graph con imagen propia por cuadro (WhatsApp/Facebook), datos estructurados (Store/LocalBusiness, Product con precio en PEN y envío, BreadcrumbList, FAQPage, ItemList, WebSite con buscador), sitemap con imágenes.
 - **GEO (buscadores con IA):** `llms.txt` y `llms-full.txt` con datos clave y catálogo completo, `robots.txt` que permite a GPTBot, ClaudeBot, PerplexityBot, etc.; descripciones factuales por cuadro.
 - **SEO local:** Lima / Perú en datos estructurados, `geo.region`, páginas por ambiente y menciones de envío a provincias.
