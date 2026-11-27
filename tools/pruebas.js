@@ -235,9 +235,9 @@ async function newPage(b, vp = { width: 1366, height: 860 }) {
     await q.keyboard.press("Escape");
     ok("Escape cierra el menú móvil", (await q.getAttribute("#navToggle", "aria-expanded")) === "false");
     await q.goto(BASE + "/", { waitUntil: "networkidle" });
-    await q.click(".hero__dots button >> nth=2"); await q.waitForTimeout(300);
+    await q.locator(".hero__dots button").nth(2).dispatchEvent("click"); await q.waitForTimeout(300); // en el celular los puntos se ocultan; la lógica sigue
     ok("Portada: los puntos cambian la foto y el pie", (await q.$eval(".hero__slide.is-on", i => i.dataset.pie)) === (await q.textContent("#heroCapTxt")) && (await q.$$eval(".hero__slide", s => s.findIndex(x => x.classList.contains("is-on")))) === 2);
-    await q.locator("[data-open-quiz]").first().click();
+    await q.locator("[data-open-quiz]:visible").first().click();
     await q.click('#qOpts [data-v="sala"]'); await q.click('#qOpts [data-back]');
     ok("Guía: «Volver» regresa al paso anterior", (await q.textContent("#qStep")) === "Paso 1 de 3");
     await q.click('#qOpts [data-v="sala"]'); await q.click('#qOpts [data-v="fe"]'); await q.click('#qOpts [data-v="set"]');

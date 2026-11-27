@@ -13,7 +13,7 @@
   },
   "ciudad": "Lima",
   "pais": "PE",
-  "entrega": "4 a 6 días hábiles en Lima; provincias por agencia",
+  "entrega": "4 a 6 días hábiles en Lima; envío gratis a todo el Perú",
   "medicion": {
    "googleVerificacion": "W8AQqbbYwi3f98LiweRvjGDUYGn_jnBeIfo30clZhHE",
    "ga4": "",
@@ -248,7 +248,7 @@
    "nombre": "Papa León XIV",
    "url": "cuadros-del-papa-leon-xiv",
    "titulo": "La visita del Papa León XIV",
-   "bajada": "Un recuerdo de la visita del Papa al Perú: Machu Picchu, el Cusco, el mar y la selva. Cotiza por WhatsApp.",
+   "bajada": "Un recuerdo de la visita del Papa al Perú: Machu Picchu, el Cusco, el mar y la selva. Con marco, a S/ 84.",
    "img": "papa-frente-a-machu-picchu",
    "subs": [],
    "h1": "Cuadros de la visita del Papa León XIV al Perú",
@@ -1462,8 +1462,7 @@
     "dormitorio"
    ],
    "o": "vertical",
-   "i": 1,
-   "q": 1
+   "i": 1
   },
   {
    "s": "papa-saludo-en-la-plaza",
@@ -1476,8 +1475,7 @@
     "dormitorio"
    ],
    "o": "vertical",
-   "i": 1,
-   "q": 1
+   "i": 1
   },
   {
    "s": "papa-cruz-sobre-muro-inca",
@@ -1490,8 +1488,7 @@
     "dormitorio"
    ],
    "o": "vertical",
-   "i": 1,
-   "q": 1
+   "i": 1
   },
   {
    "s": "papa-huellas-en-el-desierto",
@@ -1504,8 +1501,7 @@
     "dormitorio"
    ],
    "o": "vertical",
-   "i": 1,
-   "q": 1
+   "i": 1
   },
   {
    "s": "papa-cruz-en-la-cumbre-al-amanecer",
@@ -1518,8 +1514,7 @@
     "dormitorio"
    ],
    "o": "vertical",
-   "i": 1,
-   "q": 1
+   "i": 1
   },
   {
    "s": "papa-misa-frente-al-mar",
@@ -1532,8 +1527,7 @@
     "dormitorio"
    ],
    "o": "vertical",
-   "i": 1,
-   "q": 1
+   "i": 1
   },
   {
    "s": "papa-muelle-al-atardecer",
@@ -1546,8 +1540,7 @@
     "dormitorio"
    ],
    "o": "vertical",
-   "i": 1,
-   "q": 1
+   "i": 1
   },
   {
    "s": "papa-catedral-del-cusco",
@@ -1560,8 +1553,7 @@
     "dormitorio"
    ],
    "o": "vertical",
-   "i": 1,
-   "q": 1
+   "i": 1
   },
   {
    "s": "papa-orilla-del-rio-amazonico",
@@ -1574,8 +1566,7 @@
     "dormitorio"
    ],
    "o": "vertical",
-   "i": 1,
-   "q": 1
+   "i": 1
   },
   {
    "s": "papa-vigilia-con-velas",
@@ -1588,8 +1579,7 @@
     "dormitorio"
    ],
    "o": "vertical",
-   "i": 1,
-   "q": 1
+   "i": 1
   }
  ],
  "portada": [

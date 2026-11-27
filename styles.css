@@ -832,6 +832,25 @@ html.lock{overflow:hidden}
   body[data-page=landing] #catalogo{padding-top:28px}
   body[data-page=landing] #catalogo .sec__head{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)}
   body[data-page=landing] .filters{margin-bottom:24px}
-  #top{padding-top:44px}
-  #top .sec__head{margin-bottom:24px}
+  #top{padding-top:28px}
+  #top .sec__head{margin-bottom:18px}
+  #top .sec__head .kicker{display:none}
+  .hero__slides{aspect-ratio:16/10}
+  .hero__shade{height:62.5vw}
+  .hero h1{font-size:1.85rem}
+  .hero__cta .btn--line{display:none}
+  .hero__foot{display:none}
+  .hero__in{padding-bottom:4px}
 }
+.bag-total--dsc strong{font-family:var(--sans);font-size:.95rem;color:#5fd38a}
+.bag-up__msg{font-size:.84rem;color:var(--fg-2);line-height:1.5}
+.bag-up__msg b{color:var(--fg);font-weight:600}
+.revs{display:grid;grid-template-columns:repeat(3,1fr);gap:16px}
+.rev{border:1px solid var(--line);background:var(--bg-2);padding:22px;display:grid;gap:12px;margin:0}
+.rev__stars{color:var(--fg);letter-spacing:.2em;font-size:.8rem}
+.rev blockquote{margin:0;color:var(--fg-2);font-size:.92rem;line-height:1.55}
+.rev figcaption{font-size:.76rem;color:var(--muted)}
+.rev figcaption b{color:var(--fg);font-weight:500}
+.rev figcaption a{text-decoration:underline}
+@media (max-width:900px){.revs{display:flex;overflow-x:auto;scroll-snap-type:x mandatory;scrollbar-width:none}.rev{flex:0 0 82%;scroll-snap-align:start}}
+@media (max-width:620px){.bag-form{grid-template-columns:1fr 1fr;gap:8px 10px}.bag-form .check{grid-column:1/-1}.bag-form .field span{font-size:.66rem}}

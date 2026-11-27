@@ -263,11 +263,12 @@ function openProduct(slug, tab, { push = true } = {}) {
     $("#pAdd").hidden = true; $("#pWa").textContent = "Cotizar por WhatsApp";
   } else {
     $("#pPrice").textContent = soles(precioBase(x) + (x.p ? P.personalizar : 0));
-    $("#pPriceNote").textContent = x.p ? `Incluye personalización (+ ${soles(P.personalizar)}). Marco negro y envío protegido.` : `${medida(x)}. Listo para colgar.`;
+    $("#pPriceNote").textContent = x.p ? `Incluye personalización (+ ${soles(P.personalizar)}). Marco negro y envío gratis.` : `${medida(x)}. Listo para colgar.`;
     $("#pAdd").hidden = false; $("#pWa").textContent = "Pedir este por WhatsApp";
   }
   updateProductWa(); refreshAddBtn();
-  if ($("#pEta")) $("#pEta").innerHTML = `<b>Pide hoy y llega ${eta()}</b> en Lima · envío a todo el Perú`;
+  if ($("#pPack")) { $("#pPack").hidden = !enPack(x); $("#pPack").innerHTML = `<b>${packTxt()}</b> · combinando los cuadros que quieras`; }
+  if ($("#pEta")) $("#pEta").innerHTML = `<b>Pide hoy y llega ${eta()}</b> en Lima · envío gratis a todo el Perú`;
   if (window.requestIdleCallback) requestIdleCallback(preloadWalls, { timeout: 2500 }); else setTimeout(preloadWalls, 1200);
   S.room = roomFor(x);
   setTab(tab || "obra"); renderScene();
@@ -540,6 +541,11 @@ function renderRecent() {
 /* ---------- selección (carrito por WhatsApp) ---------- */
 let bag = store.get("cf_bag", []).filter(b => b && BY[b.s] && !BY[b.s].q && b.qty > 0);
 const unit = b => precioBase(BY[b.s]) + (b.f && b.f.length ? P.personalizar : 0);
+/* Precio por cantidad: cuadros sueltos (30 × 37) se cobran de 3 en 3 al precio del tríptico y 2 al del díptico */
+const enPack = x => !!x && !x.q && !x.p && !x.pr && piezas(x) === 1;
+const packPrecio = n => Math.floor(n / 3) * P.triptico + (n % 3 === 2 ? Math.min(P.diptico, 2 * P.pieza) : (n % 3) * P.pieza);
+function packs() { const n = bag.filter(b => enPack(BY[b.s])).reduce((a, b) => a + b.qty, 0); return { n, ahorro: Math.max(0, n * P.pieza - packPrecio(n)) }; }
+const packTxt = () => `Lleva 3 por ${soles(P.triptico)}` + (P.diptico < 2 * P.pieza ? ` · 2 por ${soles(P.diptico)}` : "");
 function saveBag() { store.set("cf_bag", bag); renderBag(); }
 function addToBag(s, f = null) {
   const x = BY[s]; if (!x || x.q) return;
@@ -553,7 +559,7 @@ function addToBag(s, f = null) {
   if ($("#bag").getAttribute("aria-hidden") !== "false") toast(`«${x.n}» está en tu selección`, { label: "Ver selección", fn: openBag });
 }
 function bagMessage(code = "") {
-  const total = bag.reduce((a, b) => a + unit(b) * b.qty, 0);
+  const { ahorro } = packs(), total = bagTotal();
   const lines = bag.map(b => {
     const x = BY[b.s];
     const f = b.f && b.f.length ? "\n" + b.f.map(([l, v]) => `    · ${l}: ${v}`).join("\n") : "";
@@ -561,28 +567,24 @@ function bagMessage(code = "") {
   });
   const d = store.get("cf_entrega", {});
   const extra = [d.lugar && `Entrega en: ${d.lugar}`, d.pago && `Pago: ${d.pago}`, d.regalo && "Es para regalo 🎁"].filter(Boolean).join("\n");
-  return `Hola, quiero pedir estos cuadros:\n${lines.join("\n")}\n\nTotal: ${soles(total)}` + (extra ? `\n${extra}` : "") + (code ? `\nCódigo: ${code}` : "") + `\n¿Me confirman el envío${d.lugar ? "" : " a mi dirección"}?`;
+  return `Hola, quiero pedir estos cuadros:\n${lines.join("\n")}\n\n` + (ahorro ? `Descuento por cantidad: − ${soles(ahorro)}\n` : "") + `Total: ${soles(total)} (envío gratis)` + (extra ? `\n${extra}` : "") + (code ? `\nCódigo: ${code}` : "") + `\n¿Me confirman el envío${d.lugar ? "" : " a mi dirección"}?`;
 }
 /* Sugerencia en la selección: armar el tríptico (más barato que 3 sueltos) o un cuadro que combine */
 function bagUpsell() {
-  const suelto = s => bag.some(b => b.s === s && !(b.f && b.f.length));
-  for (const t of DATA.filter(x => x.set && !x.q && !bag.some(b => b.s === x.s))) {
-    const k = t.set.filter(suelto).length; if (!k) continue;
-    const ahora = t.set.filter(suelto).reduce((a, s) => a + precioBase(BY[s]), 0), dif = precioBase(t) - ahora;
-    const txt = dif < 0 ? `Ahorra ${soles(-dif)}: llévalos como tríptico a ${soles(precioBase(t))}` : `Completa el tríptico: los 3 por ${soles(precioBase(t))} (+ ${soles(dif)})`;
-    return `<div class="bag-up"><p class="kicker">Te conviene</p><div class="bag-up__row">${pf(t, { thumb: true })}<div><b>${esc(t.n)}</b><span>${txt}</span></div></div><button class="btn btn--light btn--sm btn--block" data-swap="${t.s}">Cambiar por el tríptico</button></div>`;
-  }
+  const { n } = packs(), falta = n % 3 ? 3 - (n % 3) : 0;
+  const head = n && falta ? `<p class="bag-up__msg">Agrega ${falta} cuadro${falta > 1 ? "s" : ""} más y los 3 te salen <b>${soles(P.triptico)}</b> (pagas ${soles(packPrecio(n + falta) - packPrecio(n))} más). Envío gratis.</p>` : "";
   const cols = new Set(bag.map(b => BY[b.s].c));
   const enSet = new Set(bag.flatMap(b => BY[b.s].set || []));
-  const sug = DATA.filter(x => cols.has(x.c) && x.i && !x.q && !x.p && !enSet.has(x.s) && !bag.some(b => b.s === x.s)).sort((a, b) => rank(a) - rank(b)).slice(0, 2);
-  return sug.length ? `<div class="bag-up"><p class="kicker">Combinan con tu selección</p><div class="cards cards--mini">${sug.map(x => card(x, { mini: true, add: true })).join("")}</div></div>` : "";
+  const sug = DATA.filter(x => cols.has(x.c) && enPack(x) && x.i && !enSet.has(x.s) && !bag.some(b => b.s === x.s)).sort((a, b) => rank(a) - rank(b)).slice(0, 2);
+  return sug.length ? `<div class="bag-up"><p class="kicker">${head ? "Te conviene" : "Combinan con tu selección"}</p>${head}<div class="cards cards--mini">${sug.map(x => card(x, { mini: true, add: true })).join("")}</div></div>` : "";
 }
 function renderBag() {
   const n = bag.reduce((a, b) => a + b.qty, 0);
   const badge = $("#bagCount"); badge.hidden = !n; badge.textContent = n;
   $("#openBag").setAttribute("aria-label", n ? `Mi selección: ${n} cuadro${n > 1 ? "s" : ""}` : "Mi selección");
-  const total = bag.reduce((a, b) => a + unit(b) * b.qty, 0);
+  const total = bagTotal(), { ahorro } = packs();
   $("#bagTotal").textContent = soles(total);
+  if ($("#bagDsc")) { $("#bagDsc").hidden = !ahorro; $("#bagDscN").textContent = "− " + soles(ahorro); }
   $("#bagFoot").hidden = !n;
   $("#bagList").innerHTML = n ? bag.map((b, i) => {
     const x = BY[b.s];
@@ -595,12 +597,12 @@ function renderBag() {
     </div>`;
   }).join("") + bagUpsell() : `<div class="bag-empty"><p>Aún no guardas cuadros.</p><p class="muted small">Toca “+” en cualquier cuadro para armar tu selección y pedir todo en un solo mensaje.</p><a href="/#catalogo" class="btn btn--line" data-close-bag>Ver cuadros</a></div>`;
   $("#bagWa").href = waLink(bagMessage());
-  if ($("#bagEta")) $("#bagEta").textContent = `Pide hoy y llega ${eta()} en Lima. Envío y pago se confirman por WhatsApp: no pagas nada en la web.`;
+  if ($("#bagEta")) $("#bagEta").textContent = `Envío gratis. Pide hoy y llega ${eta()} en Lima. El pago se confirma por WhatsApp: no pagas nada en la web.`;
 }
 const drawer = $("#bag");
 let lastFocus = null;
 const bagItems = () => bag.map(b => item(BY[b.s], { price: unit(b), quantity: b.qty }));
-const bagTotal = () => bag.reduce((a, b) => a + unit(b) * b.qty, 0);
+function bagTotal() { return bag.reduce((a, b) => a + unit(b) * b.qty, 0) - packs().ahorro; }
 function openBag() {
   if (dlg && dlg.open) closeProduct();
   T("view_cart", { currency: "PEN", value: bagTotal(), items: bagItems() });
@@ -620,9 +622,6 @@ function bindBag() {
   drawer.addEventListener("click", e => {
     const q = e.target.closest("[data-q]");
     if (q) { const b = bag[+q.dataset.q]; if (+q.dataset.d < 0) T("remove_from_cart", { currency: "PEN", value: unit(b), items: [item(BY[b.s], { price: unit(b) })] }); b.qty += +q.dataset.d; if (b.qty < 1) bag.splice(+q.dataset.q, 1); saveBag(); syncAddButtons(); return; }
-    const sw = e.target.closest("[data-swap]");
-    if (sw) { const t = BY[sw.dataset.swap]; t.set.forEach(s => { const b = bag.find(b => b.s === s && !(b.f && b.f.length)); if (b) b.qty--; }); bag = bag.filter(b => b.qty > 0);
-      bag.push({ s: t.s, f: null, qty: 1 }); saveBag(); syncAddButtons(); T("add_to_cart", { currency: "PEN", value: precioBase(t), items: [item(t)], lista: "tríptico sugerido" }); return; }
     const rm = e.target.closest("[data-rm]");
     if (rm) {
       const [gone] = bag.splice(+rm.dataset.rm, 1); saveBag(); syncAddButtons();
@@ -658,7 +657,7 @@ function bindBag() {
     T("begin_checkout", { currency: "PEN", value: bagTotal(), items: bagItems(), via: "seleccion" });
     T("generate_lead", { currency: "PEN", value: bagTotal(), transaction_id: code, items: bagItems(), via: "seleccion", piezas: bag.reduce((a, b) => a + b.qty, 0), ...((window.CFTrack && CFTrack.origen()) || {}) });
     window.CFTrack && CFTrack.pedido({ codigo: code, via: "seleccion", lugar: $("#bagLugar").value.trim(), pago: $("#bagPago").value, regalo: $("#bagRegalo").checked,
-      items: bag.map(b => ({ s: b.s, n: BY[b.s].n, qty: b.qty, precio: unit(b), f: b.f && b.f.length ? b.f : null })) });
+      descuento: packs().ahorro, items: bag.map(b => ({ s: b.s, n: BY[b.s].n, qty: b.qty, precio: unit(b), f: b.f && b.f.length ? b.f : null })) });
   });
   $("#bagForm").addEventListener("submit", e => e.preventDefault());
   // Selección compartida por enlace (?seleccion=slug,slug*2)

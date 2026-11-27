@@ -227,12 +227,12 @@ async function llegadaFicha(r, slug, dev = PHONE) {
   });
 
   // 67–76: Selección (carrito) y pedido
-  await esc(n++, "Arma una selección de 3 cuadros", "pedir todo en un mensaje", async r => {
+  await esc(n++, "Arma una selección de 3 cuadros", "pedir todo en un mensaje con el precio por cantidad", async r => {
     const p = await page(); await go(p, "/cuadros-religiosos/");
     for (let i = 0; i < 3; i++) { const b = p.locator("#grid .card__add").nth(i); await b.scrollIntoViewIfNeeded(); await b.click(); }
     await p.click("#openBag"); await p.waitForTimeout(300);
     const msg = msgOf(await p.getAttribute("#bagWa", "href"));
-    F(r, !/Total: S\/ 252/.test(msg), "El total del mensaje no es S/ 252: " + (msg.match(/Total: [^\n]+/) || [""])[0]);
+    F(r, !/Total: S\/ 149/.test(msg), "3 cuadros sueltos no salen al precio del tríptico (S/ 149): " + (msg.match(/Total: [^\n]+/) || [""])[0]);
     F(r, !(await visibleNow(p, "#bagWa")), "El botón «Enviar pedido» no se ve sin scroll en el cajón");
     await p.ctx.close();
   });
@@ -319,7 +319,7 @@ async function llegadaFicha(r, slug, dev = PHONE) {
   // 85–90: Ayúdame a elegir
   for (const [room, style, fmt] of [["sala", "poder", "set"], ["oficina", "oficio", "uno"], ["dormitorio", "fe", "uno"], ["comedor", "calma", "any"], ["sala", "pers", "any"], ["oficina", "lugares", "set"]])
     await esc(n++, "Indeciso usa «Ayúdame a elegir»", `${room} · ${style} · ${fmt}`, async r => {
-      const p = await page(); await go(p, "/"); await p.locator("[data-open-quiz]").first().click();
+      const p = await page(); await go(p, "/"); await p.locator("[data-open-quiz]:visible").first().click();
       for (const v of [room, style, fmt]) await p.click(`#qOpts [data-v="${v}"]`);
       const k = await p.$$eval("#qRes .card", c => c.length); F(r, k < 3, `Solo ${k} recomendaciones`);
       const precios = await p.$$eval("#qRes .card__price", c => c.length); F(r, !precios, "Las recomendaciones no muestran precio");
