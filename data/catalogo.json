@@ -349,7 +349,12 @@
    ],
    "o": "triptico",
    "i": 1,
-   "t": 1
+   "t": 1,
+   "set": [
+    "leon-fuerza",
+    "aguila-vision",
+    "lobo-lealtad"
+   ]
   },
   {
    "s": "foco-disciplina-ejecucion",

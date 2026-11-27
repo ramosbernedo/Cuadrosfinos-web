@@ -310,6 +310,7 @@ function updateProductWa() { $("#pWa").href = waLink(productMsg(), S.x.q ? CONFI
 function refreshAddBtn() {
   const n = bag.filter(b => b.s === S.x.s).reduce((a, b) => a + b.qty, 0);
   $("#pAdd").textContent = n && !S.x.p ? `En tu selección (${n}) · Agregar otro` : "Agregar a mi selección";
+  const bb = $("#bbAdd"); if (bb) { bb.textContent = n && !S.x.p ? "✓" : "+"; bb.classList.toggle("is-in", !!n); }
 }
 function setTab(t, btn) {
   S.tab = t;
@@ -477,6 +478,14 @@ function bindProduct() {
     window.CFTrack && CFTrack.pedido({ codigo: code, via: S.x.q ? "cotizar" : "ficha", lugar: ent.lugar || "", pago: ent.pago || "", regalo: !!ent.regalo,
       items: [{ s: S.x.s, n: S.x.n, qty: 1, precio: it.price, f: S.x.p ? fieldValues().filter(([, v]) => v) : null }] });
   });
+  // Barra de compra fija (celular): visible mientras los botones principales no se ven; usa los mismos botones
+  const bar = $("#buyBar");
+  if (bar && "IntersectionObserver" in window) {
+    const ver = v => { bar.classList.toggle("is-on", v); bar.setAttribute("aria-hidden", String(!v)); document.body.classList.toggle("bb-on", v); };
+    new IntersectionObserver(([en]) => ver(!en.isIntersecting), { rootMargin: "0px 0px -24px 0px" }).observe($("#pBuy"));
+    $("#bbWa").addEventListener("click", e => { e.preventDefault(); T("barra_compra", { item_id: S.x.s, accion: "whatsapp" }); $("#pWa").click(); });
+    $("#bbAdd")?.addEventListener("click", () => { T("barra_compra", { item_id: S.x.s, accion: "agregar" }); $("#pAdd").click(); });
+  }
   // Compartir: WhatsApp, Facebook, copiar y el menú del celular
   const shareText = () => `${S.x.n} · ${precioTxt(S.x)} — Cuadros Finos`;
   const syncShare = () => {
