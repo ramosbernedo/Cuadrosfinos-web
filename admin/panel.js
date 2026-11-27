@@ -35,7 +35,7 @@ const app = $("#app");
 /* ---------- ingreso ---------- */
 function vistaIngreso(setup) {
   app.innerHTML = `<div class="login"><form id="f">
-    <div class="marca"><span class="wm"><i></i></span><h1>Panel</h1></div>
+    <div class="marca"><img class="simbolo" src="/img/marca/simbolo-blanco.svg" alt="Cuadros Finos"><h1>Panel</h1></div>
     <p class="muted small">${setup ? "Primera vez: crea la cuenta de administrador con la clave de instalación." : "Cuadros Finos · solo para el equipo."}</p>
     ${setup ? `<label class="f"><span>Clave de instalación</span><input name="clave" required autocomplete="off"></label>
     <label class="f"><span>Tu nombre</span><input name="nombre" required></label>` : ""}
@@ -94,7 +94,7 @@ function aplicarTema(t) { document.documentElement.dataset.theme = t; try { loca
 function shell(activa, contenido) {
   const ini = (YO.nombre || YO.email || "?").trim()[0].toUpperCase();
   app.innerHTML = `<div class="shell"><nav class="side" aria-label="Secciones">
-    <div class="marca"><span class="wm"><i></i></span>Cuadros Finos</div>
+    <div class="marca"><img class="simbolo" src="/img/marca/simbolo-blanco.svg" alt="">Cuadros Finos</div>
     ${SECCIONES.map(([k, n]) => { const b = BADGE[k] ? PULSO[BADGE[k][0]] : 0;
       return `<a href="#/${k}" class="${k === activa ? "on" : ""}" ${k === activa ? 'aria-current="page"' : ""}>${ic(k)}<span class="lbl">${n}</span>${b ? `<span class="badge" title="${BADGE[k][1]}">${b}</span>` : ""}</a>`; }).join("")}
     <div class="yo"><span class="avatar">${esc(ini)}</span><div>${esc(YO.nombre || "")}<br><span class="muted small">${esc(YO.rol === "admin" ? "Administrador" : "Equipo")}</span></div></div>
