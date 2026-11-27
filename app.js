@@ -90,7 +90,6 @@ function viewsHtml(x) {
   const fotos = [...(x.fotos || []), ...(x.i && !x.m ? [[`detalle-${x.s}`, "El marco negro de cerca"]] : [])];
   return `<button class="view is-on" role="tab" id="tabObra" aria-selected="true" aria-controls="pStage" data-tab="obra">${x.i ? `<img src="${obra}" alt="" loading="lazy">` : '<span class="view__ph"></span>'}<span>Obra</span></button>` +
     `<button class="view" role="tab" id="tabPared" aria-selected="false" aria-controls="pWall" data-tab="pared"><img src="/img/ambiente/t/${PAREDES[roomFor(x)].img}.webp" alt="" loading="lazy"><span>En tu pared</span></button>` +
-    `<button class="view view--3d" role="tab" aria-selected="false" aria-controls="p3d" data-tab="3d"><span class="view__3d" aria-hidden="true">3D</span><span>3D · AR</span></button>` +
     fotos.map(([f, alt]) => `<button class="view" role="tab" aria-selected="false" aria-controls="pPhoto" data-tab="foto" data-src="/img/ambiente/${f}.webp" data-alt="${esc(alt)}"><img src="/img/ambiente/t/${f}.webp" alt="" loading="lazy"><span class="sr">${esc(alt)}</span></button>`).join("");
 }
 
@@ -290,14 +289,12 @@ function setTab(t, btn) {
   if (t === "pared") preloadWalls();
   $("#pPhoto").hidden = t !== "foto";
   if (S.x && t !== "obra") T1(t + S.x.s + (btn && btn.dataset.src || ""), "ver_" + t, { item_id: S.x.s, item_name: S.x.n, ...(t === "foto" ? { foto: (btn && btn.dataset.alt) || "" } : {}) });
-  $("#p3d").hidden = t !== "3d";
-  if (t === "3d") open3D();
   if (t === "foto") {
     const img = $("#pPhotoImg");
     img.src = btn.dataset.src; img.alt = btn.dataset.alt;
     $("#pPhotoCap").textContent = btn.dataset.alt;
   }
-  $("#pZoom").hidden = t === "pared" || t === "3d" || (t === "obra" && !(S.x && (S.x.i || personal(S.x))));
+  $("#pZoom").hidden = t === "pared" || (t === "obra" && !(S.x && (S.x.i || personal(S.x))));
 }
 function zoomSrc() {
   if (S.tab === "foto") return [$("#pPhotoImg").src, $("#pPhotoImg").alt];
@@ -324,69 +321,6 @@ function livePreview() {
   const nota = CFPersonal.nota(x.s);
   $("#pPersNote").textContent = (nota ? nota + " " : "") + "Te mandamos la final por WhatsApp antes de imprimir.";
 }
-/* ---------- 3D y realidad aumentada (model-viewer, se carga solo al usarlo) ---------- */
-const MV_SRC = "/vendor/model-viewer-4.3.1.min.js";
-let mvLoading = null;
-const loadMV = () => mvLoading || (mvLoading = new Promise((ok, ko) => {
-  if (customElements.get("model-viewer")) return ok();
-  const sc = document.createElement("script"); sc.type = "module"; sc.src = MV_SRC;
-  sc.onload = () => customElements.whenDefined("model-viewer").then(ok); sc.onerror = ko;
-  document.head.append(sc);
-}));
-// Recorta la imagen a la ventana del marco (26,5 × 34,4) y la devuelve como dataURL
-function artTexture(src, horizontal, svgMarkup) {
-  return new Promise((ok, ko) => {
-    const img = new Image(); img.crossOrigin = "anonymous";
-    img.onload = () => {
-      const ar = horizontal ? 1 / 0.772 : 0.772, W = horizontal ? 1400 : 1080, H = Math.round(W / ar);
-      const c = document.createElement("canvas"); c.width = W; c.height = H;
-      const g = c.getContext("2d"), s = Math.max(W / img.naturalWidth, H / img.naturalHeight);
-      const w = img.naturalWidth * s, h = img.naturalHeight * s;
-      g.drawImage(img, (W - w) / 2, (H - h) / 2, w, h);
-      ok(c.toDataURL("image/jpeg", .9));
-    };
-    img.onerror = ko;
-    img.src = svgMarkup ? URL.createObjectURL(new Blob([svgMarkup.replace("<svg ", '<svg width="900" height="1170" ')], { type: "image/svg+xml" })) : src;
-  });
-}
-let mvFor = null;
-async function open3D() {
-  const x = S.x, wrap = $("#mvWrap");
-  if (mvFor === x.s + "|" + (personal(x) ? $$("#pFieldList input").map(i => i.value).join("|") : "")) return;
-  mvFor = x.s + "|" + (personal(x) ? $$("#pFieldList input").map(i => i.value).join("|") : "");
-  try { await loadMV(); } catch { wrap.innerHTML = '<p class="mv-loading">No se pudo cargar el visor 3D.</p>'; return; }
-  const n = piezas(x), h = esH(x) && n === 1;
-  const glb = n === 3 ? "marco-3" : n === 2 ? "marco-2" : h ? "marco-h" : "marco-v";
-  let mv = $("#mv");
-  if (!mv) {
-    wrap.innerHTML = `<model-viewer id="mv" ar ar-modes="webxr scene-viewer quick-look" ar-placement="wall" ar-scale="fixed"
-      camera-controls touch-action="pan-y" shadow-intensity="1.1" shadow-softness=".8" exposure="1.05" environment-image="neutral"
-      camera-orbit="18deg 82deg 118%" min-camera-orbit="auto auto auto" interaction-prompt="auto" interpolation-decay="120">
-      <button slot="ar-button" class="btn btn--light ar-btn">Ver en mi pared</button>
-      <div slot="progress-bar"></div></model-viewer>`;
-    mv = $("#mv");
-    mv.addEventListener("ar-status", e => { if (e.detail.status === "session-started") T("realidad_aumentada", { item_id: S.x.s, item_name: S.x.n }); if (e.detail.status === "failed") toast("Tu celular no permitió abrir la cámara para la realidad aumentada"); });
-  }
-  mv.alt = `${x.n}: cuadro con marco negro en 3D`;
-  const apply = async () => {
-    const mats = mv.model ? mv.model.materials : [];
-    for (let i = 0; i < n; i++) {
-      const mat = mats.find(m => m.name === "obra" + (i + 1)); if (!mat) continue;
-      let url;
-      if (personal(x)) url = await artTexture(null, false, CFPersonal.svg(x.s, $$("#pFieldList input").map(v => v.value.trim())));
-      else if (!x.i) continue;
-      else url = await artTexture(imgSrc(x, { panel: n > 1 ? i + 1 : 0 }), h);
-      const tex = await mv.createTexture(url);
-      mat.pbrMetallicRoughness.baseColorTexture.setTexture(tex);
-    }
-    mv.classList.add("is-ready");
-  };
-  mv.classList.remove("is-ready");
-  const src = `/3d/${glb}.glb`;
-  if (mv.getAttribute("src") !== src) { mv.addEventListener("load", apply, { once: true }); mv.setAttribute("src", src); }
-  else if (mv.loaded) apply(); else mv.addEventListener("load", apply, { once: true });
-}
-
 let wallsReady = false;
 function preloadWalls() {
   if (wallsReady) return; wallsReady = true;
@@ -426,7 +360,6 @@ function bindProduct() {
     store.set(fieldKey(), Object.fromEntries($$("#pFieldList input").map(i => [i.name, i.value])));
     T1("pers" + S.x.s, "personalizar", { item_id: S.x.s, item_name: S.x.n });
     updateProductWa(); livePreview();
-    if (S.tab === "3d") { clearTimeout(window.__t3d); window.__t3d = setTimeout(open3D, 350); }
   });
   $("#pFields").addEventListener("submit", e => e.preventDefault());
   const firstMissing = () => $$("#pFieldList input[required]").find(i => !i.value.trim());
