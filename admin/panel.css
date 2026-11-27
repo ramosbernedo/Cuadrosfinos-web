@@ -45,7 +45,7 @@ label.f>span{display:block;font-size:.74rem;font-weight:500;color:var(--fg2);mar
 .login{min-height:100dvh;display:grid;place-items:center;padding:20px}
 .login form{width:min(390px,100%);display:grid;gap:14px;background:var(--bg2);border:1px solid var(--line);border-radius:16px;padding:30px;box-shadow:var(--shadow)}
 .login .marca{display:flex;align-items:center;gap:10px;margin-bottom:4px}
-.wm{width:22px;height:28px;border:3px solid var(--fg);display:grid;place-items:center;flex:none}.wm i{width:10px;height:15px;background:linear-gradient(160deg,var(--fg2),var(--muted))}
+.simbolo{width:26px;height:26px;display:block;flex:none}
 .err{color:var(--bad);font-size:.85rem}
 
 /* Estructura */

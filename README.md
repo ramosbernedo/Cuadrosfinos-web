@@ -10,6 +10,7 @@ Catálogo e imágenes tomados de cuadros.plantify.pe (mismos dueños), con marca
 |---|---|
 | `data/catalogo.json` | **Única fuente de datos**: precios, WhatsApp, dominio, colecciones, ambientes y los 84 cuadros |
 | `tools/build.py` | Genera todas las páginas, `data.js`, `sitemap.xml`, `robots.txt`, `llms.txt`… |
+| `tools/logo.py`, `tools/logo-png.js` | Logo (marco con destello): SVG con letras en trazos y PNG en blanco, negro y dorado en `img/marca/`, y `img/favicon.svg` |
 | `tools/imagenes.py` | Genera miniaturas (`img/cuadros/t/`), imágenes para compartir (`img/og/`) e íconos |
 | `tools/marco3d.py` | Genera los marcos 3D a tamaño real (`3d/*.glb`) para la vista 3D y la realidad aumentada |
 | `tools/paredes.py` | Convierte fotos reales en paredes vacías calibradas a escala para «En tu pared» |
