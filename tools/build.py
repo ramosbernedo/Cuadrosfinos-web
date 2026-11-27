@@ -195,7 +195,7 @@ def header(page):
   <div class="topbar"><div class="wrap topbar__in"><span>Hechos a pedido en Lima · Envío a todo el Perú</span><span class="topbar__r">Si llega dañado, se repone</span></div></div>
   <header class="nav" id="nav">
     <div class="wrap nav__in">
-      <a href="/" class="brand" aria-label="{C['marca']}, inicio"><span class="wm" aria-hidden="true"><i></i></span><span class="brand__name">Cuadros <b>Finos</b></span></a>
+      <a href="/" class="brand" aria-label="{C['marca']}, inicio"><img class="brand__logo" src="/img/marca/logo-blanco.svg" alt="" width="157" height="40"></a>
       <nav class="nav__links" id="navLinks" aria-label="Principal">{nav_menu()}</nav>
       <div class="nav__actions">
         <button class="icon-btn" id="openSearch" aria-label="Buscar cuadro" aria-keyshortcuts="/"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg></button>
@@ -213,7 +213,7 @@ def footer():
   <footer class="footer">
     <div class="wrap footer__grid">
       <div class="footer__brand">
-        <a href="/" class="brand"><span class="wm" aria-hidden="true"><i></i></span><span class="brand__name">Cuadros <b>Finos</b></span></a>
+        <a href="/" class="brand"><img class="brand__logo" src="/img/marca/logo-blanco.svg" alt="{C['marca']}" width="157" height="40" loading="lazy"></a>
         <p>Cuadros en blanco y negro con marco, hechos a pedido en Lima y enviados a todo el Perú.</p>
       </div>
       <nav aria-label="Colecciones"><h2 class="footer__h">Colecciones</h2>{cols}<a href="/cuadros-personalizados/">Personalizados</a><a href="/mas-pedidos/">Más pedidos</a><a href="/nuevos/">Nuevos</a></nav>

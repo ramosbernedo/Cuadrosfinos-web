@@ -54,13 +54,10 @@ h3{font-size:1rem;letter-spacing:.14em}
 .nav{position:sticky;top:0;z-index:80;background:rgba(11,11,11,.82);backdrop-filter:blur(14px) saturate(1.3);-webkit-backdrop-filter:blur(14px) saturate(1.3);border-bottom:1px solid var(--line)}
 .nav__in{display:flex;align-items:center;gap:36px;height:72px}
 .brand{display:flex;align-items:center;gap:12px}
-.brand__name{font-family:var(--display);font-stretch:112%;font-size:1.05rem;letter-spacing:.2em;text-transform:uppercase;white-space:nowrap}
-.brand__name b{font-weight:300;color:var(--fg-2)}
-.wm{width:26px;height:32px;border:3px solid var(--fg);display:grid;place-items:center;flex:none}
-.wm i{width:12px;height:18px;background:linear-gradient(160deg,var(--fg-2),#444)}
+.brand__logo{display:block;height:40px;width:auto;flex:none}
 .nav__links{display:flex;gap:30px;margin-left:auto;font:500 .7rem/1 var(--sans);letter-spacing:.2em;text-transform:uppercase;color:var(--fg-2)}
 .nav__links{align-items:center}
-.nav__links a,.nav__dd{transition:color .2s;padding:8px 0}
+.nav__links a,.nav__dd{transition:color .2s;padding:8px 0;white-space:nowrap}
 .nav__links a:hover,.nav__dd:hover,.nav__dd[aria-expanded=true]{color:var(--fg)}
 .nav__search,.nav__help,.nav__ph{display:none}
 .nav__grp{position:relative}
@@ -71,7 +68,7 @@ h3{font-size:1rem;letter-spacing:.14em}
 .nav__panel--tem{min-width:440px}
 .nav__panel::before{content:"";position:absolute;left:0;right:0;top:-20px;height:20px}
 .nav__dd[aria-expanded=true] + .nav__panel{opacity:1;visibility:visible;transform:none;transition:opacity .2s,transform .2s}
-@media (hover:hover) and (min-width:901px){.nav__grp:hover .nav__panel{opacity:1;visibility:visible;transform:none;transition:opacity .2s,transform .2s}}
+@media (hover:hover) and (min-width:1101px){.nav__grp:hover .nav__panel{opacity:1;visibility:visible;transform:none;transition:opacity .2s,transform .2s}}
 .nav__panel .nav__ph{display:block;font:500 .6rem/1 var(--sans);letter-spacing:.22em;color:var(--muted);margin-bottom:12px}
 .nav__list{display:grid;gap:0 28px}
 .nav__panel--tem .nav__list{grid-template-columns:1fr 1fr}
@@ -353,7 +350,7 @@ h3{font-size:1rem;letter-spacing:.14em}
   .cols{grid-template-columns:repeat(2,1fr)}
   .nav__links{gap:20px}
 }
-@media (max-width:900px){
+@media (max-width:1100px){
   .nav__links{position:fixed;top:72px;left:0;right:0;flex-direction:column;gap:0;margin:0;padding:8px 24px 24px;background:var(--bg);border-bottom:1px solid var(--line);opacity:0;visibility:hidden;transform:translateY(-10px);transition:.3s}
   .nav__links{align-items:stretch;max-height:calc(100dvh - 72px);overflow-y:auto;overscroll-behavior:contain;padding-top:16px}
   .nav__links a{padding:14px 0;border-bottom:1px solid var(--line);font-size:.74rem}
@@ -374,6 +371,8 @@ h3{font-size:1rem;letter-spacing:.14em}
   .nav__actions{margin-left:auto}
   .nav.open .nav__toggle span:first-child{transform:translateY(3.75px) rotate(45deg)}
   .nav.open .nav__toggle span:last-child{transform:translateY(-3.75px) rotate(-45deg)}
+}
+@media (max-width:900px){
   .pd{grid-template-columns:minmax(0,1fr)}
   .wall-teaser{padding:80px 0;gap:40px}
   .pers{gap:40px}
@@ -394,8 +393,7 @@ h3{font-size:1rem;letter-spacing:.14em}
   .wrap{width:calc(100% - 32px)}
   .topbar__r{display:none}
   .topbar__in{justify-content:center;text-align:center;font-size:.56rem;letter-spacing:.16em}
-  .brand__name{font-size:.85rem;letter-spacing:.14em}
-  .wm{width:22px;height:28px}
+  .brand__logo{height:32px}
   .cards{grid-template-columns:repeat(2,1fr);gap:32px 14px}
   .cards--scroll{grid-auto-columns:68%;grid-template-columns:none}
   .card h3{font-size:.72rem;letter-spacing:.12em}

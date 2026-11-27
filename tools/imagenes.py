@@ -134,16 +134,31 @@ def ogs():
     print("imágenes para compartir:", n)
 
 
+def destello(cx, cy, alto, ancho, pasos=24):
+    """Puntos del destello de cuatro puntas del logo (mismas curvas que tools/logo.py, caja de 100)."""
+    c = [(50, 16), (50.7, 39), (52.6, 47.6), (71, 50)]  # cuarto: de la punta de arriba a la de la derecha
+    def bez(t):
+        u = 1 - t
+        return tuple(u**3 * c[0][i] + 3 * u * u * t * c[1][i] + 3 * u * t * t * c[2][i] + t**3 * c[3][i] for i in range(2))
+    q = [bez(i / pasos) for i in range(pasos + 1)]
+    pts = q + [(x, 100 - y) for x, y in reversed(q)] + [(100 - x, 100 - y) for x, y in q] + [(100 - x, y) for x, y in reversed(q)]
+    return [(cx + (x - 50) * ancho / 42, cy + (y - 50) * alto / 68) for x, y in pts]
+
+
 def icons():
+    """Ícono de la app: marco con destello, igual a img/favicon.svg (dibujado a 4x y reducido para suavizar)."""
     for s in (180, 192, 512):
         out = os.path.join(ROOT, "img", f"icon-{s}.png")
         if not need(out): continue
-        im = Image.new("RGB", (s, s), BG)
+        S = s * 4
+        im = Image.new("RGB", (S, S), BG)
         d = ImageDraw.Draw(im)
-        u = s / 32
-        d.rectangle((9.5 * u, 6 * u, 22.5 * u, 26 * u), outline=FG, width=max(2, round(2.6 * u)))
-        d.rectangle((13 * u, 9.6 * u, 19 * u, 22.4 * u), fill=(154, 150, 143))
-        im.save(out, "PNG", optimize=True)
+        u = S / 32
+        w = 2.2 * u
+        d.rectangle((5.2 * u - w / 2, 5.2 * u - w / 2, 26.8 * u + w / 2, 26.8 * u + w / 2), fill=FG)
+        d.rectangle((5.2 * u + w / 2, 5.2 * u + w / 2, 26.8 * u - w / 2, 26.8 * u - w / 2), fill=BG)
+        d.polygon(destello(16 * u, 16 * u, 15.2 * u, 11.2 * u), fill=FG)
+        im.resize((s, s), Image.LANCZOS).save(out, "PNG", optimize=True)
     print("íconos: ok")
 
 
