@@ -26,7 +26,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@112,300;112,400;112,500&family=Cormorant+Garamond:ital,wght@0,500;1,400;1,500&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="/styles.css?v=a79061bf">
+  <link rel="stylesheet" href="/styles.css?v=9c43ad1a">
   
   
 </head><body data-page="404">
@@ -76,11 +76,13 @@
       <header class="drawer__head"><h2 id="bagTitle">Mi selección</h2><button class="modal__close" data-close-bag aria-label="Cerrar selección">×</button></header>
       <div class="drawer__body" id="bagList"></div>
       <footer class="drawer__foot" id="bagFoot" hidden>
+        <details class="bag-det" id="bagDet"><summary>Datos de entrega <span class="muted">(opcional)</span></summary>
         <form class="bag-form" id="bagForm" autocomplete="on">
           <label class="field"><span>Distrito o ciudad de entrega</span><input name="lugar" id="bagLugar" placeholder="Ej.: Surco, Lima · Arequipa" autocomplete="address-level2"></label>
           <label class="field"><span>Forma de pago</span><select name="pago" id="bagPago"><option value="">Lo veo por WhatsApp</option><option>Yape</option><option>Plin</option><option>Transferencia</option><option>Tarjeta</option></select></label>
           <label class="check"><input type="checkbox" id="bagRegalo"> <span>Es para regalo</span></label>
         </form>
+        </details>
         <div class="bag-total bag-total--dsc" id="bagDsc" hidden><span>Descuento por cantidad</span><strong id="bagDscN"></strong></div>
         <div class="bag-total"><span>Total</span><strong id="bagTotal">S/ 0</strong></div>
         <p class="muted small" id="bagEta">Envío y pago se confirman por WhatsApp. No pagas nada en la web.</p>
@@ -106,6 +108,6 @@
   <script src="/data.js?v=5f95b3c3-2" defer></script>
   <script src="/personaliza.js?v=2d609fe9" defer></script>
   <script src="/medicion.js?v=bd5b03b8" defer></script>
-  <script src="/app.js?v=da4ebb70" defer></script>
+  <script src="/app.js?v=77e1e0fc" defer></script>
 </body>
 </html>

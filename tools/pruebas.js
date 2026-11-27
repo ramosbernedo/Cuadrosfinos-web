@@ -167,7 +167,7 @@ async function newPage(b, vp = { width: 1366, height: 860 }) {
     ok("Los datos escritos se recuerdan", (await q.inputValue("#pFieldList input")) === "Familia Pérez");
     await q.click("#openBag"); await q.waitForTimeout(400);
     const msg = decodeURIComponent((await q.getAttribute("#bagWa", "href")).split("text=")[1]);
-    await q.fill("#bagLugar", "Surco, Lima"); await q.selectOption("#bagPago", "Yape"); await q.check("#bagRegalo");
+    await q.evaluate(() => { document.getElementById("bagDet").open = true; }); await q.fill("#bagLugar", "Surco, Lima"); await q.selectOption("#bagPago", "Yape"); await q.check("#bagRegalo");
     const msg2 = decodeURIComponent((await q.getAttribute("#bagWa", "href")).split("text=")[1]);
     ok("Entrega, pago y regalo van en el mensaje", /Entrega en: Surco, Lima/.test(msg2) && /Pago: Yape/.test(msg2) && /regalo/.test(msg2));
     ok("Mensaje de WhatsApp con los 3 cuadros, datos y total", /Gorila/.test(msg) && /Tríptico/.test(msg) && /Familia Pérez/.test(msg) && /Total: S\/ 357/.test(msg));
@@ -268,7 +268,7 @@ async function newPage(b, vp = { width: 1366, height: 860 }) {
     await q.waitForLoadState("networkidle");
     await q.click("#tabPared"); await q.click("#pAdd"); await q.waitForTimeout(200);
     await q.click("#openBag"); await q.waitForTimeout(300);
-    await q.fill("#bagLugar", "Arequipa"); await q.press("#bagLugar", "Tab");
+    await q.evaluate(() => { document.getElementById("bagDet").open = true; }); await q.fill("#bagLugar", "Arequipa"); await q.press("#bagLugar", "Tab");
     await q.selectOption("#bagPago", "Plin");
     await q.click("#bagWa"); await q.waitForTimeout(300);
     const href = decodeURIComponent(await q.getAttribute("#bagWa", "href"));
