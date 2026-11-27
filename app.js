@@ -706,6 +706,8 @@ function renderSearch(q) {
     list = vistos.length ? vistos : DATA.filter(x => x.t);
   }
   list = list.slice(0, 8);
+  // Enter abre el cuadro si su nombre coincide con lo buscado (p. ej. «machu»); si no, el primer tema.
+  sdlg.dataset.top = q.trim() && list[0] && relevancia(list[0], q) > 0 ? "cuadro" : "";
   const head = !q.trim() ? `<p class="search__hint">${store.get("cf_vistos", []).length ? "Vistos recientemente" : "Los más pedidos"}</p>` : "";
   // Temas y subtemas que coinciden (p. ej. «médico» → Profesionales · Salud)
   const temas = [];
@@ -764,7 +766,7 @@ function bindGeneral() {
   $("#sq").addEventListener("input", e => { renderSearch(e.target.value); const v = e.target.value.trim(); clearTimeout(window.__ts); if (v.length >= 3) window.__ts = setTimeout(() => T("search", { search_term: v, lugar: "buscador", resultados: DATA.filter(x => matches(x, v)).length }), 1200); });
   $("#search form").addEventListener("submit", e => {
     e.preventDefault();
-    const first = $("#sRes a.s-item"); if (first) return first.click();
+    const first = (sdlg.dataset.top === "cuadro" && $("#sRes a.s-item:not(.s-item--col)")) || $("#sRes a.s-item"); if (first) return first.click();
   });
   document.addEventListener("keydown", e => {
     const typing = /input|textarea|select/i.test(document.activeElement.tagName);
