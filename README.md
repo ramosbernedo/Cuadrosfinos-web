@@ -38,6 +38,7 @@ Con al menos una, la portada muestra la sección «Lo que dicen nuestros cliente
 ```bash
 python3 -m http.server 8765 &
 node tools/pruebas.js
+node tools/escenarios2.js  # 100 más: personas, textos, Google y redes, casos difíciles, celular real, navegadores, medición
 node tools/escenarios.js   # 134 escenarios de compra: fricción, velocidad 4G, precios, fotos, anuncios, accesibilidad
 ```
 
