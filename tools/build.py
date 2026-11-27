@@ -101,13 +101,20 @@ def pf(x, lazy=True, thumb=False, scene=False):
     return f'<span class="{cls}"><img src="{base}{x["s"]}.webp" alt="{e(x["n"])} — cuadro con marco negro"{ld}></span>'
 
 
+def nombre_html(n):
+    """«Tríptico Foco · Disciplina · Ejecución» → «Tríptico Foco» + línea secundaria. Solo en nombres largos con «·»."""
+    if len(n) <= 22 or " · " not in n: return e(n)
+    a, b = n.split(" · ", 1)
+    return f'{e(a)}<span class="t-sub"><span class="sr"> · </span>{e(b)}</span>'
+
+
 def card(x, mini=False):
     tag = ('<span class="tag">Más pedido</span>' if x.get("t") else '<span class="tag tag--ghost">Nuevo</span>' if x.get("nw")
            else '<span class="tag tag--ghost">Personalizable</span>' if x.get("p") else "")
     add = "" if (x.get("q") or mini) else f'<button class="card__add" data-add="{x["s"]}" aria-label="Agregar a mi selección: {e(x["n"])}">+</button>'
     frase = "" if mini else f'<p>{e(x["f"])}</p>'
     return (f'<article class="card{"" if mini else " rv"}" data-s="{x["s"]}"><div class="card__stage">{tag}{pf(x, thumb=True)}{add}</div>'
-            f'<h3>{e(x["n"])}</h3>{frase}<span class="card__price">{precio_txt(x)}</span>'
+            f'<h3>{nombre_html(x["n"])}</h3>{frase}<span class="card__price">{precio_txt(x)}</span>'
             f'<a class="card__open" href="{purl(x)}" aria-label="Ver {e(x["n"])}"></a></article>')
 
 
@@ -326,7 +333,7 @@ def pd_markup(x=None, page=False):
       </div>
       <div class="pd__info">
         <p class="kicker" id="pCol">{e(col)}</p>
-        <{title_tag} id="pTitle">{e(g(lambda x: x["n"]))}</{title_tag}>
+        <{title_tag} id="pTitle">{g(lambda x: nombre_html(x["n"]))}</{title_tag}>
         <p class="pd__phrase" id="pPhrase">{e(g(lambda x: x["f"]))}</p>
         <p class="pd__price" id="pPrice">{price}</p>
         <p class="muted small" id="pPriceNote">{e(note)}</p>
@@ -694,7 +701,7 @@ def build_home():
 
 def landing(kind, obj, items):
     path = f"/{obj['url']}/"
-    crumbs = [("Inicio", "/"), (obj["h1"], path)]
+    crumbs = [("Inicio", "/"), (obj.get("h1Corto") or obj["h1"], path)]
     preset = {"col": obj["id"]} if kind in ("col", "virt") else {"room": obj["id"]}
     n = len(items)
     con_precio = [x for x in items if precio(x)]
@@ -715,7 +722,7 @@ def landing(kind, obj, items):
       <div class="wrap lhero__grid">
         <div>
           <p class="kicker">{e(obj.get("titulo") or obj["nombre"])}</p>
-          <h1>{e(obj["h1"])}</h1>
+          <h1>{f'{e(obj["h1Corto"])}<span class="t-sub">{e(obj["h1Sub"])}</span>' if obj.get("h1Corto") else e(obj["h1"])}</h1>
           <p class="hero__lead">{e(obj["bajada"])}</p>
         </div>
         <div class="lhero__art" aria-hidden="true">{"".join(f'<span class="lhero__p">{pf(x, thumb=True, lazy=False)}</span>' for x in hero_items)}</div>

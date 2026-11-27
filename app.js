@@ -93,13 +93,14 @@ function pf(x, { lazy = true, thumb = false, scene = false } = {}) {
   if (!x.i) return `<span class="${cls}"><span class="ph"><b>${esc(x.n)}</b><i>Vista previa<br>por WhatsApp</i></span></span>`;
   return `<span class="${cls}"><img src="${imgSrc(x, { thumb })}" alt="${esc(x.n)} — cuadro con marco negro"${ld}></span>`;
 }
+const nombreHtml = n => n.length <= 22 || !n.includes(" · ") ? esc(n) : (([a, ...b]) => `${esc(a)}<span class="t-sub"><span class="sr"> · </span>${esc(b.join(" · "))}</span>`)(n.split(" · "));
 const precioTxt = x => x.q ? "Cotizar" : (x.p ? "Desde " : "") + soles(precioBase(x));
 function card(x, { mini = false, add: conAdd = !mini } = {}) {
   const tag = x.t ? '<span class="tag">Más pedido</span>' : x.nw ? '<span class="tag tag--ghost">Nuevo</span>' : x.p ? '<span class="tag tag--ghost">Personalizable</span>' : "";
   const inBag = bag.some(b => b.s === x.s);
   const add = x.q || !conAdd ? "" : `<button class="card__add${inBag ? " is-in" : ""}" data-add="${x.s}" aria-label="${inBag ? "Ya está en tu selección" : "Agregar a mi selección"}: ${esc(x.n)}">${inBag ? "✓" : "+"}</button>`;
   return `<article class="card${mini ? "" : " rv"}" data-s="${x.s}"><div class="card__stage">${tag}${pf(x, { thumb: true })}${add}</div>` +
-    `<h3>${esc(x.n)}</h3>${mini ? "" : `<p>${esc(x.f)}</p>`}<span class="card__price">${precioTxt(x)}</span>` +
+    `<h3>${nombreHtml(x.n)}</h3>${mini ? "" : `<p>${esc(x.f)}</p>`}<span class="card__price">${precioTxt(x)}</span>` +
     `<a class="card__open" href="${purl(x)}" aria-label="Ver ${esc(x.n)}"></a></article>`;
 }
 
@@ -239,7 +240,7 @@ function openProduct(slug, tab, { push = true } = {}) {
   S.x = x;
   const c = colDe(x.c);
   $("#pCol").textContent = `Colección ${c.nombre}${subNombre(x) && c.subs.length > 1 ? " · " + subNombre(x) : ""}`;
-  $("#pTitle").textContent = x.n;
+  $("#pTitle").innerHTML = nombreHtml(x.n);
   $("#pPhrase").textContent = x.f;
   if (!inline || dinamico) {
     $("#pStage").innerHTML = pf(x, { lazy: false });
