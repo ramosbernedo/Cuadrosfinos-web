@@ -84,7 +84,7 @@ def meta_desc(x):
     t = precio_total(x)
     p = "Cotiza por WhatsApp" if t is None else soles(t)
     s = f"{x['n']}: {x['f']} {medida(x)}, listo para colgar. {p}. Hecho a pedido en Lima, envío gratis a todo el Perú."
-    return s if len(s) <= 165 else s[:162].rsplit(" ", 1)[0] + "…"
+    return s if len(s) <= 158 else s[:155].rsplit(" ", 1)[0] + "…"
 
 
 # ---------- piezas de HTML que replica app.js ----------
@@ -144,7 +144,7 @@ ORG = {
 
 
 def head(title, desc, path, og_img="/img/og/inicio.jpg", ld=(), preload="", og_type="website", robots="index,follow"):
-    t = title if (C["marca"] in title or len(title) > 60) else f"{title} | {C['marca']}"
+    t = title if (C["marca"] in title or len(f"{title} | {C['marca']}") > 65) else f"{title} | {C['marca']}"
     return f'''<!doctype html>
 <html lang="es-PE">
 <head>
@@ -788,7 +788,11 @@ def build_product(x, robots="index,follow"):
     </div></section>
 {faq_html(faqs)}
   </main>'''
-    title = f"{x['n']} · Cuadro con marco" + (" · Visita del Papa León XIV" if x["c"] == "papa" else "")
+    # Título para Google: el más completo que entre en 65 caracteres
+    m = C["marca"]; papa = x["c"] == "papa"
+    opciones = ([f"{x['n']} · Cuadro con marco · Visita del Papa León XIV | {m}", f"{x['n']} · Papa León XIV | {m}"] if papa else []) + \
+               [f"{x['n']} · Cuadro con marco | {m}", f"{x['n']} · Cuadro | {m}", f"{x['n']} | {m}"]
+    title = next((t for t in opciones if len(t) <= 65), opciones[-1])
     page = head(title, meta_desc(x), path, og_img=img_og(x), og_type="product", robots=robots,
                 ld=[prod, crumbs_ld(crumbs), faq_ld(faqs)],
                 preload=f'<link rel="preload" as="image" href="{img_main(x)}" fetchpriority="high">' if x.get("i") else "")

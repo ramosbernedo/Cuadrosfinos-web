@@ -946,3 +946,10 @@ h1,h2,h3{text-wrap:balance}
 @media (max-width:620px){.home-shots>.home-shot,.home-shots>.home-shot:first-child{aspect-ratio:1/1;grid-column:auto;grid-row:auto}}
 .revs:has(.rev:only-child){grid-template-columns:minmax(0,560px)}
 @media (max-width:900px){.revs:has(.rev:only-child) .rev{flex-basis:100%}}
+/* ---------- Celular real: teclado, zoom de iPhone, letra grande, iOS 15 ---------- */
+body.escribiendo .bb{transform:translateY(110%);visibility:hidden}
+body.escribiendo .wa-float{display:none}
+@media (max-width:900px){#q,#sort,.search input,.bag-form input,.bag-form select,.field input{font-size:16px}}
+#more{white-space:normal;height:auto;min-height:50px;padding-top:12px;padding-bottom:12px;text-align:center;line-height:1.4;max-width:100%;flex-wrap:wrap}
+.sin-dialog dialog:not([open]){display:none}
+.sin-dialog dialog[open]{position:fixed;inset:0;z-index:300;margin:auto;max-height:100%;overflow:auto;box-shadow:0 0 0 100vmax rgba(0,0,0,.7)}

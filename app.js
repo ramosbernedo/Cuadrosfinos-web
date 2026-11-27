@@ -5,6 +5,15 @@
    ========================================================= */
 (() => {
 "use strict";
+// iOS 15.0–15.3 y navegadores viejos: <dialog> sin showModal → alternativa mínima
+if (!window.HTMLDialogElement || !HTMLDialogElement.prototype.showModal) {
+  const D = (window.HTMLDialogElement || window.HTMLUnknownElement || HTMLElement).prototype;
+  document.documentElement.classList.add("sin-dialog");
+  D.showModal = D.show = function () { this.setAttribute("open", ""); };
+  D.close = function () { if (!this.hasAttribute("open")) return; this.toggleAttribute("open", false); this.dispatchEvent(new Event("close")); };
+  Object.defineProperty(D, "open", { configurable: true, get() { return this.hasAttribute("open"); } });
+  document.addEventListener("keydown", e => { if (e.key === "Escape") document.querySelectorAll("dialog[open]").forEach(d => d.close()); });
+}
 const CAT = window.CATALOGO;
 const CONFIG = CAT.config;
 const P = CONFIG.precio;
@@ -354,7 +363,7 @@ function openZoom([src, alt, html]) {
   if (html) st.insertAdjacentHTML("beforeend", `<div class="zoom__svg" id="zoomSvg" role="img" aria-label="${esc(alt)}">${html}</div>`);
   else { img.src = src; img.alt = alt; }
   z.classList.remove("is-z");
-  z.showModal();
+  z.showModal(); abrirCapa("zoom");
 }
 /* Vista previa en vivo de los personalizados */
 const personal = x => !!(x && window.CFPersonal && CFPersonal.tiene(x.s));
@@ -479,6 +488,7 @@ function bindProduct() {
   });
   $("#pWa").addEventListener("click", e => {
     if (S.x.p && firstMissing()) { e.preventDefault(); firstMissing().focus(); toast("Completa los datos para personalizar"); return; }
+    if (pedidoReciente()) return;
     const code = window.CFTrack ? CFTrack.codigo() : "";
     $("#pWa").href = waLink(productMsg(code), S.x.q ? CONFIG.whatsappPapa : CONFIG.whatsapp);
     const it = item(S.x);
@@ -527,6 +537,28 @@ function bindProduct() {
   if (inline) openProduct(document.body.dataset.slug, new URLSearchParams(location.search).get("vista") === "pared" ? "pared" : "obra", { push: false });
 }
 
+/* ---------- «Atrás» del celular cierra la capa abierta (búsqueda, guía, foto, selección) ---------- */
+let capa = null, popPropio = false, navegando = false;
+function abrirCapa(k) { if (capa === k) return; if (!capa) history.pushState(Object.assign({}, history.state, { capa: k }), ""); capa = k; }
+function cerrarCapa(k) { if (capa !== k) return; capa = null; if (!navegando && history.state && history.state.capa) { popPropio = true; history.back(); } }
+// Al tocar un enlace dentro de una capa, se reemplaza su entrada (así «atrás» vuelve a la página, no a la capa)
+document.addEventListener("click", e => {
+  if (!capa || !history.state || !history.state.capa) return;
+  const a = e.target.closest("a[href]"); if (!a || e.defaultPrevented || a.target === "_blank" || e.metaKey || e.ctrlKey || e.shiftKey || e.button) return;
+  if (!a.closest("dialog, .drawer")) return;
+  const u = new URL(a.href, location.href); if (u.origin !== location.origin) return;
+  e.preventDefault(); navegando = true; location.replace(u.href);
+});
+addEventListener("popstate", () => {
+  if (popPropio) { popPropio = false; return; }
+  if (!capa) return;
+  const k = capa; capa = null;
+  if (k === "bag") closeBag(); else { const d = { search: sdlg, quiz, zoom: $("#zoom") }[k]; if (d && d.open) d.close(); }
+});
+
+document.addEventListener("focusin", e => { if (e.target.matches("input:not([type=checkbox]), textarea, select")) document.body.classList.add("escribiendo"); });
+document.addEventListener("focusout", () => setTimeout(() => { if (!document.activeElement || !document.activeElement.matches("input:not([type=checkbox]), textarea, select")) document.body.classList.remove("escribiendo"); }, 50));
+
 /* ---------- vistos recientemente ---------- */
 function recordView(s) {
   const v = store.get("cf_vistos", []).filter(x => x !== s && BY[x]);
@@ -542,6 +574,10 @@ function renderRecent() {
 }
 
 /* ---------- selección (carrito por WhatsApp) ---------- */
+// Un doble toque en «Pedir» abre WhatsApp una vez y registra un solo pedido
+let ultimoPedido = 0;
+const pedidoReciente = () => { const r = Date.now() - ultimoPedido < 4000; ultimoPedido = Date.now(); return r; };
+const MAX_QTY = 50;
 let bag = store.get("cf_bag", []).filter(b => b && BY[b.s] && !BY[b.s].q && b.qty > 0);
 const unit = b => precioBase(BY[b.s]) + (b.f && b.f.length ? P.personalizar : 0);
 /* Precio por cantidad: cuadros sueltos (30 × 37) se cobran de 3 en 3 al precio del tríptico y 2 al del díptico */
@@ -555,6 +591,7 @@ function addToBag(s, f = null) {
   if (x.p && !f) { openProduct(s); toast("Escribe los datos para personalizarlo"); return; }
   const key = JSON.stringify(f);
   const ex = bag.find(b => b.s === s && JSON.stringify(b.f) === key);
+  if (ex && ex.qty >= MAX_QTY) { toast(`Para más de ${MAX_QTY}, escríbenos por WhatsApp`); return; }
   ex ? ex.qty++ : bag.push({ s, f, qty: 1 });
   T("add_to_cart", { currency: "PEN", value: unit({ s, f }), items: [item(x, { price: unit({ s, f }) })], lista: LISTA });
   saveBag(); syncAddButtons();
@@ -608,6 +645,7 @@ const bagItems = () => bag.map(b => item(BY[b.s], { price: unit(b), quantity: b.
 function bagTotal() { return bag.reduce((a, b) => a + unit(b) * b.qty, 0) - packs().ahorro; }
 function openBag() {
   if (dlg && dlg.open) closeProduct();
+  abrirCapa("bag");
   T("view_cart", { currency: "PEN", value: bagTotal(), items: bagItems() });
   lastFocus = document.activeElement;
   $("#toast").classList.remove("is-on");
@@ -616,6 +654,7 @@ function openBag() {
   setTimeout(() => $(".drawer__head [data-close-bag]").focus(), 60);
 }
 function closeBag() {
+  cerrarCapa("bag");
   drawer.setAttribute("aria-hidden", "true"); drawer.setAttribute("inert", "");
   document.documentElement.classList.remove("lock");
   lastFocus && lastFocus.focus && lastFocus.focus();
@@ -624,6 +663,7 @@ function bindBag() {
   $("#openBag").addEventListener("click", openBag);
   drawer.addEventListener("click", e => {
     const q = e.target.closest("[data-q]");
+    if (q && +q.dataset.d > 0 && bag[+q.dataset.q].qty >= MAX_QTY) { toast(`Para más de ${MAX_QTY} cuadros iguales, escríbenos por WhatsApp`); return; }
     if (q) { const b = bag[+q.dataset.q]; if (+q.dataset.d < 0) T("remove_from_cart", { currency: "PEN", value: unit(b), items: [item(BY[b.s], { price: unit(b) })] }); b.qty += +q.dataset.d; if (b.qty < 1) bag.splice(+q.dataset.q, 1); saveBag(); syncAddButtons(); return; }
     const rm = e.target.closest("[data-rm]");
     if (rm) {
@@ -632,15 +672,19 @@ function bindBag() {
       toast(`Quitaste «${BY[gone.s].n}»`, { label: "Deshacer", fn: () => { bag.push(gone); saveBag(); syncAddButtons(); openBag(); } });
       return;
     }
-    if (e.target.closest("[data-close-bag]") || e.target.closest("a[href]")) closeBag();
+    const enl = e.target.closest("a[href]");
+    if (enl && enl.target !== "_blank") {
+      if (capa && history.state && history.state.capa && new URL(enl.href, location.href).origin === location.origin) { e.preventDefault(); navegando = true; closeBag(); location.replace(enl.href); return; }
+      closeBag(); }
+    else if (e.target.closest("[data-close-bag]")) closeBag();
   });
   drawer.addEventListener("keydown", e => {
     if (e.key === "Escape") return closeBag();
     if (e.key !== "Tab") return;
     const f = $$("a[href],button:not([disabled])", $(".drawer__panel")).filter(el => el.offsetParent);
     if (!f.length) return;
-    if (e.shiftKey && document.activeElement === f[0]) { e.preventDefault(); f.at(-1).focus(); }
-    else if (!e.shiftKey && document.activeElement === f.at(-1)) { e.preventDefault(); f[0].focus(); }
+    if (e.shiftKey && document.activeElement === f[0]) { e.preventDefault(); f[f.length - 1].focus(); }
+    else if (!e.shiftKey && document.activeElement === f[f.length - 1]) { e.preventDefault(); f[0].focus(); }
   });
   $("#bagShare").addEventListener("click", async () => {
     T("share", { method: "seleccion", content_type: "seleccion" });
@@ -655,6 +699,7 @@ function bindBag() {
   $("#bagLugar").addEventListener("change", () => $("#bagLugar").value.trim() && T("add_shipping_info", { currency: "PEN", value: bagTotal(), shipping_tier: $("#bagLugar").value.trim(), items: bagItems() }));
   $("#bagPago").addEventListener("change", () => $("#bagPago").value && T("add_payment_info", { currency: "PEN", value: bagTotal(), payment_type: $("#bagPago").value, items: bagItems() }));
   $("#bagWa").addEventListener("click", () => {
+    if (pedidoReciente()) return;
     const code = window.CFTrack ? CFTrack.codigo() : "";
     $("#bagWa").href = waLink(bagMessage(code));
     T("begin_checkout", { currency: "PEN", value: bagTotal(), items: bagItems(), via: "seleccion" });
@@ -691,7 +736,7 @@ const STYLE = { poder: x => x.c === "poder", fe: x => x.c === "fe" || x.c === "p
 const STYLE_COL = { poder: "poder", fe: "fe", calma: "abstracto", lugares: "lugares", oficio: "oficio", pers: "personalizados" };
 let QA = {};
 const quiz = $("#quiz");
-function openQuiz() { QA = {}; quizStep(0); quiz.showModal(); T("ayuda_inicio", { lista: LISTA }); }
+function openQuiz() { QA = {}; quizStep(0); quiz.showModal(); abrirCapa("quiz"); T("ayuda_inicio", { lista: LISTA }); }
 function quizStep(i) {
   $("#qRes").hidden = true; $("#qOpts").hidden = false;
   const q = QUIZ[i];
@@ -725,7 +770,7 @@ function quizResult() {
 
 /* ---------- búsqueda rápida ---------- */
 const sdlg = $("#search");
-function openSearch() { sdlg.showModal(); $("#sq").value = ""; renderSearch(""); $("#sq").focus(); }
+function openSearch() { sdlg.showModal(); abrirCapa("search"); $("#sq").value = ""; renderSearch(""); $("#sq").focus(); }
 function renderSearch(q) {
   let list;
   if (q.trim()) list = DATA.filter(x => matches(x, q)).sort((a, b) => relevancia(b, q) - relevancia(a, q) || rank(a) - rank(b));
@@ -786,6 +831,7 @@ function bindGeneral() {
       }
     }
   });
+  [["search", sdlg], ["quiz", quiz], ["zoom", $("#zoom")]].forEach(([k, d]) => d && d.addEventListener("close", () => cerrarCapa(k)));
   $$("dialog").forEach(d => d.addEventListener("click", e => { if (d !== dlg && (e.target === d || e.target.closest("[data-close]"))) d.close(); }));
   $("#openSearch").addEventListener("click", openSearch);
   $("#nfSearch")?.addEventListener("click", openSearch);
@@ -806,7 +852,8 @@ function bindGeneral() {
     const typing = /input|textarea|select/i.test(document.activeElement.tagName);
     if (e.key === "/" && !typing && !document.querySelector("dialog[open]")) { e.preventDefault(); openSearch(); }
   });
-  addEventListener("popstate", () => {
+  addEventListener("popstate", e => {
+    if ((e.state && e.state.capa) || popPropio) return;
     const m = location.pathname.match(/^\/cuadro\/([a-z0-9-]+)\/?$/);
     if (dlg && m && BY[m[1]]) { S.pushed = false; openProduct(m[1], null, { push: false }); }
     else if (dlg && dlg.open) { S.pushed = false; dlg.close(); }
