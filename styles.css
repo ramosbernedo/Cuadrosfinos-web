@@ -488,6 +488,7 @@ html.lock{overflow:hidden}
 .hero__shade{position:absolute;inset:0;background:linear-gradient(90deg,rgba(6,6,6,.92) 0%,rgba(6,6,6,.7) 36%,rgba(6,6,6,.15) 70%,rgba(6,6,6,.05)),linear-gradient(0deg,rgba(6,6,6,.85),transparent 40%)}
 .hero__in{position:relative;z-index:1;width:min(1240px,100% - 48px);padding:120px 0 34px;display:flex;flex-direction:column;gap:70px}
 .hero__copy{max-width:600px}
+.hero h1 .l{display:block;font-weight:inherit;text-wrap:balance}
 .hero h1{font-size:clamp(2.2rem,5vw,4rem);text-shadow:0 2px 30px rgba(0,0,0,.5)}
 .hero__lead{color:#d4d0c8}
 .hero__foot{display:flex;justify-content:space-between;align-items:flex-end;gap:20px;border-top:1px solid rgba(255,255,255,.14);padding-top:18px}
