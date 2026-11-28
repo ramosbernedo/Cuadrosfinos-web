@@ -966,11 +966,13 @@ body.escribiendo .wa-float{display:none}
   .filters__more .filters__grp .filters__row{flex-wrap:wrap;overflow:visible;width:auto;max-width:100%;margin-right:0;padding-right:0}
   .filters__done{display:flex;width:100%;margin-top:18px;justify-content:center}
   .filters__foot{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:10px}
-  .filters__foot .select{margin-left:0;min-width:0;min-height:44px;padding:0 12px;gap:8px}
-  .filters__foot .select select{min-width:0;width:100%;font-size:.85rem}
-  .filters__toggle{display:flex;align-items:center;gap:8px;min-width:0;min-height:44px;padding:0 12px;border:1px solid var(--line-2);text-align:left}
-  .filters__toggle span{flex:none;font:500 .62rem/1 var(--sans);letter-spacing:.18em;text-transform:uppercase;color:var(--muted)}
-  .filters__toggle b{flex:1;min-width:0;font-weight:400;font-size:.85rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .filters__foot .select{margin-left:0;min-width:0;min-height:54px;padding:8px 12px 6px;gap:3px;flex-direction:column;align-items:stretch;justify-content:center}
+  .filters__foot .select span{font-size:.54rem;letter-spacing:.16em}
+  .filters__foot .select select{min-width:0;width:100%;padding:2px 0;line-height:1.2}
+  .filters__toggle{display:grid;grid-template-columns:1fr auto;column-gap:8px;row-gap:3px;align-items:center;align-content:center;min-width:0;min-height:54px;padding:8px 12px 6px;border:1px solid var(--line-2);text-align:left}
+  .filters__toggle i{grid-column:2;grid-row:1/3}
+  .filters__toggle span{flex:none;font:500 .54rem/1 var(--sans);letter-spacing:.16em;text-transform:uppercase;color:var(--muted)}
+  .filters__toggle b{min-width:0;font-weight:400;font-size:16px;line-height:1.2;padding:2px 0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
   .filters__toggle i{flex:none;width:7px;height:7px;border-right:1.5px solid var(--fg-2);border-bottom:1.5px solid var(--fg-2);transform:translateY(-2px) rotate(45deg);transition:transform .2s}
   .filters.is-open .filters__toggle{border-color:var(--fg-2)}
   .filters.is-open .filters__toggle i{transform:translateY(2px) rotate(-135deg)}
