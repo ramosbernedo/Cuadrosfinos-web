@@ -142,21 +142,24 @@ const DISENOS = {
 /* ---------- Mapas reales: lugar → coordenadas (Nominatim) → calles (Overpass) → SVG ---------- */
 const MAPAS = new Map();          // clave → { ok, svg, lat, lon, nombre } | { error } | { cargando: Promise }
 const claveMapa = lugar => { const v = norm(lugar || "").replace(/\s+/g, " ").trim(); return v.length >= 3 ? v : ""; };
-const OVERPASS = ["https://overpass-api.de/api/interpreter", "https://overpass.kumi.systems/api/interpreter"];
+const OVERPASS = ["https://overpass-api.de/api/interpreter", "https://maps.mail.ru/osm/tools/overpass/api/interpreter", "https://overpass.kumi.systems/api/interpreter"];
 const ANCHO = { motorway: 4.2, trunk: 3.8, primary: 3.2, secondary: 2.5, tertiary: 1.9, unclassified: 1.1, residential: 1.0, living_street: .9, pedestrian: .9 };
 const conTiempo = (url, op, ms) => { const c = new AbortController(); const t = setTimeout(() => c.abort(), ms); return fetch(url, { ...op, signal: c.signal }).finally(() => clearTimeout(t)); };
 async function buscarLugar(q) {
   const u = "https://nominatim.openstreetmap.org/search?format=jsonv2&limit=1&accept-language=es&q=" + encodeURIComponent(q);
   const r = await conTiempo(u, { headers: { Accept: "application/json" } }, 9000); const j = await r.json();
   if (!j.length) throw new Error("no encontrado");
-  const x = j[0], radio = /city|town|municipality|county|state/.test(x.addresstype || x.type) ? 2600 : /suburb|borough|city_district|quarter|neighbourhood|village/.test(x.addresstype || x.type) ? 1500 : 1200;
+  const x = j[0], radio = /city|town|municipality|county|state/.test(x.addresstype || x.type) ? 2200 : /suburb|borough|city_district|quarter|neighbourhood|village/.test(x.addresstype || x.type) ? 1500 : 1200;
   return { lat: +x.lat, lon: +x.lon, radio, nombre: x.name };
 }
 async function bajarCalles({ lat, lon, radio }) {
-  const q = `[out:json][timeout:25];way(around:${radio},${lat.toFixed(5)},${lon.toFixed(5)})[highway~"^(motorway|trunk|primary|secondary|tertiary|unclassified|residential|living_street|pedestrian)$"];out geom qt;`;
+  // Rectángulo del cuadro (no un círculo): el radio es medio ancho; arriba 1×radio, abajo 1,3×radio (detrás del nombre)
+  const dy = radio / 110540, dx = radio / (111320 * Math.cos(lat * Math.PI / 180));
+  const caja = [lat - 1.3 * dy, lon - 1.05 * dx, lat + 1.05 * dy, lon + 1.05 * dx].map(v => v.toFixed(5)).join(",");
+  const q = `[out:json][timeout:25];way(${caja})[highway~"^(motorway|trunk|primary|secondary|tertiary|unclassified|residential|living_street|pedestrian)$"];out geom qt;`;
   let ultimo;
   for (const url of OVERPASS) {
-    try { const r = await conTiempo(url, { method: "POST", body: "data=" + encodeURIComponent(q), headers: { "Content-Type": "application/x-www-form-urlencoded" } }, 30000);
+    try { const r = await conTiempo(url, { method: "POST", body: "data=" + encodeURIComponent(q), headers: { "Content-Type": "application/x-www-form-urlencoded" } }, 22000);
       if (!r.ok) throw new Error("HTTP " + r.status); return (await r.json()).elements || []; } catch (e) { ultimo = e; }
   }
   throw ultimo;
