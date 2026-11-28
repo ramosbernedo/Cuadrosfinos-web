@@ -26,6 +26,7 @@ const grain = id => `<rect width="${W}" height="${H}" filter="url(#${id})"/>`;
 const T = (x, y, txt, { size = 20, font = SERIF, weight = 400, italic = false, track = 0, fill = "#1c1a17", anchor = "middle", opacity = 1 } = {}) =>
   `<text x="${x}" y="${y}" text-anchor="${anchor}" font-family="${font}" font-size="${size.toFixed(1)}" font-weight="${weight}"${italic ? ' font-style="italic"' : ""}${track ? ` letter-spacing="${(track * size).toFixed(1)}"` : ""} fill="${fill}" opacity="${opacity}">${esc(txt)}</text>`;
 const up = s => s.toLocaleUpperCase("es-PE");
+const norm = s => String(s).normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase();
 
 // Semilla estable a partir de un texto
 const seeded = str => { let h = 2166136261; for (const c of str) { h ^= c.charCodeAt(0); h = Math.imul(h, 16777619); } return () => { h ^= h << 13; h ^= h >>> 17; h ^= h << 5; return ((h >>> 0) % 100000) / 100000; }; };
@@ -109,15 +110,27 @@ const DISENOS = {
       T(300, 302, a, { size: fit(a, 520, 36, .7, .14), weight: 500, track: .14, fill: "#191714" }), "", "#ece6dc");
   },
 
-  /* Tu ciudad — mapa con el nombre del lugar */
+  /* Tu ciudad — mapa real del lugar (calles de OpenStreetMap) con su nombre */
   "tu-ciudad"([lugar, texto]) {
     const id = "m" + (++uid);
     const raw = (lugar || "Lima, Perú").trim();
     const [c1, ...rest] = raw.split(",").map(s => s.trim()).filter(Boolean);
     const city = up(c1 || "Lima"), sub = rest.join(", ") || "Perú";
     const t = (texto || "").trim();
-    const defs = `<linearGradient id="${id}" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#0b0b0b" stop-opacity="0"/><stop offset=".45" stop-color="#0b0b0b" stop-opacity=".92"/><stop offset="1" stop-color="#0b0b0b"/></linearGradient>`;
-    return svg(`<image href="/img/cuadros/base/tu-ciudad.webp" x="0" y="-20" width="600" height="816" preserveAspectRatio="xMidYMid slice"/>` +
+    const clave = claveMapa(lugar), m = clave && MAPAS.get(clave);
+    const defs = `<linearGradient id="${id}" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#0b0b0b" stop-opacity="0"/><stop offset=".45" stop-color="#0b0b0b" stop-opacity=".92"/><stop offset="1" stop-color="#0b0b0b"/></linearGradient>` +
+      `<clipPath id="${id}c"><rect width="600" height="780"/></clipPath><filter id="${id}b"><feGaussianBlur stdDeviation="7"/></filter>`;
+    let fondo;
+    if (m && m.ok) fondo = `<g clip-path="url(#${id}c)" fill="none" stroke="#ffffff" stroke-linecap="round" stroke-linejoin="round">${m.svg}</g>` +
+      `<text x="590" y="772" text-anchor="end" font-family="${SANS}" font-size="9" fill="#6f6a62">© OpenStreetMap</text>`;
+    else if (!clave) fondo = `<image href="/img/cuadros/base/tu-ciudad.webp" x="0" y="-20" width="600" height="816" preserveAspectRatio="xMidYMid slice"/>`;
+    else {
+      // Mientras llega (o si falla) el mapa: muestra difuminada y aviso
+      const msg = m && m.error ? "Te mandamos el mapa por WhatsApp" : "Dibujando el mapa de " + city + "…";
+      fondo = `<image href="/img/cuadros/base/tu-ciudad.webp" x="0" y="-20" width="600" height="816" preserveAspectRatio="xMidYMid slice" filter="url(#${id}b)" opacity=".55"/>` +
+        T(300, 330, msg, { size: fit(msg, 500, 20, .6, .12), track: .12, font: SANS, weight: 500, fill: "#ffffff" });
+    }
+    return svg(fondo +
       `<rect x="0" y="540" width="600" height="240" fill="url(#${id})"/>` +
       T(300, 650, city, { size: fit(city, 520, 54, .7, .5), track: .5, font: SANS, weight: 600, fill: "#ffffff" }) +
       `<line x1="226" y1="682" x2="250" y2="682" stroke="#cfc9bf" stroke-width="1"/><line x1="350" y1="682" x2="374" y2="682" stroke="#cfc9bf" stroke-width="1"/>` +
@@ -126,8 +139,59 @@ const DISENOS = {
   },
 };
 
+/* ---------- Mapas reales: lugar → coordenadas (Nominatim) → calles (Overpass) → SVG ---------- */
+const MAPAS = new Map();          // clave → { ok, svg, lat, lon, nombre } | { error } | { cargando: Promise }
+const claveMapa = lugar => { const v = norm(lugar || "").replace(/\s+/g, " ").trim(); return v.length >= 3 ? v : ""; };
+const OVERPASS = ["https://overpass-api.de/api/interpreter", "https://maps.mail.ru/osm/tools/overpass/api/interpreter", "https://overpass.kumi.systems/api/interpreter"];
+const ANCHO = { motorway: 4.2, trunk: 3.8, primary: 3.2, secondary: 2.5, tertiary: 1.9, unclassified: 1.1, residential: 1.0, living_street: .9, pedestrian: .9 };
+const conTiempo = (url, op, ms) => { const c = new AbortController(); const t = setTimeout(() => c.abort(), ms); return fetch(url, { ...op, signal: c.signal }).finally(() => clearTimeout(t)); };
+async function buscarLugar(q) {
+  const u = "https://nominatim.openstreetmap.org/search?format=jsonv2&limit=1&accept-language=es&q=" + encodeURIComponent(q);
+  const r = await conTiempo(u, { headers: { Accept: "application/json" } }, 9000); const j = await r.json();
+  if (!j.length) throw new Error("no encontrado");
+  const x = j[0], radio = /city|town|municipality|county|state/.test(x.addresstype || x.type) ? 2200 : /suburb|borough|city_district|quarter|neighbourhood|village/.test(x.addresstype || x.type) ? 1500 : 1200;
+  return { lat: +x.lat, lon: +x.lon, radio, nombre: x.name };
+}
+async function bajarCalles({ lat, lon, radio }) {
+  // Rectángulo del cuadro (no un círculo): el radio es medio ancho; arriba 1×radio, abajo 1,3×radio (detrás del nombre)
+  const dy = radio / 110540, dx = radio / (111320 * Math.cos(lat * Math.PI / 180));
+  const caja = [lat - 1.3 * dy, lon - 1.05 * dx, lat + 1.05 * dy, lon + 1.05 * dx].map(v => v.toFixed(5)).join(",");
+  const q = `[out:json][timeout:25];way(${caja})[highway~"^(motorway|trunk|primary|secondary|tertiary|unclassified|residential|living_street|pedestrian)$"];out geom qt;`;
+  let ultimo;
+  for (const url of OVERPASS) {
+    try { const r = await conTiempo(url, { method: "POST", body: "data=" + encodeURIComponent(q), headers: { "Content-Type": "application/x-www-form-urlencoded" } }, 22000);
+      if (!r.ok) throw new Error("HTTP " + r.status); return (await r.json()).elements || []; } catch (e) { ultimo = e; }
+  }
+  throw ultimo;
+}
+// Proyección local: el radio ocupa el ancho del cuadro (centrado un poco arriba, sobre el nombre)
+function dibujar(ways, { lat, lon, radio }) {
+  const kx = 300 / radio, mx = 111320 * Math.cos(lat * Math.PI / 180), my = 110540, cy = 300;
+  const grupos = {};
+  for (const w of ways) {
+    const g = w.geometry; if (!g || g.length < 2) continue; const tipo = (w.tags || {}).highway;
+    const d = "M" + g.map(p => ((p.lon - lon) * mx * kx + 300).toFixed(1) + " " + (cy - (p.lat - lat) * my * kx).toFixed(1)).join("L");
+    (grupos[tipo] ||= []).push(d);
+  }
+  return Object.entries(grupos).sort((a, b) => (ANCHO[a[0]] || 1) - (ANCHO[b[0]] || 1))
+    .map(([tipo, ds]) => `<path stroke-width="${ANCHO[tipo] || 1}" opacity="${(ANCHO[tipo] || 1) > 1.5 ? .95 : .7}" d="${ds.join("")}"/>`).join("");
+}
+function cargarMapa(lugar) {
+  const clave = claveMapa(lugar); if (!clave || typeof fetch !== "function") return Promise.resolve(false);
+  const ya = MAPAS.get(clave); if (ya) return ya.cargando || Promise.resolve(false);
+  const cargando = (async () => {
+    try { const loc = await buscarLugar(lugar); const ways = await bajarCalles(loc);
+      if (ways.length < 15) throw new Error("pocas calles");
+      MAPAS.set(clave, { ok: true, svg: dibujar(ways, loc), lat: loc.lat, lon: loc.lon, nombre: loc.nombre });
+    } catch (e) { MAPAS.set(clave, { error: String(e.message || e) }); }
+    return true;
+  })();
+  MAPAS.set(clave, { cargando });
+  return cargando;
+}
+
 const NOTAS = {
-  "tu-ciudad": "La vista previa usa el mapa de Lima: el tuyo se dibuja con las calles reales del lugar que escribas.",
+  "tu-ciudad": "El mapa se dibuja con las calles reales del lugar que escribas (datos de OpenStreetMap).",
   "tu-cielo": "Vista previa referencial: el cielo exacto de tu fecha, hora y lugar te lo enviamos por WhatsApp antes de imprimir.",
 };
 
@@ -135,5 +199,9 @@ window.CFPersonal = {
   tiene: slug => !!DISENOS[slug],
   svg: (slug, valores = []) => DISENOS[slug](valores),
   nota: slug => NOTAS[slug] || "",
+  // Carga lo que el diseño necesite de internet (el mapa real); resuelve true cuando hay algo nuevo que dibujar
+  cargar: (slug, valores = []) => slug === "tu-ciudad" ? cargarMapa(valores[0]) : Promise.resolve(false),
+  // Datos extra para el pedido (coordenadas del mapa, para imprimir exactamente lo que vio)
+  extra: (slug, valores = []) => { if (slug !== "tu-ciudad") return null; const m = MAPAS.get(claveMapa(valores[0])); return m && m.ok ? ["Ubicación del mapa", `${m.lat.toFixed(5)}, ${m.lon.toFixed(5)} (${m.nombre})`] : null; },
 };
 })();

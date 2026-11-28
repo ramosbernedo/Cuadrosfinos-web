@@ -314,6 +314,12 @@ function onDialogClosed() {
   S.pushed = false;
 }
 const fieldKey = () => "cf_fields_" + S.x.s;
+// Lo que va al pedido: lo escrito + lo que el diseño agregue (p. ej. las coordenadas del mapa real)
+function camposPedido() {
+  const f = fieldValues().filter(([, v]) => v);
+  const ex = window.CFPersonal && CFPersonal.extra && S.x ? CFPersonal.extra(S.x.s, $$("#pFieldList input").map(i => i.value.trim())) : null;
+  return ex ? [...f, ex] : f;
+}
 function fieldValues() { return $$("#pFieldList input").map(i => [i.dataset.label, i.value.trim()]); }
 function restoreFields() {
   const saved = store.get(fieldKey(), {});
@@ -322,7 +328,7 @@ function restoreFields() {
 function productMsg(code = "") {
   const x = S.x;
   if (x.q) return `Hola, quiero cotizar el cuadro «${x.n}» (Papa León XIV).\n${absUrl(x)}` + (code ? `\nCódigo: ${code}` : "");
-  const f = x.p ? fieldValues().filter(([, v]) => v).map(([l, v]) => `  · ${l}: ${v}`).join("\n") : "";
+  const f = x.p ? camposPedido().map(([l, v]) => `  · ${l}: ${v}`).join("\n") : "";
   return `Hola, quiero pedir este cuadro:\n• ${x.n} — ${medida(x)} — ${$("#pPrice").textContent}` + (f ? `\n${f}` : "") + `\n${absUrl(x)}` + (code ? `\nCódigo: ${code}` : "") + `\n\n¿Me confirman el envío a mi dirección?`;
 }
 function updateProductWa() { $("#pWa").href = waLink(productMsg(), S.x.q ? CONFIG.whatsappPapa : CONFIG.whatsapp); }
@@ -374,6 +380,15 @@ function livePreview() {
   draw($("#pStage .pf")); draw($("#pSceneArt .pf"));
   const nota = CFPersonal.nota(x.s);
   $("#pPersNote").textContent = (nota ? nota + " " : "") + "Te mandamos la final por WhatsApp antes de imprimir.";
+  // Diseños que necesitan internet (el mapa real de «Tu ciudad»): se piden al dejar de escribir
+  if (CFPersonal.cargar) {
+    clearTimeout(window.__tmap);
+    window.__tmap = setTimeout(() => CFPersonal.cargar(x.s, vals).then(nuevo => {
+      if (!nuevo || S.x !== x || $$("#pFieldList input").map(i => i.value.trim()).join("|") !== vals.join("|")) return;
+      livePreview(); updateProductWa();
+      if (S.tab === "3d") { mvFor = null; open3D(); }
+    }), 700);
+  }
 }
 /* ---------- 3D y realidad aumentada (model-viewer, se carga solo al usarlo) ---------- */
 const MV_SRC = "/vendor/model-viewer-4.3.1.min.js";
@@ -483,7 +498,7 @@ function bindProduct() {
   const firstMissing = () => $$("#pFieldList input[required]").find(i => !i.value.trim());
   $("#pAdd").addEventListener("click", () => {
     if (S.x.p && firstMissing()) { firstMissing().focus(); toast("Completa los datos para personalizar"); return; }
-    addToBag(S.x.s, S.x.p ? fieldValues().filter(([, v]) => v) : null);
+    addToBag(S.x.s, S.x.p ? camposPedido() : null);
     refreshAddBtn();
   });
   $("#pWa").addEventListener("click", e => {
@@ -496,7 +511,7 @@ function bindProduct() {
     T("generate_lead", { currency: "PEN", value: it.price, transaction_id: code, items: [it], via: S.x.q ? "cotizar" : "ficha", ...((window.CFTrack && CFTrack.origen()) || {}) });
     const ent = store.get("cf_entrega", {});
     window.CFTrack && CFTrack.pedido({ codigo: code, via: S.x.q ? "cotizar" : "ficha", lugar: ent.lugar || "", pago: ent.pago || "", regalo: !!ent.regalo,
-      items: [{ s: S.x.s, n: S.x.n, qty: 1, precio: it.price, f: S.x.p ? fieldValues().filter(([, v]) => v) : null }] });
+      items: [{ s: S.x.s, n: S.x.n, qty: 1, precio: it.price, f: S.x.p ? camposPedido() : null }] });
   });
   // Barra de compra fija (celular): visible mientras los botones principales no se ven completos; usa los mismos botones
   const bar = $("#buyBar");
