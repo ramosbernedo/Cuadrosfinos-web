@@ -115,9 +115,11 @@ const DISENOS = {
     const id = "m" + (++uid);
     const raw = (lugar || "Lima, Perú").trim();
     const [c1, ...rest] = raw.split(",").map(s => s.trim()).filter(Boolean);
-    const city = up(c1 || "Lima"), sub = rest.join(", ") || "Perú";
+    const city = up(c1 || "Lima");
     const t = (texto || "").trim();
     const clave = claveMapa(lugar), m = clave && MAPAS.get(clave);
+    // País: el que escribiste después de la coma; si no, el del lugar encontrado (Paris → Francia); Perú solo en el ejemplo
+    const sub = rest.join(", ") || (m && m.ok && m.pais) || (clave ? "" : "Perú");
     const defs = `<linearGradient id="${id}" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#0b0b0b" stop-opacity="0"/><stop offset=".45" stop-color="#0b0b0b" stop-opacity=".92"/><stop offset="1" stop-color="#0b0b0b"/></linearGradient>` +
       `<clipPath id="${id}c"><rect width="600" height="780"/></clipPath><filter id="${id}b"><feGaussianBlur stdDeviation="7"/></filter>`;
     let fondo;
@@ -133,8 +135,8 @@ const DISENOS = {
     return svg(fondo +
       `<rect x="0" y="540" width="600" height="240" fill="url(#${id})"/>` +
       T(300, 650, city, { size: fit(city, 520, 54, .7, .5), track: .5, font: SANS, weight: 600, fill: "#ffffff" }) +
-      `<line x1="226" y1="682" x2="250" y2="682" stroke="#cfc9bf" stroke-width="1"/><line x1="350" y1="682" x2="374" y2="682" stroke="#cfc9bf" stroke-width="1"/>` +
-      T(300, 690, sub, { size: fit(sub, 90, 24, .45), italic: true, fill: "#d9d3c9" }) +
+      (sub ? `<line x1="226" y1="682" x2="250" y2="682" stroke="#cfc9bf" stroke-width="1"/><line x1="350" y1="682" x2="374" y2="682" stroke="#cfc9bf" stroke-width="1"/>` +
+      T(300, 690, sub, { size: fit(sub, 90, 24, .45), italic: true, fill: "#d9d3c9" }) : "") +
       (t ? T(300, 730, up(t), { size: fit(up(t), 520, 13, .62, .35), track: .35, font: SANS, fill: "#a9a399" }) : ""), defs, "#0b0b0b");
   },
 };
@@ -146,11 +148,11 @@ const OVERPASS = ["https://overpass-api.de/api/interpreter", "https://maps.mail.
 const ANCHO = { motorway: 4.2, trunk: 3.8, primary: 3.2, secondary: 2.5, tertiary: 1.9, unclassified: 1.1, residential: 1.0, living_street: .9, pedestrian: .9 };
 const conTiempo = (url, op, ms) => { const c = new AbortController(); const t = setTimeout(() => c.abort(), ms); return fetch(url, { ...op, signal: c.signal }).finally(() => clearTimeout(t)); };
 async function buscarLugar(q) {
-  const u = "https://nominatim.openstreetmap.org/search?format=jsonv2&limit=1&accept-language=es&q=" + encodeURIComponent(q);
+  const u = "https://nominatim.openstreetmap.org/search?format=jsonv2&limit=1&addressdetails=1&accept-language=es&q=" + encodeURIComponent(q);
   const r = await conTiempo(u, { headers: { Accept: "application/json" } }, 9000); const j = await r.json();
   if (!j.length) throw new Error("no encontrado");
   const x = j[0], radio = /city|town|municipality|county|state/.test(x.addresstype || x.type) ? 2200 : /suburb|borough|city_district|quarter|neighbourhood|village/.test(x.addresstype || x.type) ? 1500 : 1200;
-  return { lat: +x.lat, lon: +x.lon, radio, nombre: x.name };
+  return { lat: +x.lat, lon: +x.lon, radio, nombre: x.name, pais: (x.address || {}).country || "" };
 }
 async function bajarCalles({ lat, lon, radio }) {
   // Rectángulo del cuadro (no un círculo): el radio es medio ancho; arriba 1×radio, abajo 1,3×radio (detrás del nombre)
@@ -182,7 +184,7 @@ function cargarMapa(lugar) {
   const cargando = (async () => {
     try { const loc = await buscarLugar(lugar); const ways = await bajarCalles(loc);
       if (ways.length < 15) throw new Error("pocas calles");
-      MAPAS.set(clave, { ok: true, svg: dibujar(ways, loc), lat: loc.lat, lon: loc.lon, nombre: loc.nombre });
+      MAPAS.set(clave, { ok: true, svg: dibujar(ways, loc), lat: loc.lat, lon: loc.lon, nombre: loc.nombre, pais: loc.pais });
     } catch (e) { MAPAS.set(clave, { error: String(e.message || e) }); }
     return true;
   })();
