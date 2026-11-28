@@ -953,3 +953,8 @@ body.escribiendo .wa-float{display:none}
 #more{white-space:normal;height:auto;min-height:50px;padding-top:12px;padding-bottom:12px;text-align:center;line-height:1.4;max-width:100%;flex-wrap:wrap}
 .sin-dialog dialog:not([open]){display:none}
 .sin-dialog dialog[open]{position:fixed;inset:0;z-index:300;margin:auto;max-height:100%;overflow:auto;box-shadow:0 0 0 100vmax rgba(0,0,0,.7)}
+/* ---------- Portada en escritorio: la foto a la derecha, sin texto encima ni cuadros cortados ---------- */
+@media (min-width:901px){
+  .hero__slides{left:auto;right:0;width:60%;-webkit-mask-image:linear-gradient(90deg,transparent 0,#000 9%);mask-image:linear-gradient(90deg,transparent 0,#000 9%)}
+  .hero__shade{background:linear-gradient(0deg,rgba(6,6,6,.8),transparent 35%)}
+}
