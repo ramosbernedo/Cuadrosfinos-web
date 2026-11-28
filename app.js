@@ -392,6 +392,8 @@ function livePreview() {
     window.__tmap = setTimeout(() => CFPersonal.cargar(x.s, vals).then(nuevo => {
       if (!nuevo || S.x !== x || $$("#pFieldList input").map(i => i.value.trim()).join("|") !== vals.join("|")) return;
       livePreview(); updateProductWa();
+      // Si la vista ampliada está abierta, también se actualiza (antes se quedaba en «Dibujando el mapa…»)
+      const zs = $("#zoom").open && $("#zoomSvg"); if (zs) zs.innerHTML = CFPersonal.svg(x.s, vals);
       if (S.tab === "3d") { mvFor = null; open3D(); }
     }), 700);
   }
