@@ -166,6 +166,8 @@ function renderFilters() {
     $("small", b).textContent = n; b.classList.toggle("is-zero", !n && b.dataset.room !== F.room); });
   $("#sort").value = F.sort;
   if ($("#q").value !== F.q) $("#q").value = F.q;
+  const nCol = F.col && ((colDe(F.col) || VIRTUALES.find(v => v.id === F.col) || {}).nombre || F.col), nRoom = F.room && $(`#roomFilters [data-room="${F.room}"]`)?.firstChild?.textContent;
+  $("#filtersSum").textContent = [nCol, nRoom].filter(Boolean).join(" · ") || "Todos";
   $("#resetFilters").hidden = !(F.q || F.sub || F.col !== F0.col || F.room !== F0.room || (PAGE === "home" && (F.col || F.room)));
 }
 function renderGrid() {
@@ -175,6 +177,7 @@ function renderGrid() {
   $("#more").hidden = resto <= 0; $("#moreN").textContent = `quedan ${resto}`;
   $("#empty").hidden = list.length > 0;
   $("#emptyQ").textContent = F.q ? `“${F.q}”` : "cuadros con esos filtros";
+  $("#filtersDoneN").textContent = list.length;
   $("#count").textContent = list.length === DATA.length ? `${list.length} cuadros` : `${list.length} de ${DATA.length} cuadros`;
   reveal($("#grid"));
   T("view_item_list", { item_list_id: F.col || F.room || "todos", item_list_name: listaNombre(), items: list.slice(0, 20).map((x, i) => item(x, { index: i })) });
@@ -213,6 +216,9 @@ function bindCatalog() {
   $("#resetFilters").addEventListener("click", () => setFilter({ col: PAGE === "home" ? "" : F0.col, sub: "", q: "", room: PAGE === "home" ? "" : F0.room }));
   $("#more").addEventListener("click", () => { const desde = lim; lim += LIM0 * 2; renderGrid(); $$("#grid .card")[desde]?.querySelector(".card__open")?.focus({ preventScroll: true }); T("ver_mas", { lista: listaNombre(), mostrados: lim }); });
   $("#sort").addEventListener("change", e => setFilter({ sort: e.target.value }));
+  const abrir = on => { $(".filters").classList.toggle("is-open", on); $("#filtersToggle").setAttribute("aria-expanded", String(on)); };
+  $("#filtersToggle").addEventListener("click", () => abrir(!$(".filters").classList.contains("is-open")));
+  $("#filtersDone").addEventListener("click", () => { abrir(false); $("#grid").scrollIntoView({ behavior: reduced ? "auto" : "smooth", block: "start" }); });
   $("#clearFilters").addEventListener("click", () => setFilter({ col: "", sub: "", q: "", room: "" }));
   const changed = F.q || F.sub || F.col !== F0.col || F.room !== F0.room;
   renderFilters();
