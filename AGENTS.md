@@ -62,6 +62,10 @@ Si no puedes correr alguna prueba, dilo en el PR. No digas que pasó si no la co
 - **Accesibilidad**: mantén teclado, `aria-*`, contraste y `prefers-reduced-motion`.
 - **Rendimiento**: nada de imágenes pesadas ni scripts grandes nuevos.
 
+## Imágenes con IA
+Si te piden diseñar o generar imágenes de cuadros, sigue **`docs/chatgpt-disenos.md`** al pie de la letra:
+primero un mosaico de prueba, esperar el ok, una sola final al tamaño exacto, sin variantes extra. El cupo es compartido.
+
 ## Pull requests
 - Un PR por tarea, pequeño y enfocado.
 - Título corto en español que diga qué cambia para el cliente (ej.: «Ficha: precio visible sin bajar en celular»).
