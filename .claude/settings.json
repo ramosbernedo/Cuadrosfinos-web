@@ -1,0 +1,9 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(curl * https://overpass-api.de/api/interpreter*)",
+      "Bash(curl * https://overpass.kumi.systems/api/interpreter*)",
+      "Bash(curl * https://nominatim.openstreetmap.org/search*)"
+    ]
+  }
+}
