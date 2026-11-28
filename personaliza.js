@@ -144,48 +144,12 @@ const DISENOS = {
 /* ---------- Mapas reales: lugar → coordenadas (Nominatim) → calles (Overpass) → SVG ---------- */
 const MAPAS = new Map();          // clave → { ok, svg, lat, lon, nombre } | { error } | { cargando: Promise }
 const claveMapa = lugar => { const v = norm(lugar || "").replace(/\s+/g, " ").trim(); return v.length >= 3 ? v : ""; };
-const OVERPASS = ["https://overpass-api.de/api/interpreter", "https://maps.mail.ru/osm/tools/overpass/api/interpreter", "https://overpass.kumi.systems/api/interpreter"];
-const ANCHO = { motorway: 4.2, trunk: 3.8, primary: 3.2, secondary: 2.5, tertiary: 1.9, unclassified: 1.1, residential: 1.0, living_street: .9, pedestrian: .9 };
 const conTiempo = (url, op, ms) => { const c = new AbortController(); const t = setTimeout(() => c.abort(), ms); return fetch(url, { ...op, signal: c.signal }).finally(() => clearTimeout(t)); };
-async function buscarLugar(q) {
-  const u = "https://nominatim.openstreetmap.org/search?format=jsonv2&limit=1&addressdetails=1&accept-language=es&q=" + encodeURIComponent(q);
-  const r = await conTiempo(u, { headers: { Accept: "application/json" } }, 9000); const j = await r.json();
-  if (!j.length) throw new Error("no encontrado");
-  const x = j[0], radio = /city|town|municipality|county|state/.test(x.addresstype || x.type) ? 2200 : /suburb|borough|city_district|quarter|neighbourhood|village/.test(x.addresstype || x.type) ? 1500 : 1200;
-  return { lat: +x.lat, lon: +x.lon, radio, nombre: x.name, pais: (x.address || {}).country || "" };
-}
-async function bajarCalles({ lat, lon, radio }) {
-  // Rectángulo del cuadro (no un círculo): el radio es medio ancho; arriba 1×radio, abajo 1,3×radio (detrás del nombre)
-  const dy = radio / 110540, dx = radio / (111320 * Math.cos(lat * Math.PI / 180));
-  const caja = [lat - 1.3 * dy, lon - 1.05 * dx, lat + 1.05 * dy, lon + 1.05 * dx].map(v => v.toFixed(5)).join(",");
-  const q = `[out:json][timeout:25];way(${caja})[highway~"^(motorway|trunk|primary|secondary|tertiary|unclassified|residential|living_street|pedestrian)$"];out geom qt;`;
-  // Todos los servidores a la vez: gana el primero que responde bien (antes se probaban uno tras otro)
-  const ctrls = OVERPASS.map(() => new AbortController());
-  const pedidos = OVERPASS.map((url, i) => { const t = setTimeout(() => ctrls[i].abort(), 25000);
-    return fetch(url, { method: "POST", body: "data=" + encodeURIComponent(q), headers: { "Content-Type": "application/x-www-form-urlencoded" }, signal: ctrls[i].signal })
-      .then(async r => { if (!r.ok) throw new Error("HTTP " + r.status); const els = (await r.json()).elements || []; if (els.length < 15) throw new Error("pocas calles"); return [i, els]; })
-      .finally(() => clearTimeout(t)); });
-  const [gano, els] = await Promise.any(pedidos);
-  ctrls.forEach((c, i) => { if (i !== gano) c.abort(); });
-  return els;
-}
 // Camino rápido: nuestro servidor busca, descarga y adelgaza el mapa (y lo guarda para la próxima vez)
 async function mapaServidor(lugar) {
   const r = await conTiempo("/api/mapa?q=" + encodeURIComponent(lugar), {}, 30000);
   const j = await r.json(); if (!j.ok) throw new Error(j.error || "HTTP " + r.status);
   return j;
-}
-// Proyección local: el radio ocupa el ancho del cuadro (centrado un poco arriba, sobre el nombre)
-function dibujar(ways, { lat, lon, radio }) {
-  const kx = 300 / radio, mx = 111320 * Math.cos(lat * Math.PI / 180), my = 110540, cy = 300;
-  const grupos = {};
-  for (const w of ways) {
-    const g = w.geometry; if (!g || g.length < 2) continue; const tipo = (w.tags || {}).highway;
-    const d = "M" + g.map(p => ((p.lon - lon) * mx * kx + 300).toFixed(1) + " " + (cy - (p.lat - lat) * my * kx).toFixed(1)).join("L");
-    (grupos[tipo] ||= []).push(d);
-  }
-  return Object.entries(grupos).sort((a, b) => (ANCHO[a[0]] || 1) - (ANCHO[b[0]] || 1))
-    .map(([tipo, ds]) => `<path stroke-width="${ANCHO[tipo] || 1}" opacity="${(ANCHO[tipo] || 1) > 1.5 ? .95 : .7}" d="${ds.join("")}"/>`).join("");
 }
 function cargarMapa(lugar) {
   const clave = claveMapa(lugar); if (!clave || typeof fetch !== "function") return Promise.resolve(false);
@@ -194,9 +158,9 @@ function cargarMapa(lugar) {
     try { const j = await mapaServidor(lugar); MAPAS.set(clave, { ok: true, svg: j.svg, lat: j.lat, lon: j.lon, nombre: j.nombre, pais: j.pais }); }
     catch (e0) {
       if (String(e0.message) === "no encontrado") { MAPAS.set(clave, { error: "no encontrado" }); return true; }
-      // Respaldo: el celular lo baja directo de OpenStreetMap
-      try { const loc = await buscarLugar(lugar); const ways = await bajarCalles(loc);
-        MAPAS.set(clave, { ok: true, svg: dibujar(ways, loc), lat: loc.lat, lon: loc.lon, nombre: loc.nombre, pais: loc.pais });
+      // Respaldo: el celular arma el mapa directo de OpenStreetMap con el mismo código del servidor (/mapa.js)
+      try { const { armarMapa } = await import("/mapa.js"); const j = await armarMapa(lugar);
+        MAPAS.set(clave, { ok: true, svg: j.svg, lat: j.lat, lon: j.lon, nombre: j.nombre, pais: j.pais });
       } catch (e) { MAPAS.set(clave, { error: String(e.message || e) }); }
     }
     return true;
