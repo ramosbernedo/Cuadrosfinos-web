@@ -455,10 +455,14 @@ def catalog_section(title, kicker, items, preset_col="", preset_room="", h_tag="
         <header class="sec__head"><div><p class="kicker">{kicker}</p><{h_tag} id="catTitle">{title}</{h_tag}></div><button class="btn btn--line btn--sm" data-open-quiz>Ayúdame a elegir</button></header>
         <div class="filters">
           <label class="search"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg><span class="sr">Buscar en el catálogo</span><input type="search" id="q" placeholder="Busca: león, Jesús, abogado, Machu Picchu…" autocomplete="off" enterkeyhint="search"></label>
+          <div class="filters__more" id="filtersMore">
           <div class="filters__grp"><span class="filters__lbl" id="lblTema">Tema</span><div class="filters__row" id="colFilters" role="tablist" aria-labelledby="lblTema">{chips_tema(PRODS, preset_col)}</div></div>
           <div class="filters__row filters__row--sub" id="subFilters" aria-label="Subtema"></div>
           <div class="filters__grp"><span class="filters__lbl" id="lblRoom">Dónde</span><div class="filters__row" id="roomFilters" role="group" aria-labelledby="lblRoom">{room_html}</div></div>
+          <button class="btn btn--light btn--sm filters__done" id="filtersDone" type="button">Ver <span id="filtersDoneN">{len(items)}</span> cuadros</button>
+          </div>
           <div class="filters__foot">
+            <button class="filters__toggle" id="filtersToggle" type="button" aria-expanded="false" aria-controls="filtersMore"><span>Filtrar</span><b id="filtersSum">Todos</b><i aria-hidden="true"></i></button>
             <p class="filters__count" id="count" aria-live="polite">{cuenta}</p>
             <button class="link-btn small" id="resetFilters" hidden>Quitar filtros</button>
             <label class="select select--sm"><span>Orden</span><select id="sort"><option value="">Recomendados</option><option value="nuevo">Nuevos primero</option><option value="az">A–Z</option><option value="precio">Precio</option></select></label>

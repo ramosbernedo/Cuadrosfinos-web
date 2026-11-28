@@ -958,3 +958,24 @@ body.escribiendo .wa-float{display:none}
   .hero__slides{left:auto;right:0;width:60%;-webkit-mask-image:linear-gradient(90deg,transparent 0,#000 9%);mask-image:linear-gradient(90deg,transparent 0,#000 9%)}
   .hero__shade{background:linear-gradient(0deg,rgba(6,6,6,.8),transparent 35%)}
 }
+/* Filtros en celular: un solo botón «Filtrar» en vez de tres filas que se deslizan */
+.filters__toggle,.filters__done{display:none}
+@media (max-width:760px){
+  .filters__more{display:none;margin-top:4px;padding:4px 0 16px;border-bottom:1px solid var(--line)}
+  .filters.is-open .filters__more{display:block}
+  .filters__more .filters__grp .filters__row{flex-wrap:wrap;overflow:visible;width:auto;max-width:100%;margin-right:0;padding-right:0}
+  .filters__done{display:flex;width:100%;margin-top:18px;justify-content:center}
+  .filters__foot{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:10px}
+  .filters__foot .select{margin-left:0;min-width:0;min-height:44px;padding:0 12px;gap:8px}
+  .filters__foot .select select{min-width:0;width:100%;font-size:.85rem}
+  .filters__toggle{display:flex;align-items:center;gap:8px;min-width:0;min-height:44px;padding:0 12px;border:1px solid var(--line-2);text-align:left}
+  .filters__toggle span{flex:none;font:500 .62rem/1 var(--sans);letter-spacing:.18em;text-transform:uppercase;color:var(--muted)}
+  .filters__toggle b{flex:1;min-width:0;font-weight:400;font-size:.85rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .filters__toggle i{flex:none;width:7px;height:7px;border-right:1.5px solid var(--fg-2);border-bottom:1.5px solid var(--fg-2);transform:translateY(-2px) rotate(45deg);transition:transform .2s}
+  .filters.is-open .filters__toggle{border-color:var(--fg-2)}
+  .filters.is-open .filters__toggle i{transform:translateY(2px) rotate(-135deg)}
+  .filters__foot .filters__count{grid-column:1/-1;order:3;font-size:.78rem}
+  .filters__foot #resetFilters{grid-column:1/-1;order:4;justify-self:start}
+  .filters__foot .select{order:2}
+  .filters__more .filters__row--sub{flex-wrap:wrap;overflow:visible;margin-top:12px}
+}
